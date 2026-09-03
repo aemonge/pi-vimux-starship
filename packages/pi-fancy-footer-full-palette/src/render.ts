@@ -1,10 +1,10 @@
-import type { AssistantMessage } from '@earendil-works/pi-ai';
+import type { AssistantMessage } from "@earendil-works/pi-ai";
 import type {
   ExtensionContext,
   SessionEntry,
   Theme,
-} from '@earendil-works/pi-coding-agent';
-import { truncateToWidth, visibleWidth } from '@earendil-works/pi-tui';
+} from "@earendil-works/pi-coding-agent";
+import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import {
   FOOTER_WIDGET_META,
   MAX_WIDGET_MIN_WIDTH,
@@ -23,6 +23,7 @@ import {
   type PreparedWidgetGroup,
   type ProviderStatusConfigSnapshot,
   type ProviderStatusSnapshot,
+  type ProviderStatusWindow,
   type SessionUsageMetrics,
   type ThinkingLevel,
   type WidgetRenderContext,
@@ -44,11 +45,11 @@ import {
   normalizeModel,
   normalizePath,
   toNumber,
-} from './shared.ts';
+} from "./shared.ts";
 import {
   resolveDataWidgetIcon,
   type NormalizedFancyFooterDataWidget,
-} from './data-widgets.ts';
+} from "./data-widgets.ts";
 import {
   buildProviderStatusGauge,
   formatProviderStatusText,
@@ -56,11 +57,12 @@ import {
   projectProviderStatusForModel,
   providerStatusColor,
   resetCountdownText,
-} from './provider-status.ts';
+} from "./provider-status.ts";
 
 function providerQuotaPercent(snapshot: ProviderStatusSnapshot): number | undefined {
   const known = [snapshot.primary, snapshot.secondary].filter(
-    (window) => window !== undefined && !window.usageUnknown,
+    (window): window is ProviderStatusWindow =>
+      window !== undefined && !window.usageUnknown,
   );
   if (known.length === 0) return undefined;
   return Math.max(...known.map((window) => window.usedPercent));
@@ -70,29 +72,29 @@ export function providerQuotaBatteryGlyph(usedPercent: number): string {
   const used = Number.isFinite(usedPercent)
     ? Math.max(0, Math.min(100, usedPercent))
     : 0;
-  if (used <= 20) return '';
-  if (used <= 40) return '';
-  if (used <= 60) return '';
-  if (used <= 80) return '';
-  return '';
+  if (used <= 20) return "";
+  if (used <= 40) return "";
+  if (used <= 60) return "";
+  if (used <= 80) return "";
+  return "";
 }
 
 function buildProviderStatusPart(
   snapshot: ProviderStatusSnapshot,
   config: Pick<
     ProviderStatusConfigSnapshot,
-    'display' | 'showCredits' | 'showReset' | 'resetMinUsedPercent'
+    "display" | "showCredits" | "showReset" | "resetMinUsedPercent"
   >,
   barStyle: GaugeStyleDef,
   gaugeWidth: number,
   gaugeColors: GaugeColorsSnapshot,
   theme: Theme,
-  defaultTextColor: WidgetRenderContext['defaultTextColor'],
+  defaultTextColor: WidgetRenderContext["defaultTextColor"],
   nowMs: number,
 ): string {
-  if (config.display === 'percent') {
+  if (config.display === "percent") {
     const percent = providerQuotaPercent(snapshot);
-    if (percent === undefined) return '';
+    if (percent === undefined) return "";
     const color = gaugeSeverity(100 - percent);
     return theme.fg(
       color,
@@ -101,10 +103,10 @@ function buildProviderStatusPart(
   }
 
   const text = formatProviderStatusText(snapshot, config, nowMs);
-  if (!text) return '';
+  if (!text) return "";
 
   const gauge =
-    config.display === 'gauge'
+    config.display === "gauge"
       ? buildProviderStatusGauge(snapshot, barStyle, gaugeWidth)
       : [];
   let body: string;
@@ -119,14 +121,14 @@ function buildProviderStatusPart(
       if (reset) piece += theme.fg(gaugeColors.ok, ` ${reset}`);
       return piece;
     });
-    body = pieces.join(' ');
+    body = pieces.join(" ");
     if (config.showCredits && snapshot.credits) {
       body += theme.fg(defaultTextColor, ` cr:${snapshot.credits}`);
     }
   } else {
     const color = providerStatusColor(snapshot);
     body = theme.fg(
-      color === 'dim' ? defaultTextColor : gaugeColorFor(color, gaugeColors),
+      color === "dim" ? defaultTextColor : gaugeColorFor(color, gaugeColors),
       text,
     );
   }
@@ -136,26 +138,26 @@ function buildProviderStatusPart(
 
 export function formatCompactCost(cost: number): string {
   const normalized = Number.isFinite(cost) ? Math.max(0, cost) : 0;
-  if (normalized === 0) return '$0';
+  if (normalized === 0) return "$0";
 
   const decimals =
     normalized >= 0.01
       ? 2
       : Math.min(6, Math.max(3, Math.ceil(-Math.log10(normalized)) + 1));
-  return `$${normalized.toFixed(decimals).replace(/\.?0+$/, '')}`;
+  return `$${normalized.toFixed(decimals).replace(/\.?0+$/, "")}`;
 }
 
 function getUsageData(entries: SessionEntry[]): SessionUsageMetrics {
-  let latest: SessionUsageMetrics['latest'];
+  let latest: SessionUsageMetrics["latest"];
   let totalCost = 0;
   let totalCacheRead = 0;
   let totalCacheWrite = 0;
 
   for (const entry of entries) {
-    if (entry.type !== 'message') continue;
+    if (entry.type !== "message") continue;
 
     const message = entry.message as Partial<AssistantMessage>;
-    if (message.role !== 'assistant' || !message.usage) continue;
+    if (message.role !== "assistant" || !message.usage) continue;
 
     const usage = message.usage;
     latest = {
@@ -188,12 +190,12 @@ function renderGauge(
   cells: number,
   colors: GaugeColorsSnapshot,
   theme: Theme,
-  textColor: WidgetRenderContext['defaultTextColor'],
+  textColor: WidgetRenderContext["defaultTextColor"],
 ): string {
   const gauge = buildGauge(usedPercent, style, cells);
   return (
     theme.fg(gaugeColorFor(gauge.color, colors), gauge.filledGlyphs) +
-    theme.fg('dim', gauge.emptyGlyphs) +
+    theme.fg("dim", gauge.emptyGlyphs) +
     theme.fg(textColor, ` ${gauge.percentText}`)
   );
 }
@@ -207,7 +209,7 @@ function renderGrowGauge(
   availableWidth: number,
   colors: GaugeColorsSnapshot,
   theme: Theme,
-  textColor: WidgetRenderContext['defaultTextColor'],
+  textColor: WidgetRenderContext["defaultTextColor"],
 ): string {
   const label = `${formatTokens(usedTokens)} `;
   const cells = Math.max(1, Math.floor(availableWidth) - visibleWidth(label));
@@ -215,14 +217,14 @@ function renderGrowGauge(
   return (
     theme.fg(textColor, label) +
     theme.fg(gaugeColorFor(gauge.color, colors), gauge.filledGlyphs) +
-    theme.fg('dim', gauge.emptyGlyphs)
+    theme.fg("dim", gauge.emptyGlyphs)
   );
 }
 
 function buildGitStatus(
   counts: GitCounts,
   iconFamily: FooterIconFamily,
-): Pick<FooterMetrics, 'gitStatusSymbol' | 'gitStatusText'> {
+): Pick<FooterMetrics, "gitStatusSymbol" | "gitStatusText"> {
   const symbols = getStatuslineSymbols(iconFamily);
 
   if (counts.ahead > 0 && counts.behind > 0) {
@@ -243,23 +245,23 @@ function buildGitStatus(
       gitStatusText: `${counts.behind}`,
     };
   }
-  return { gitStatusSymbol: '', gitStatusText: '' };
+  return { gitStatusSymbol: "", gitStatusText: "" };
 }
 
 function resolveGitStatusSymbolColor(
   symbol: string,
-  configuredColor: FooterConfigSnapshot['defaultIconColor'],
+  configuredColor: FooterConfigSnapshot["defaultIconColor"],
   iconFamily: FooterIconFamily,
-): FooterConfigSnapshot['defaultIconColor'] {
-  if (configuredColor !== 'text') return configuredColor;
+): FooterConfigSnapshot["defaultIconColor"] {
+  if (configuredColor !== "text") return configuredColor;
 
   const symbols = getStatuslineSymbols(iconFamily);
-  if (symbol === symbols.gitBehind) return 'warning';
-  if (symbol === symbols.gitAhead || symbol === symbols.gitDiverged) return 'accent';
+  if (symbol === symbols.gitBehind) return "warning";
+  if (symbol === symbols.gitAhead || symbol === symbols.gitDiverged) return "accent";
   return configuredColor;
 }
 
-function truncateFooterText(text: string, maxWidth: number, ellipsis = '...'): string {
+function truncateFooterText(text: string, maxWidth: number, ellipsis = "..."): string {
   return closeOpenTerminalHyperlinks(
     truncateToWidth(text, maxWidth, ellipsis),
     `\x1b[0m${ellipsis}`,
@@ -274,10 +276,10 @@ function resolveWidgetSize(
   size: FooterWidgetSize | undefined,
   renderCtx: WidgetRenderContext,
 ): number {
-  if (typeof size === 'number') {
+  if (typeof size === "number") {
     return clampInt(size, 0, MAX_WIDGET_MIN_WIDTH);
   }
-  if (typeof size === 'function') {
+  if (typeof size === "function") {
     return clampInt(size(renderCtx), 0, MAX_WIDGET_MIN_WIDTH);
   }
   return 0;
@@ -296,10 +298,10 @@ function renderWidget(
   renderCtx: WidgetRenderContext,
   allocatedWidth?: number,
 ): string {
-  if (!isWidgetVisible(widget, renderCtx)) return '';
+  if (!isWidgetVisible(widget, renderCtx)) return "";
 
   const hasIcon = Boolean(widget.icon?.text);
-  const iconText = widget.icon?.text ?? '';
+  const iconText = widget.icon?.text ?? "";
   const iconWidth = hasIcon ? visibleWidth(iconText) : 0;
 
   const maxTotalWidth =
@@ -310,21 +312,21 @@ function renderWidget(
       : Math.max(0, maxTotalWidth - iconWidth - (hasIcon ? 1 : 0));
 
   const rawText = widget.renderText(renderCtx, contentWidth);
-  if (!rawText && !hasIcon) return '';
+  if (!rawText && !hasIcon) return "";
   const styledText = widget.styled
     ? rawText
-    : renderCtx.theme.fg(widget.textColor ?? 'dim', rawText);
+    : renderCtx.theme.fg(widget.textColor ?? "dim", rawText);
 
   const styledIcon =
-    hasIcon && widget.icon ? renderCtx.theme.fg(widget.icon.color, iconText) : '';
+    hasIcon && widget.icon ? renderCtx.theme.fg(widget.icon.color, iconText) : "";
 
-  const iconGap = hasIcon && rawText ? ' ' : '';
+  const iconGap = hasIcon && rawText ? " " : "";
   const combined = `${styledIcon}${iconGap}${styledText}`;
   const linked = widget.href
     ? formatTerminalHyperlink(widget.href, combined)
     : combined;
   if (maxTotalWidth === undefined) return linked;
-  return truncateFooterText(linked, maxTotalWidth, '');
+  return truncateFooterText(linked, maxTotalWidth, "");
 }
 
 function prepareWidgetGroup(
@@ -335,13 +337,13 @@ function prepareWidgetGroup(
   const prepared: PreparedWidget[] = [];
 
   for (const widget of sorted) {
-    const fill = widget.fill ?? 'none';
-    if (fill === 'grow') {
+    const fill = widget.fill ?? "none";
+    if (fill === "grow") {
       prepared.push({
         widget,
         fill,
         minWidth: resolveWidgetSize(widget.minWidth, renderCtx),
-        fixedText: '',
+        fixedText: "",
         fixedWidth: 0,
       });
       continue;
@@ -355,7 +357,7 @@ function prepareWidgetGroup(
       renderedWidth,
       resolveWidgetSize(widget.minWidth, renderCtx),
     );
-    const fixedText = `${renderedText}${' '.repeat(fixedWidth - renderedWidth)}`;
+    const fixedText = `${renderedText}${" ".repeat(fixedWidth - renderedWidth)}`;
     prepared.push({
       widget,
       fill,
@@ -367,7 +369,7 @@ function prepareWidgetGroup(
 
   const gaps = Math.max(0, prepared.length - 1);
   const contentMinWidth = prepared.reduce((acc, item) => {
-    if (item.fill === 'grow') return acc + item.minWidth;
+    if (item.fill === "grow") return acc + item.minWidth;
     return acc + item.fixedWidth;
   }, 0);
 
@@ -385,7 +387,7 @@ function renderGroup(
   const parts: string[] = [];
 
   for (const item of group.widgets) {
-    if (item.fill === 'grow') {
+    if (item.fill === "grow") {
       const extra = fillExtras.get(widgetKey(item.widget)) ?? 0;
       const allocatedWidth = item.minWidth + extra;
       const rendered = renderWidget(item.widget, renderCtx, allocatedWidth);
@@ -396,11 +398,11 @@ function renderGroup(
     if (item.fixedText) parts.push(item.fixedText);
   }
 
-  return parts.join(' ');
+  return parts.join(" ");
 }
 
 const ALIGNED_GROUP_GAP = 4;
-const RAMONA_AVATAR = '󰠭';
+const RAMONA_AVATAR = "󰠭";
 const RAMONA_AVATAR_SLOT_WIDTH = 4;
 const RAMONA_AVATAR_MIN_TERMINAL_WIDTH = 100;
 
@@ -425,11 +427,11 @@ function composeAlignedRow(
   ) {
     const effectiveWidth = width - RAMONA_AVATAR_SLOT_WIDTH;
     if (leftWidth + rightWidth + ALIGNED_GROUP_GAP <= effectiveWidth) {
-      const avatarSlot = ` ${theme.fg('thinkingHigh', '⟨')} ${theme.fg('customMessageLabel', RAMONA_AVATAR)}`;
+      const avatarSlot = ` ${theme.fg("thinkingHigh", "⟨")} ${theme.fg("customMessageLabel", RAMONA_AVATAR)}`;
       return `${composeAlignedRow(
         effectiveWidth,
         left,
-        '',
+        "",
         right,
         theme,
         false,
@@ -438,8 +440,8 @@ function composeAlignedRow(
   }
 
   const fallback = () => {
-    const joined = [left, middle, right].filter((part) => part).join(' ');
-    return truncateFooterText(joined, width, theme.fg('dim', '...'));
+    const joined = [left, middle, right].filter((part) => part).join(" ");
+    return truncateFooterText(joined, width, theme.fg("dim", "..."));
   };
 
   if (!middle) {
@@ -447,27 +449,27 @@ function composeAlignedRow(
       if (leftWidth + rightWidth + ALIGNED_GROUP_GAP > width) return fallback();
       const gap = Math.max(ALIGNED_GROUP_GAP, width - leftWidth - rightWidth);
       return truncateFooterText(
-        `${left}${' '.repeat(gap)}${right}`,
+        `${left}${" ".repeat(gap)}${right}`,
         width,
-        theme.fg('dim', '...'),
+        theme.fg("dim", "..."),
       );
     }
 
-    if (left) return truncateFooterText(left, width, theme.fg('dim', '...'));
+    if (left) return truncateFooterText(left, width, theme.fg("dim", "..."));
     if (right) {
       if (rightWidth > width) return fallback();
-      return `${' '.repeat(width - rightWidth)}${right}`;
+      return `${" ".repeat(width - rightWidth)}${right}`;
     }
-    return '';
+    return "";
   }
 
   if (!left && !right) {
     if (middleWidth > width) return fallback();
     const start = Math.max(0, Math.floor((width - middleWidth) / 2));
     return truncateFooterText(
-      `${' '.repeat(start)}${middle}`,
+      `${" ".repeat(start)}${middle}`,
       width,
-      theme.fg('dim', '...'),
+      theme.fg("dim", "..."),
     );
   }
 
@@ -481,7 +483,7 @@ function composeAlignedRow(
   const slotWidth = rightBoundary - leftBoundary;
   let middleText = middle;
   if (middleWidth > slotWidth) {
-    middleText = truncateFooterText(middleText, slotWidth, '');
+    middleText = truncateFooterText(middleText, slotWidth, "");
   }
 
   const middleTextWidth = visibleWidth(middleText);
@@ -491,20 +493,20 @@ function composeAlignedRow(
   const preMiddleSpaces = Math.max(0, middleStart - leftBoundary);
   const postMiddleSpaces = Math.max(0, rightBoundary - (middleStart + middleTextWidth));
 
-  let out = '';
+  let out = "";
   if (left) {
     out += left;
-    out += ' ';
+    out += " ";
   }
-  out += ' '.repeat(preMiddleSpaces);
+  out += " ".repeat(preMiddleSpaces);
   out += middleText;
-  out += ' '.repeat(postMiddleSpaces);
+  out += " ".repeat(postMiddleSpaces);
   if (right) {
-    out += ' ';
+    out += " ";
     out += right;
   }
 
-  return truncateFooterText(out, width, theme.fg('dim', '...'));
+  return truncateFooterText(out, width, theme.fg("dim", "..."));
 }
 
 function computeFooterMetrics(
@@ -526,7 +528,7 @@ function computeFooterMetrics(
 
   const contextTokensRaw = contextUsage?.tokens;
   const contextTokensKnown =
-    typeof contextTokensRaw === 'number' && Number.isFinite(contextTokensRaw);
+    typeof contextTokensRaw === "number" && Number.isFinite(contextTokensRaw);
   const contextTokens = contextTokensKnown
     ? Math.max(0, Math.floor(contextTokensRaw))
     : 0;
@@ -535,7 +537,7 @@ function computeFooterMetrics(
 
   const usedRaw = contextUsage?.percent;
   const hasUsedPercent =
-    typeof usedRaw === 'number' && Number.isFinite(usedRaw) && usedRaw >= 0;
+    typeof usedRaw === "number" && Number.isFinite(usedRaw) && usedRaw >= 0;
   const usedPct = Math.max(
     0,
     Math.min(
@@ -570,13 +572,13 @@ function computeFooterMetrics(
     usedTokensForBar = Math.max(usageFromPercent, usageFromLatest);
   }
 
-  const model = normalizeModel(ctx.model?.name || ctx.model?.id || 'Claude');
+  const model = normalizeModel(ctx.model?.name || ctx.model?.id || "Claude");
   // Providers carry a display name ("Anthropic", "OpenAI Codex"); fall back to
   // the raw id for providers defined only in models.json.
-  const providerId = ctx.model?.provider ?? '';
+  const providerId = ctx.model?.provider ?? "";
   const provider = providerId
     ? (ctx.modelRegistry?.getProviderDisplayName(providerId) ?? providerId)
-    : '';
+    : "";
   const thinking = formatThinkingLevel(
     getThinkingLevelFromEntries(ctx.sessionManager.getBranch(), fallbackThinkingLevel),
   );
@@ -613,7 +615,7 @@ function baseWidgetDefaults(
   iconFamily: FooterIconFamily,
 ): Pick<
   FooterWidget,
-  'id' | 'location' | 'align' | 'fill' | 'defaultEnabled' | 'icon' | 'textColor'
+  "id" | "location" | "align" | "fill" | "defaultEnabled" | "icon" | "textColor"
 > {
   const defaults = FOOTER_WIDGET_META[widgetId].defaults;
 
@@ -627,7 +629,7 @@ function baseWidgetDefaults(
     fill: defaults.fill,
     defaultEnabled: defaults.enabled,
     icon: getDefaultWidgetIcon(widgetId, iconFamily),
-    textColor: 'dim',
+    textColor: "dim",
   };
 }
 
@@ -637,25 +639,25 @@ function buildFooterWidgets(
 ): FooterWidget[] {
   return [
     {
-      ...baseWidgetDefaults('provider', iconFamily),
-      visible: ({ metrics }) => metrics.provider !== '',
+      ...baseWidgetDefaults("provider", iconFamily),
+      visible: ({ metrics }) => metrics.provider !== "",
       renderText: ({ metrics }) => metrics.provider,
     },
     {
-      ...baseWidgetDefaults('model', iconFamily),
+      ...baseWidgetDefaults("model", iconFamily),
       renderText: ({ metrics }) => metrics.model,
     },
     {
-      ...baseWidgetDefaults('thinking', iconFamily),
-      visible: ({ metrics }) => metrics.thinking !== '',
+      ...baseWidgetDefaults("thinking", iconFamily),
+      visible: ({ metrics }) => metrics.thinking !== "",
       renderText: ({ metrics }) => metrics.thinking,
     },
     {
-      ...baseWidgetDefaults('context-capacity', iconFamily),
+      ...baseWidgetDefaults("context-capacity", iconFamily),
       renderText: ({ metrics }) => formatTokens(metrics.totalTokens),
     },
     {
-      ...baseWidgetDefaults('context-bar', iconFamily),
+      ...baseWidgetDefaults("context-bar", iconFamily),
       minWidth: ({ width }) => (width >= 100 ? 12 : width >= 70 ? 8 : 4),
       styled: true,
       renderText: (
@@ -688,24 +690,24 @@ function buildFooterWidgets(
       },
     },
     {
-      ...baseWidgetDefaults('total-cost', iconFamily),
+      ...baseWidgetDefaults("total-cost", iconFamily),
       styled: true,
       visible: ({ width, metrics }) => width >= 60 && metrics.totalCost > 0,
       renderText: ({ metrics, theme }) =>
-        theme.fg('accent', `⟩ ${formatCompactCost(metrics.totalCost)}`),
+        theme.fg("accent", `⟩ ${formatCompactCost(metrics.totalCost)}`),
     },
     {
-      ...baseWidgetDefaults('cache-read', iconFamily),
+      ...baseWidgetDefaults("cache-read", iconFamily),
       visible: ({ width, metrics }) => width >= 60 && metrics.totalCacheRead > 0,
       renderText: ({ metrics }) => formatTokens(metrics.totalCacheRead),
     },
     {
-      ...baseWidgetDefaults('cache-write', iconFamily),
+      ...baseWidgetDefaults("cache-write", iconFamily),
       visible: ({ width, metrics }) => width >= 60 && metrics.totalCacheWrite > 0,
       renderText: ({ metrics }) => formatTokens(metrics.totalCacheWrite),
     },
     {
-      ...baseWidgetDefaults('cache-hit-rate', iconFamily),
+      ...baseWidgetDefaults("cache-hit-rate", iconFamily),
       styled: true,
       visible: ({ width, metrics }) =>
         width >= 60 &&
@@ -713,32 +715,32 @@ function buildFooterWidgets(
         metrics.cacheHitRatePercent !== undefined,
       renderText: ({ metrics, theme }) =>
         theme.fg(
-          'accent',
+          "accent",
           `› 󰍛 ${formatGaugePercent(metrics.cacheHitRatePercent ?? 0)}`,
         ),
     },
     {
-      ...baseWidgetDefaults('location', iconFamily),
+      ...baseWidgetDefaults("location", iconFamily),
       renderText: ({ metrics }) => metrics.locationText,
     },
     {
-      ...baseWidgetDefaults('branch', iconFamily),
-      visible: ({ metrics }) => metrics.branch !== '',
+      ...baseWidgetDefaults("branch", iconFamily),
+      visible: ({ metrics }) => metrics.branch !== "",
       renderText: ({ metrics }) => metrics.branch,
     },
     {
-      ...baseWidgetDefaults('commit', iconFamily),
-      visible: ({ metrics }) => metrics.commit !== '',
+      ...baseWidgetDefaults("commit", iconFamily),
+      visible: ({ metrics }) => metrics.commit !== "",
       renderText: ({ metrics }) => metrics.commit,
     },
     {
-      ...baseWidgetDefaults('provider-status', iconFamily),
+      ...baseWidgetDefaults("provider-status", iconFamily),
       styled: true,
       visible: ({ providerStatuses, providerStatusConfig, nowMs }) =>
         providerStatuses.some((snapshot) =>
-          providerStatusConfig.display === 'percent'
+          providerStatusConfig.display === "percent"
             ? providerQuotaPercent(snapshot) !== undefined
-            : formatProviderStatusText(snapshot, providerStatusConfig, nowMs) !== '',
+            : formatProviderStatusText(snapshot, providerStatusConfig, nowMs) !== "",
         ),
       renderText: ({
         providerStatuses,
@@ -763,27 +765,27 @@ function buildFooterWidgets(
           );
           if (part) parts.push(part);
         }
-        const text = parts.join(' ');
-        if (!text) return '';
-        return providerStatusConfig.display === 'percent'
+        const text = parts.join(" ");
+        if (!text) return "";
+        return providerStatusConfig.display === "percent"
           ? text
-          : `${theme.fg(defaultTextColor, 'qta')} ${text}`;
+          : `${theme.fg(defaultTextColor, "qta")} ${text}`;
       },
     },
     {
-      ...baseWidgetDefaults('diff-added', iconFamily),
+      ...baseWidgetDefaults("diff-added", iconFamily),
       visible: ({ metrics }) => metrics.added > 0,
       renderText: ({ metrics }) => `${metrics.added}`,
     },
     {
-      ...baseWidgetDefaults('diff-removed', iconFamily),
+      ...baseWidgetDefaults("diff-removed", iconFamily),
       visible: ({ metrics }) => metrics.removed > 0,
       renderText: ({ metrics }) => `${metrics.removed}`,
     },
     {
-      ...baseWidgetDefaults('git-status', iconFamily),
+      ...baseWidgetDefaults("git-status", iconFamily),
       styled: true,
-      visible: ({ metrics }) => metrics.gitStatusSymbol !== '',
+      visible: ({ metrics }) => metrics.gitStatusSymbol !== "",
       renderText: ({ metrics, theme, defaultIconColor, defaultTextColor }) => {
         const symbolColor = resolveGitStatusSymbolColor(
           metrics.gitStatusSymbol,
@@ -823,14 +825,14 @@ function buildExtensionWidgets(
       styled: widget.bold === true,
       forceVisibleWhenEnabled: false,
       visible: () =>
-        widget.content.text !== '' || (showIconWhenEmpty && icon !== undefined),
+        widget.content.text !== "" || (showIconWhenEmpty && icon !== undefined),
       renderText: ({ theme, defaultTextColor }, availableWidth) => {
         const rendered = widget.bold
           ? theme.fg(defaultTextColor, theme.bold(widget.content.text))
           : widget.content.text;
         return availableWidth === undefined
           ? rendered
-          : truncateFooterText(rendered, availableWidth, '...');
+          : truncateFooterText(rendered, availableWidth, "...");
       },
     };
   });
@@ -839,8 +841,8 @@ function buildExtensionWidgets(
 function applyWidgetConfigOverrides(
   widgets: FooterWidget[],
   overrides: Record<string, FooterWidgetConfigOverride | undefined>,
-  defaultTextColor: FooterConfigSnapshot['defaultTextColor'],
-  defaultIconColor: FooterConfigSnapshot['defaultIconColor'],
+  defaultTextColor: FooterConfigSnapshot["defaultTextColor"],
+  defaultIconColor: FooterConfigSnapshot["defaultIconColor"],
   iconFamily: FooterIconFamily,
 ): FooterWidget[] {
   return widgets.map((widget) => {
@@ -861,7 +863,7 @@ function applyWidgetConfigOverrides(
       override.iconColor ?? widget.preferredIconColor ?? defaultIconColor;
 
     let icon = widget.icon;
-    if (override.icon === 'hide') {
+    if (override.icon === "hide") {
       icon = undefined;
     } else if (!icon) {
       icon = getDefaultWidgetIcon(widget.id, iconFamily);
@@ -896,7 +898,7 @@ function applyWidgetConfigOverrides(
       renderText = (renderCtx, availableWidth) => {
         const out = originalRenderText(renderCtx, availableWidth);
         if (visibleWidth(out) > 0) return out;
-        return widget.styled ? renderCtx.theme.fg('dim', '·') : '·';
+        return widget.styled ? renderCtx.theme.fg("dim", "·") : "·";
       };
     }
 
@@ -923,23 +925,23 @@ function renderWidgetRow(
   renderCtx: WidgetRenderContext,
   insetWideRight = false,
 ): string {
-  if (width <= 0 || rowWidgets.length === 0) return '';
+  if (width <= 0 || rowWidgets.length === 0) return "";
 
   const visibleWidgets = rowWidgets.filter((widget) =>
     isWidgetVisible(widget, renderCtx),
   );
-  if (visibleWidgets.length === 0) return '';
+  if (visibleWidgets.length === 0) return "";
 
   const leftGroup = prepareWidgetGroup(
-    visibleWidgets.filter((widget) => widget.align === 'left'),
+    visibleWidgets.filter((widget) => widget.align === "left"),
     renderCtx,
   );
   const middleGroup = prepareWidgetGroup(
-    visibleWidgets.filter((widget) => widget.align === 'middle'),
+    visibleWidgets.filter((widget) => widget.align === "middle"),
     renderCtx,
   );
   const rightGroup = prepareWidgetGroup(
-    visibleWidgets.filter((widget) => widget.align === 'right'),
+    visibleWidgets.filter((widget) => widget.align === "right"),
     renderCtx,
   );
 
@@ -954,7 +956,7 @@ function renderWidgetRow(
 
   if (minRequiredWidth <= width) {
     const fillWidgets = groups.flatMap((group) =>
-      group.widgets.filter((item) => item.fill === 'grow'),
+      group.widgets.filter((item) => item.fill === "grow"),
     );
     if (fillWidgets.length > 0) {
       const extraSpace = width - minRequiredWidth;
@@ -974,8 +976,8 @@ function renderWidgetRow(
   const rightText = renderGroup(rightGroup, renderCtx, fillExtras);
 
   if (minRequiredWidth > width) {
-    const fallback = [leftText, middleText, rightText].filter((part) => part).join(' ');
-    return truncateFooterText(fallback, width, renderCtx.theme.fg('dim', '...'));
+    const fallback = [leftText, middleText, rightText].filter((part) => part).join(" ");
+    return truncateFooterText(fallback, width, renderCtx.theme.fg("dim", "..."));
   }
 
   return composeAlignedRow(
@@ -1000,7 +1002,7 @@ export function renderFooterLines(
   providerStatuses: readonly ProviderStatusSnapshot[] = [],
   nowMs = Date.now(),
 ): string[] {
-  if (width <= 0) return ['', ''];
+  if (width <= 0) return ["", ""];
 
   const metrics = computeFooterMetrics(
     ctx,
@@ -1052,7 +1054,7 @@ export function renderFooterLines(
   for (let row = 0; row <= highestRow; row++) {
     const rowWidgets = widgets.filter((widget) => widget.location.row === row);
     const line = renderWidgetRow(width, rowWidgets, renderCtx, highestRow === 0);
-    rows.push(truncateFooterText(line, width, theme.fg('dim', '...')));
+    rows.push(truncateFooterText(line, width, theme.fg("dim", "...")));
   }
 
   return rows;

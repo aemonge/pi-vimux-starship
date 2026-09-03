@@ -40,11 +40,12 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: Offline root `npm ci` installed 259 packages; after removing stale generated child `node_modules`, `npm ls` resolves all workspace Pi peers to 0.84.4 and root TypeBox peers to 1.3.25; Prettier config/package checks and `node --check eslint.config.js` pass. The original baseline passed before this intentional replacement and now reports the expected changed file set until Step 1.2 establishes dual manifests.
   - Paths: `package.json`, `package-lock.json`, `.prettierignore`, `.prettierrc.json`, `biome.json`, `eslint.config.js`, `tsconfig.json`, four workspace `package.json` files, removed Status/Header child lockfiles, new Footer/Vim `tsconfig.json` files, and this Fix change.
   - History: Expected `step(tooling): centralize standalone development dependencies`.
-- [ ] Step 1.2 Repair the characterized fixture, TypeBox diagnostic, Footer type, and source-integrity defects without visible runtime change.
-  - Estimate: 15–25 minutes; uncertainty is retaining exact validation messages across TypeBox versions.
-  - Timing: Pending
-  - Check: Pending
-  - History: Pending
+- [x] Step 1.2 Repair the characterized fixture, TypeBox diagnostic, Footer type, and source-integrity defects without visible runtime change.
+  - Estimate: 15–25 minutes; uncertainty was retaining exact validation messages across TypeBox versions.
+  - Timing: 2026-09-03T13:44:21Z–2026-09-03T13:46:55Z (2m34s implementation and focused checks).
+  - Check: Header 69/69 and Footer 158/158 tests pass under root dependencies; Footer strict TypeScript and focused Prettier checks pass; current source integrity passes for 88 files and the immutable original import record passes for 87 files.
+  - Paths: `baseline/source.sha256`, new `baseline/imported-source.sha256`, `scripts/check-baseline.mjs`, Header fixture and its test reference, Footer `src/config.ts`, `src/render.ts`, `src/shared.ts`, and this Task ledger.
+  - History: Expected `step(tooling): repair imported verification defects`.
 - [ ] Step 1.3 Add schema-aware planning validation, document the standalone boundary, and prove a clean offline reinstall.
   - Estimate: 15–25 minutes; uncertainty is clean-install behavior after removing child lockfiles.
   - Timing: Pending

@@ -63,15 +63,11 @@ const literalUnion = (values: readonly string[]) =>
 
 const footerWidgetColorSchema = literalUnion(FOOTER_WIDGET_COLORS);
 const footerIconFamilySchema = literalUnion(FOOTER_ICON_FAMILIES);
-const gaugeStyleSchema = literalUnion(
-  GAUGE_STYLES.map((style) => style.label),
-);
+const gaugeStyleSchema = literalUnion(GAUGE_STYLES.map((style) => style.label));
 const footerWidgetAlignSchema = literalUnion(["left", "middle", "right"]);
 const footerWidgetFillSchema = literalUnion(["none", "grow"]);
 const footerWidgetIconModeSchema = literalUnion(["default", "hide"]);
-const providerStatusProviderSchema = literalUnion(
-  PROVIDER_STATUS_PROVIDER_IDS,
-);
+const providerStatusProviderSchema = literalUnion(PROVIDER_STATUS_PROVIDER_IDS);
 const providerStatusDisplaySchema = literalUnion(PROVIDER_STATUS_DISPLAYS);
 const providerStatusResetModeSchema = literalUnion(PROVIDER_STATUS_RESET_MODES);
 const PROVIDER_STATUS_RESET_MIN_USED_PERCENT_OPTIONS = [
@@ -96,9 +92,7 @@ const providerStatusConfigSchema = Type.Object(
     display: Type.Optional(providerStatusDisplaySchema),
     showCredits: Type.Optional(Type.Boolean()),
     showReset: Type.Optional(providerStatusResetModeSchema),
-    resetMinUsedPercent: Type.Optional(
-      Type.Number({ minimum: 0, maximum: 100 }),
-    ),
+    resetMinUsedPercent: Type.Optional(Type.Number({ minimum: 0, maximum: 100 })),
   },
   { additionalProperties: false },
 );
@@ -107,9 +101,7 @@ const footerWidgetConfigOverrideSchema = Type.Object(
   {
     enabled: Type.Optional(Type.Boolean()),
     row: Type.Optional(Type.Integer({ minimum: 0, maximum: MAX_WIDGET_ROW })),
-    position: Type.Optional(
-      Type.Integer({ minimum: 0, maximum: MAX_WIDGET_POSITION }),
-    ),
+    position: Type.Optional(Type.Integer({ minimum: 0, maximum: MAX_WIDGET_POSITION })),
     align: Type.Optional(footerWidgetAlignSchema),
     fill: Type.Optional(footerWidgetFillSchema),
     minWidth: Type.Optional(
@@ -160,10 +152,7 @@ const footerConfigFileSchema = Type.Object(
       ),
     ),
     extensionWidgets: Type.Optional(
-      Type.Record(
-        Type.String({ minLength: 1 }),
-        footerWidgetConfigOverrideSchema,
-      ),
+      Type.Record(Type.String({ minLength: 1 }), footerWidgetConfigOverrideSchema),
     ),
   },
   { additionalProperties: false },
@@ -228,18 +217,14 @@ function parseProviderStatusConfig(
     providers.includes(id),
   );
   return {
-    refreshMs:
-      input?.refreshMs ?? DEFAULT_PROVIDER_STATUS_CONFIG.refreshMs,
-    cacheTtlMs:
-      input?.cacheTtlMs ?? DEFAULT_PROVIDER_STATUS_CONFIG.cacheTtlMs,
+    refreshMs: input?.refreshMs ?? DEFAULT_PROVIDER_STATUS_CONFIG.refreshMs,
+    cacheTtlMs: input?.cacheTtlMs ?? DEFAULT_PROVIDER_STATUS_CONFIG.cacheTtlMs,
     providers: knownProviders,
     display: input?.display ?? DEFAULT_PROVIDER_STATUS_CONFIG.display,
-    showCredits:
-      input?.showCredits ?? DEFAULT_PROVIDER_STATUS_CONFIG.showCredits,
+    showCredits: input?.showCredits ?? DEFAULT_PROVIDER_STATUS_CONFIG.showCredits,
     showReset: input?.showReset ?? DEFAULT_PROVIDER_STATUS_CONFIG.showReset,
     resetMinUsedPercent:
-      input?.resetMinUsedPercent ??
-      DEFAULT_PROVIDER_STATUS_CONFIG.resetMinUsedPercent,
+      input?.resetMinUsedPercent ?? DEFAULT_PROVIDER_STATUS_CONFIG.resetMinUsedPercent,
   };
 }
 
@@ -279,9 +264,7 @@ function describeConfigError(error: {
       `  - ${display}: use a number from 0 to 100 (the used quota percentage at which reset countdowns appear)`,
     ];
   }
-  const params = error.params as
-    | { additionalProperties?: unknown }
-    | undefined;
+  const params = error.params as { additionalProperties?: unknown } | undefined;
   const unknown = Array.isArray(params?.additionalProperties)
     ? params.additionalProperties.filter(
         (key): key is string => typeof key === "string",
@@ -305,10 +288,7 @@ function describeConfigError(error: {
   });
 }
 
-function closestKey(
-  key: string,
-  candidates: readonly string[],
-): string | undefined {
+function closestKey(key: string, candidates: readonly string[]): string | undefined {
   let best: string | undefined;
   let bestDistance = Math.max(2, Math.floor(key.length / 3));
   for (const candidate of candidates) {
@@ -341,9 +321,30 @@ function editDistance(a: string, b: string): number {
 
 export function footerConfigValidationErrors(value: unknown): string[] {
   if (validateFooterConfigFile.Check(value)) return [];
+
+  const errors = [...validateFooterConfigFile.Errors(value)];
+  const unknownPropertyPaths = new Set<string>();
+  for (const error of errors) {
+    const params = error.params as { additionalProperties?: unknown } | undefined;
+    if (!Array.isArray(params?.additionalProperties)) continue;
+
+    const parentPath = error.instancePath || "";
+    for (const key of params.additionalProperties) {
+      if (typeof key !== "string") continue;
+      const pointerKey = key.replaceAll("~", "~0").replaceAll("/", "~1");
+      unknownPropertyPaths.add(`${parentPath}/${pointerKey}`);
+    }
+  }
+
   const seen = new Set<string>();
   const messages: string[] = [];
-  for (const error of validateFooterConfigFile.Errors(value)) {
+  for (const error of errors) {
+    if (
+      error.message === "schema is false" &&
+      unknownPropertyPaths.has(error.instancePath)
+    ) {
+      continue;
+    }
     for (const message of describeConfigError(error)) {
       if (seen.has(message)) continue;
       seen.add(message);
@@ -353,10 +354,7 @@ export function footerConfigValidationErrors(value: unknown): string[] {
   return messages;
 }
 
-function parseFooterConfig(
-  filePath: string,
-  value: unknown,
-): FooterConfigSnapshot {
+function parseFooterConfig(filePath: string, value: unknown): FooterConfigSnapshot {
   if (value === undefined) return defaultFooterConfig();
 
   const errors = footerConfigValidationErrors(value);
@@ -375,10 +373,8 @@ function parseFooterConfig(
       warning: input.gaugeColors?.warning ?? DEFAULT_GAUGE_COLORS.warning,
       error: input.gaugeColors?.error ?? DEFAULT_GAUGE_COLORS.error,
     },
-    defaultTextColor:
-      input.defaultTextColor ?? DEFAULT_FOOTER_CONFIG.defaultTextColor,
-    defaultIconColor:
-      input.defaultIconColor ?? DEFAULT_FOOTER_CONFIG.defaultIconColor,
+    defaultTextColor: input.defaultTextColor ?? DEFAULT_FOOTER_CONFIG.defaultTextColor,
+    defaultIconColor: input.defaultIconColor ?? DEFAULT_FOOTER_CONFIG.defaultIconColor,
     providerStatus: parseProviderStatusConfig(input.providerStatus),
     widgets: pruneWidgetOverrides(
       input.widgets as Record<string, FooterWidgetConfigOverride> | undefined,
@@ -416,9 +412,7 @@ function writeFooterConfigFile(content: string): void {
   writeFileSync(getFooterConfigPath(), content, "utf8");
 }
 
-export function cloneFooterConfig(
-  config: FooterConfigSnapshot,
-): FooterConfigSnapshot {
+export function cloneFooterConfig(config: FooterConfigSnapshot): FooterConfigSnapshot {
   return structuredClone(config);
 }
 
@@ -432,12 +426,9 @@ function isEmptyWidgetOverride(
   return true;
 }
 
-function toFooterConfigObject(
-  config: FooterConfigSnapshot,
-): Record<string, unknown> {
-  const widgets: Partial<
-    Record<BuiltInFooterWidgetId, FooterWidgetConfigOverride>
-  > = {};
+function toFooterConfigObject(config: FooterConfigSnapshot): Record<string, unknown> {
+  const widgets: Partial<Record<BuiltInFooterWidgetId, FooterWidgetConfigOverride>> =
+    {};
   for (const widgetId of FOOTER_WIDGET_IDS) {
     const override = config.widgets[widgetId];
     if (isEmptyWidgetOverride(override)) continue;
@@ -451,11 +442,7 @@ function toFooterConfigObject(
   }
 
   const out: Record<string, unknown> = {
-    refreshMs: clampInt(
-      config.refreshMs,
-      MIN_FOOTER_REFRESH_MS,
-      MAX_FOOTER_REFRESH_MS,
-    ),
+    refreshMs: clampInt(config.refreshMs, MIN_FOOTER_REFRESH_MS, MAX_FOOTER_REFRESH_MS),
     iconFamily: config.iconFamily,
     gaugeStyle: config.gaugeStyle,
     gaugeWidth: clampInt(config.gaugeWidth, MIN_GAUGE_WIDTH, MAX_GAUGE_WIDTH),
@@ -472,15 +459,11 @@ function toFooterConfigObject(
   }
 
   if (
-    config.providerStatus.refreshMs !==
-      DEFAULT_PROVIDER_STATUS_CONFIG.refreshMs ||
-    config.providerStatus.cacheTtlMs !==
-      DEFAULT_PROVIDER_STATUS_CONFIG.cacheTtlMs ||
+    config.providerStatus.refreshMs !== DEFAULT_PROVIDER_STATUS_CONFIG.refreshMs ||
+    config.providerStatus.cacheTtlMs !== DEFAULT_PROVIDER_STATUS_CONFIG.cacheTtlMs ||
     config.providerStatus.display !== DEFAULT_PROVIDER_STATUS_CONFIG.display ||
-    config.providerStatus.showCredits !==
-      DEFAULT_PROVIDER_STATUS_CONFIG.showCredits ||
-    config.providerStatus.showReset !==
-      DEFAULT_PROVIDER_STATUS_CONFIG.showReset ||
+    config.providerStatus.showCredits !== DEFAULT_PROVIDER_STATUS_CONFIG.showCredits ||
+    config.providerStatus.showReset !== DEFAULT_PROVIDER_STATUS_CONFIG.showReset ||
     config.providerStatus.resetMinUsedPercent !==
       DEFAULT_PROVIDER_STATUS_CONFIG.resetMinUsedPercent ||
     config.providerStatus.providers.join(",") !==
@@ -498,9 +481,7 @@ function toFooterConfigObject(
 }
 
 export function writeFooterConfigSnapshot(config: FooterConfigSnapshot): void {
-  writeFooterConfigFile(
-    `${JSON.stringify(toFooterConfigObject(config), null, 2)}\n`,
-  );
+  writeFooterConfigFile(`${JSON.stringify(toFooterConfigObject(config), null, 2)}\n`);
 }
 
 export function getWidgetOverride(
@@ -581,10 +562,7 @@ function applyWidgetField(
   fieldId: string,
   newValue: string,
 ): void {
-  if (
-    widget.builtInId === "provider-status" &&
-    fieldId === "resetMinUsedPercent"
-  ) {
+  if (widget.builtInId === "provider-status" && fieldId === "resetMinUsedPercent") {
     config.providerStatus.resetMinUsedPercent = Number(newValue);
     return;
   }
@@ -629,10 +607,7 @@ function optionValues(
 ): string[] {
   const values = new Set(base.map((value) => String(value)));
   if (currentValue !== undefined) values.add(String(currentValue));
-  return [
-    "default",
-    ...Array.from(values).sort((a, b) => Number(a) - Number(b)),
-  ];
+  return ["default", ...Array.from(values).sort((a, b) => Number(a) - Number(b))];
 }
 
 // Settings values for colors and gauge styles carry a preview prefix
@@ -707,9 +682,7 @@ function widgetSettingsItems(
       id: "minWidth",
       label: "min width",
       currentValue:
-        override?.minWidth !== undefined
-          ? String(override.minWidth)
-          : "default",
+        override?.minWidth !== undefined ? String(override.minWidth) : "default",
       values: optionValues(FOOTER_MIN_WIDTH_OPTIONS, override?.minWidth),
       description: "Reserve at least this much width for the widget.",
     },
@@ -746,10 +719,7 @@ export function widgetSettingsSubmenu(
     const container = new Container();
     container.addChild(
       new Text(
-        theme.fg(
-          "accent",
-          theme.bold(`Widget: ${widgetLabel(draft, widget, theme)}`),
-        ),
+        theme.fg("accent", theme.bold(`Widget: ${widgetLabel(draft, widget, theme)}`)),
         1,
         0,
       ),
@@ -777,11 +747,7 @@ export function widgetSettingsSubmenu(
 
     container.addChild(settings);
     container.addChild(
-      new Text(
-        theme.fg("dim", "↑↓ navigate • enter/space change • esc back"),
-        1,
-        0,
-      ),
+      new Text(theme.fg("dim", "↑↓ navigate • enter/space change • esc back"), 1, 0),
     );
 
     return {
@@ -831,8 +797,7 @@ export function genericFooterSettingsItems(
       label: "gauge style",
       currentValue: gaugeStyleSettingValue(getGaugeStyle(draft.gaugeStyle)),
       values: GAUGE_STYLES.map((style) => gaugeStyleSettingValue(style)),
-      description:
-        "Choose the glyphs used by the context and provider status gauges.",
+      description: "Choose the glyphs used by the context and provider status gauges.",
     },
     {
       id: "gaugeWidth",
@@ -846,9 +811,7 @@ export function genericFooterSettingsItems(
       id: "gaugeColorOk",
       label: "gauge color (healthy)",
       currentValue: colorSettingValue(theme, draft.gaugeColors.ok),
-      values: FOOTER_WIDGET_COLORS.map((color) =>
-        colorSettingValue(theme, color),
-      ),
+      values: FOOTER_WIDGET_COLORS.map((color) => colorSettingValue(theme, color)),
       description:
         "Choose the fill color for healthy gauges. Defaults to the theme accent so gauges only stand out when running low.",
     },
@@ -856,27 +819,21 @@ export function genericFooterSettingsItems(
       id: "gaugeColorWarning",
       label: "gauge color (warning)",
       currentValue: colorSettingValue(theme, draft.gaugeColors.warning),
-      values: FOOTER_WIDGET_COLORS.map((color) =>
-        colorSettingValue(theme, color),
-      ),
+      values: FOOTER_WIDGET_COLORS.map((color) => colorSettingValue(theme, color)),
       description: "Choose the fill color for gauges above 40% used.",
     },
     {
       id: "gaugeColorError",
       label: "gauge color (critical)",
       currentValue: colorSettingValue(theme, draft.gaugeColors.error),
-      values: FOOTER_WIDGET_COLORS.map((color) =>
-        colorSettingValue(theme, color),
-      ),
+      values: FOOTER_WIDGET_COLORS.map((color) => colorSettingValue(theme, color)),
       description: "Choose the fill color for gauges above 75% used.",
     },
     {
       id: "defaultTextColor",
       label: "default text color",
       currentValue: colorSettingValue(theme, draft.defaultTextColor),
-      values: FOOTER_WIDGET_COLORS.map((color) =>
-        colorSettingValue(theme, color),
-      ),
+      values: FOOTER_WIDGET_COLORS.map((color) => colorSettingValue(theme, color)),
       description:
         "Choose the default text color for widgets. You can still change individual widgets.",
     },
@@ -884,9 +841,7 @@ export function genericFooterSettingsItems(
       id: "defaultIconColor",
       label: "default icon color",
       currentValue: colorSettingValue(theme, draft.defaultIconColor),
-      values: FOOTER_WIDGET_COLORS.map((color) =>
-        colorSettingValue(theme, color),
-      ),
+      values: FOOTER_WIDGET_COLORS.map((color) => colorSettingValue(theme, color)),
       description:
         "Choose the default icon color for widgets. You can still change individual widgets.",
     },

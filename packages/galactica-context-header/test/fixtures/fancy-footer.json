@@ -1,0 +1,58 @@
+{
+  "widgets": {
+    "provider-status": {
+      "row": 0,
+      "position": 2,
+      "align": "right",
+      "icon": "hide"
+    },
+    "total-cost": {
+      "enabled": false
+    }
+  },
+  "extensionWidgets": {
+    "galactica.agent-environment": {
+      "row": 0,
+      "position": 0,
+      "align": "right"
+    },
+    "galactica.reasoning-effort": {
+      "row": 0,
+      "position": 1,
+      "align": "right"
+    },
+    "galactica.openspec-progress": {
+      "enabled": false
+    },
+    "galactica.work": {
+      "enabled": false
+    },
+    "galactica.goal": {
+      "enabled": false
+    },
+    "galactica.project-capabilities": {
+      "enabled": false
+    },
+    "galactica.runtime-scope-separator": {
+      "enabled": false
+    },
+    "galactica.runtime-state": {
+      "enabled": false
+    },
+    "galactica.session-memory": {
+      "enabled": false
+    },
+    "galactica.session-cpu": {
+      "enabled": false
+    },
+    "galactica.resource-separator": {
+      "enabled": false
+    },
+    "galactica.context-usage": {
+      "enabled": false
+    },
+    "galactica.compaction-count": {
+      "enabled": false
+    }
+  }
+}

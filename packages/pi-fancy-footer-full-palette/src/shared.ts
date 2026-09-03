@@ -3,12 +3,7 @@ import type { ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
 
 export type ThinkingLevel = ModelThinkingLevel;
 
-export const FOOTER_ICON_FAMILIES = [
-  "nerd",
-  "emoji",
-  "unicode",
-  "ascii",
-] as const;
+export const FOOTER_ICON_FAMILIES = ["nerd", "emoji", "unicode", "ascii"] as const;
 
 export type FooterIconFamily = (typeof FOOTER_ICON_FAMILIES)[number];
 
@@ -126,8 +121,7 @@ export const DEFAULT_GAUGE_STYLE: GaugeStyleId = "blocks";
 
 export function isGaugeStyleId(value: unknown): value is GaugeStyleId {
   return (
-    typeof value === "string" &&
-    (GAUGE_STYLE_IDS as readonly string[]).includes(value)
+    typeof value === "string" && (GAUGE_STYLE_IDS as readonly string[]).includes(value)
   );
 }
 
@@ -178,9 +172,7 @@ export function displayedGaugePercent(value: number): number {
 
 export function formatGaugePercent(value: number): string {
   const displayed = displayedGaugePercent(value);
-  return Number.isInteger(displayed)
-    ? `${displayed}%`
-    : `${displayed.toFixed(1)}%`;
+  return Number.isInteger(displayed) ? `${displayed}%` : `${displayed.toFixed(1)}%`;
 }
 
 // Compact token counts with SI-style units: 246, 1.2k, 246k, 1M, 1.2M, 12M.
@@ -253,7 +245,6 @@ export interface GitCounts {
   behind: number;
 }
 
-
 export interface ProviderStatusWindow {
   label: string;
   leftPercent: number;
@@ -290,6 +281,7 @@ export interface ProviderStatusSnapshot {
 }
 
 export interface GitInfo {
+  repository?: string;
   branch: string;
   commit: string;
   added: number;
@@ -390,9 +382,7 @@ export type FooterWidgetId = string;
 export const FOOTER_REFRESH_OPTIONS = [
   250, 500, 1000, 2000, 3000, 5000, 10000,
 ] as const;
-export const FOOTER_ROW_OPTIONS = [
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-] as const;
+export const FOOTER_ROW_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 export const FOOTER_POSITION_OPTIONS = [
   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
 ] as const;
@@ -511,13 +501,9 @@ export interface FooterConfigSnapshot {
   extensionWidgets: Record<string, FooterWidgetConfigOverride>;
 }
 
-export const PROVIDER_STATUS_PROVIDER_IDS = [
-  "openai-codex",
-  "anthropic",
-] as const;
+export const PROVIDER_STATUS_PROVIDER_IDS = ["openai-codex", "anthropic"] as const;
 
-export type ProviderStatusProviderId =
-  (typeof PROVIDER_STATUS_PROVIDER_IDS)[number];
+export type ProviderStatusProviderId = (typeof PROVIDER_STATUS_PROVIDER_IDS)[number];
 
 export const PROVIDER_STATUS_DISPLAYS = ["gauge", "text", "percent"] as const;
 
@@ -525,8 +511,7 @@ export type ProviderStatusDisplay = (typeof PROVIDER_STATUS_DISPLAYS)[number];
 
 export const PROVIDER_STATUS_RESET_MODES = ["off", "primary", "all"] as const;
 
-export type ProviderStatusResetMode =
-  (typeof PROVIDER_STATUS_RESET_MODES)[number];
+export type ProviderStatusResetMode = (typeof PROVIDER_STATUS_RESET_MODES)[number];
 
 export interface ProviderStatusConfigSnapshot {
   refreshMs: number;
@@ -581,10 +566,7 @@ export interface FooterWidgetMeta {
   hasFooterIcon?: boolean;
 }
 
-export const FOOTER_WIDGET_META: Record<
-  BuiltInFooterWidgetId,
-  FooterWidgetMeta
-> = {
+export const FOOTER_WIDGET_META: Record<BuiltInFooterWidgetId, FooterWidgetMeta> = {
   provider: {
     shortLabel: "provider",
     defaults: {
@@ -712,9 +694,7 @@ export function clampInt(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, Math.floor(value)));
 }
 
-export function isFooterWidgetColor(
-  value: unknown,
-): value is FooterWidgetColor {
+export function isFooterWidgetColor(value: unknown): value is FooterWidgetColor {
   return (
     typeof value === "string" &&
     (FOOTER_WIDGET_COLORS as readonly string[]).includes(value)
@@ -728,15 +708,11 @@ export function isFooterIconFamily(value: unknown): value is FooterIconFamily {
   );
 }
 
-export function getStatuslineSymbols(
-  iconFamily: FooterIconFamily,
-): StatuslineSymbols {
+export function getStatuslineSymbols(iconFamily: FooterIconFamily): StatuslineSymbols {
   return STATUSLINE_SYMBOLS[iconFamily];
 }
 
-export function isFooterWidgetAlign(
-  value: unknown,
-): value is FooterWidgetAlign {
+export function isFooterWidgetAlign(value: unknown): value is FooterWidgetAlign {
   return value === "left" || value === "middle" || value === "right";
 }
 
@@ -744,9 +720,7 @@ export function isFooterWidgetFill(value: unknown): value is FooterWidgetFill {
   return value === "none" || value === "grow";
 }
 
-export function isFooterWidgetId(
-  value: string,
-): value is BuiltInFooterWidgetId {
+export function isFooterWidgetId(value: string): value is BuiltInFooterWidgetId {
   return (FOOTER_WIDGET_IDS as readonly string[]).includes(value);
 }
 
@@ -866,9 +840,7 @@ export function getWidgetSettingIcon(
   widgetId: BuiltInFooterWidgetId,
   iconFamily: FooterIconFamily,
 ): string {
-  return getStatuslineSymbols(iconFamily)[
-    FOOTER_WIDGET_META[widgetId].symbolKey
-  ];
+  return getStatuslineSymbols(iconFamily)[FOOTER_WIDGET_META[widgetId].symbolKey];
 }
 
 export function getDefaultWidgetIcon(
@@ -896,15 +868,11 @@ export function widgetSummary(
   const parts: string[] = [];
 
   if (override.enabled === true) parts.push("on");
-  if (override.enabled === false && (defaults.enabled ?? true))
-    parts.push("off");
+  if (override.enabled === false && (defaults.enabled ?? true)) parts.push("off");
 
   if (override.row !== undefined && override.row !== defaults.row)
     parts.push(`row:${override.row}`);
-  if (
-    override.position !== undefined &&
-    override.position !== defaults.position
-  )
+  if (override.position !== undefined && override.position !== defaults.position)
     parts.push(`pos:${override.position}`);
   if (override.align !== undefined && override.align !== defaults.align)
     parts.push(`align:${override.align}`);

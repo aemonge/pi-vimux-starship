@@ -282,7 +282,7 @@ test('keeps local metrics blue until critical context turns them yellow', () => 
 
 test('config keeps one footer row and moves compact telemetry to prompt rails', () => {
   const config = JSON.parse(
-    readFileSync(new URL('../../../fancy-footer.json', import.meta.url), 'utf8'),
+    readFileSync(new URL('./fixtures/fancy-footer.json', import.meta.url), 'utf8'),
   ) as {
     widgets: Record<
       string,
