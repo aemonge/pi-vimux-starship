@@ -262,6 +262,7 @@ test('builds a bounded diagnostics event for the prompt header', () => {
     backgroundActivity: false,
     approvalRequired: false,
     blocked: false,
+    counters: { agents: { active: 0, total: 0 } },
     progress: [],
   });
   assert.deepEqual(buildHeaderStatusEvent?.([]), {
@@ -272,6 +273,7 @@ test('builds a bounded diagnostics event for the prompt header', () => {
     backgroundActivity: false,
     approvalRequired: false,
     blocked: false,
+    counters: { agents: { active: 0, total: 0 } },
     progress: [],
   });
 });
@@ -456,6 +458,10 @@ test('header event keeps lifecycle and every available narrative title off telem
   assert.deepEqual(event.progress, [
     { icon: '󰘬', completed: 20, total: 22, color: 'accent' },
   ]);
+  assert.deepEqual(event.counters, {
+    agents: { active: 0, total: 0 },
+    steps: { completed: 20, total: 22 },
+  });
 });
 
 test('header normalizes real Taskflow activity without exposing raw node text', () => {
@@ -465,6 +471,9 @@ test('header normalizes real Taskflow activity without exposing raw node text', 
       phase: 'checking',
       state: 'running',
       activeWorkers: 1,
+      totalWorkers: 3,
+      completedFiles: 37,
+      totalFiles: 53,
       currentTask: 'Verify persistent chrome',
       meta: {
         source: 'taskflow',
@@ -481,6 +490,10 @@ test('header normalizes real Taskflow activity without exposing raw node text', 
     titles: ['Taskflow run'],
     color: 'accent',
     activity: { kind: 'regression' },
+  });
+  assert.deepEqual(event.counters, {
+    agents: { active: 1, total: 3 },
+    files: { completed: 37, total: 53 },
   });
   assert.doesNotMatch(JSON.stringify(event.work), /Verify persistent chrome/u);
 });

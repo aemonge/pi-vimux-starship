@@ -99,6 +99,9 @@ export interface OrchestrationState {
   phase?: string;
   state: WorkflowState;
   activeWorkers: number;
+  totalWorkers?: number;
+  completedFiles?: number;
+  totalFiles?: number;
   currentTask?: string;
   openspecTaskId?: string;
   startedAt?: number;

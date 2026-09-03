@@ -9,6 +9,7 @@ import type {
 export const FANCY_FOOTER_PROTOCOL_VERSION = 1 as const;
 export const FANCY_FOOTER_WIDGET_CHANNEL = "pi-fancy-footer:widget";
 export const FANCY_FOOTER_READY_CHANNEL = "pi-fancy-footer:ready";
+export const FANCY_FOOTER_TELEMETRY_CHANNEL = "pi-vimux-starship:footer-telemetry/v1";
 
 export interface FancyFooterTextContent {
   type: "text";
@@ -68,6 +69,13 @@ export interface FancyFooterReadyMessage {
   version: string;
 }
 
+export interface FancyFooterTelemetryMessage {
+  protocol: typeof FANCY_FOOTER_PROTOCOL_VERSION;
+  type: "snapshot";
+  totalCost: number;
+  quotaPercent?: number;
+}
+
 export interface FancyFooterClient {
   upsert(widget: FancyFooterDataWidget): void;
   remove(id: string): void;
@@ -76,6 +84,30 @@ export interface FancyFooterClient {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function parseFancyFooterTelemetry(
+  value: unknown,
+): FancyFooterTelemetryMessage | null {
+  if (!isRecord(value) || value.protocol !== FANCY_FOOTER_PROTOCOL_VERSION) {
+    return null;
+  }
+  if (value.type !== "snapshot") return null;
+  const totalCost = Number(value.totalCost);
+  if (!Number.isFinite(totalCost) || totalCost < 0) return null;
+  if (value.quotaPercent === undefined) {
+    return { protocol: FANCY_FOOTER_PROTOCOL_VERSION, type: "snapshot", totalCost };
+  }
+  const quotaPercent = Number(value.quotaPercent);
+  if (!Number.isFinite(quotaPercent) || quotaPercent < 0 || quotaPercent > 100) {
+    return null;
+  }
+  return {
+    protocol: FANCY_FOOTER_PROTOCOL_VERSION,
+    type: "snapshot",
+    totalCost,
+    quotaPercent,
+  };
 }
 
 /** Create a typed client over the same import-free event-bus protocol. */

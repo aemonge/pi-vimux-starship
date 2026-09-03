@@ -25,8 +25,10 @@ import { collectGitInfo } from "./git.ts";
 import {
   FANCY_FOOTER_PROTOCOL_VERSION,
   FANCY_FOOTER_READY_CHANNEL,
+  FANCY_FOOTER_TELEMETRY_CHANNEL,
   FANCY_FOOTER_WIDGET_CHANNEL,
   type FancyFooterReadyMessage,
+  type FancyFooterTelemetryMessage,
 } from "./api.ts";
 import {
   createMicrotaskCoalescer,
@@ -37,6 +39,8 @@ import { openFooterConfigEditor } from "./config-editor.ts";
 import { collectSessionUsageMetrics, renderFooterLines } from "./render.ts";
 import {
   collectProviderStatus,
+  isProviderStatusRelevantToModel,
+  projectProviderStatusForModel,
   updateProviderStatusFromHeaders,
 } from "./provider-status.ts";
 
@@ -51,7 +55,14 @@ const PACKAGE_VERSION = (
   createRequire(import.meta.url)("../package.json") as { version: string }
 ).version;
 
-export default function (pi: ExtensionAPI) {
+export type FancyFooterSurface = "footer" | "telemetry";
+
+export interface FancyFooterOptions {
+  surface?: FancyFooterSurface;
+}
+
+export default function (pi: ExtensionAPI, options: FancyFooterOptions = {}) {
+  const telemetryOnly = options.surface === "telemetry";
   let footerConfig: FooterConfigSnapshot = {
     refreshMs: DEFAULT_FOOTER_CONFIG.refreshMs,
     iconFamily: DEFAULT_FOOTER_CONFIG.iconFamily,
@@ -69,6 +80,10 @@ export default function (pi: ExtensionAPI) {
 
   let activeFooterControls: ActiveFooterControls | undefined;
   let footerInstanceId = 0;
+  let telemetryContext: ExtensionContext | undefined;
+  let telemetryProviderStatuses = new Map<string, ProviderStatusSnapshot>();
+  let telemetryRefreshTimer: ReturnType<typeof setTimeout> | undefined;
+  let telemetryGeneration = 0;
 
   const invalidateActiveFooter = () => {
     footerInstanceId += 1;
@@ -88,6 +103,74 @@ export default function (pi: ExtensionAPI) {
       version: PACKAGE_VERSION,
     };
     pi.events.emit(FANCY_FOOTER_READY_CHANNEL, message);
+  };
+
+  const telemetryQuotaPercent = (): number | undefined => {
+    const model = telemetryContext?.model;
+    const percentages: number[] = [];
+    for (const snapshot of telemetryProviderStatuses.values()) {
+      if (!isProviderStatusRelevantToModel(snapshot.provider, model)) continue;
+      const projected = projectProviderStatusForModel(snapshot, model);
+      for (const window of [projected.primary, projected.secondary]) {
+        if (!window || window.usageUnknown) continue;
+        percentages.push(window.usedPercent);
+      }
+    }
+    return percentages.length > 0 ? Math.max(...percentages) : undefined;
+  };
+
+  const publishTelemetry = () => {
+    if (!telemetryContext) return;
+    const totalCost = collectSessionUsageMetrics(telemetryContext).totalCost;
+    const quotaPercent = telemetryQuotaPercent();
+    const message: FancyFooterTelemetryMessage = {
+      protocol: FANCY_FOOTER_PROTOCOL_VERSION,
+      type: "snapshot",
+      totalCost,
+      ...(quotaPercent === undefined ? {} : { quotaPercent }),
+    };
+    pi.events.emit(FANCY_FOOTER_TELEMETRY_CHANNEL, message);
+  };
+
+  const stopTelemetryProvider = () => {
+    telemetryGeneration += 1;
+    telemetryContext = undefined;
+    telemetryProviderStatuses.clear();
+    if (telemetryRefreshTimer) clearTimeout(telemetryRefreshTimer);
+    telemetryRefreshTimer = undefined;
+  };
+
+  const installTelemetryProvider = (ctx: ExtensionContext) => {
+    stopTelemetryProvider();
+    telemetryContext = ctx;
+    footerConfig = loadFooterConfig();
+    const generation = telemetryGeneration;
+
+    const refresh = async () => {
+      if (!telemetryContext || generation !== telemetryGeneration) return;
+      const next = await collectProviderStatus(pi, footerConfig.providerStatus);
+      if (!telemetryContext || generation !== telemetryGeneration) return;
+      telemetryProviderStatuses = new Map(
+        next.map((snapshot) => [snapshot.provider, snapshot]),
+      );
+      publishTelemetry();
+    };
+    const schedule = () => {
+      if (!telemetryContext || generation !== telemetryGeneration) return;
+      if (telemetryRefreshTimer) clearTimeout(telemetryRefreshTimer);
+      const refreshMs = clampInt(
+        footerConfig.providerStatus.refreshMs,
+        MIN_PROVIDER_STATUS_REFRESH_MS,
+        MAX_PROVIDER_STATUS_REFRESH_MS,
+      );
+      telemetryRefreshTimer = setTimeout(() => {
+        void refresh().finally(schedule);
+      }, refreshMs);
+    };
+
+    publishTelemetry();
+    void refresh();
+    schedule();
   };
 
   const stopDataWidgetListener = pi.events.on(FANCY_FOOTER_WIDGET_CHANNEL, (raw) => {
@@ -317,11 +400,14 @@ export default function (pi: ExtensionAPI) {
     );
     for (const snapshot of updated) {
       activeFooterControls?.updateProviderStatus(snapshot);
+      if (telemetryOnly) telemetryProviderStatuses.set(snapshot.provider, snapshot);
     }
+    if (telemetryOnly && updated.length > 0) publishTelemetry();
   });
 
   pi.on("model_select", () => {
     activeFooterControls?.requestRender();
+    if (telemetryOnly) publishTelemetry();
   });
 
   pi.on("thinking_level_select", () => {
@@ -330,17 +416,24 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_compact", () => {
     activeFooterControls?.requestRender();
+    if (telemetryOnly) publishTelemetry();
+  });
+
+  pi.on("message_end", () => {
+    if (telemetryOnly) publishTelemetry();
   });
 
   pi.on("session_shutdown", async () => {
     stopDataWidgetListener();
+    stopTelemetryProvider();
     invalidateActiveFooter();
     if (dataWidgets.clear()) extensionWidgets = [];
   });
 
   pi.on("session_start", async (_event, ctx) => {
     if (dataWidgets.clear()) extensionWidgets = [];
-    installFooter(ctx);
+    if (telemetryOnly) installTelemetryProvider(ctx);
+    else installFooter(ctx);
     publishReady();
   });
 

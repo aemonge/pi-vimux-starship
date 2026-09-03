@@ -1,10 +1,14 @@
 export const MCP_STATUS_EVENT = 'pi-mcp-adapter/status/v1';
+export const LSP_STATUS_EVENT = 'pi-lsp-adapter/status/v1';
 export const CAPABILITY_WIDGET_ID = 'galactica.project-capabilities';
 
-export type McpCapability = {
+export type CapabilityCount = {
   healthy: number;
   total: number;
 };
+
+export type McpCapability = CapabilityCount;
+export type LspCapability = CapabilityCount;
 
 const MCP_SERVER_STATUSES = new Set([
   'connected',
@@ -20,6 +24,18 @@ function boundedCount(value: unknown): number | undefined {
     return undefined;
   }
   return Number(value);
+}
+
+export function parseLspCapability(value: unknown): LspCapability | null {
+  if (!value || typeof value !== 'object') return null;
+  const snapshot = value as Record<string, unknown>;
+  const healthy = boundedCount(snapshot.healthy);
+  const total = boundedCount(snapshot.total);
+  if (snapshot.version !== 1 || healthy === undefined || total === undefined) {
+    return null;
+  }
+  if (healthy > total) return null;
+  return { healthy, total };
 }
 
 export function parseMcpCapability(value: unknown): McpCapability | null {
@@ -54,8 +70,8 @@ export function parseMcpCapability(value: unknown): McpCapability | null {
   return total > 0 ? { healthy, total } : null;
 }
 
-export function capabilityText(mcp: McpCapability | null): string {
-  return mcp ? `${mcp.healthy}/${mcp.total}` : '0/0';
+export function capabilityText(capability: CapabilityCount | null): string {
+  return capability ? `${capability.healthy}/${capability.total}` : '—';
 }
 
 export function buildCapabilityFooterWidget(mcp: McpCapability | null) {

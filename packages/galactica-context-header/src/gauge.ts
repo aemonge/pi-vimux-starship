@@ -19,6 +19,8 @@ export const COMPACTION_WIDGET_ID = 'galactica.compaction-count';
 export const RESOURCE_SEPARATOR_WIDGET_ID = 'galactica.resource-separator';
 export const SCOPE_SEPARATOR_WIDGET_ID = 'galactica.scope-separator';
 export const PROMPT_STATUS_CHANNEL = 'galactica-status:prompt-row';
+export const FOOTER_TELEMETRY_CHANNEL = 'pi-vimux-starship:footer-telemetry/v1';
+export const VIM_MODE_CHANNEL = 'pi-vim:mode-change';
 
 const HEADER_COLORS = [
   'text',
@@ -88,6 +90,11 @@ export type HeaderSnapshot = {
   backgroundActivity: boolean;
   approvalRequired: boolean;
   blocked: boolean;
+  counters: {
+    agents: { active: number; total: number };
+    steps?: { completed: number; total: number };
+    files?: { completed: number; total: number };
+  };
   progress: Array<{
     icon: string;
     completed: number;
@@ -95,6 +102,13 @@ export type HeaderSnapshot = {
     color: HeaderColor;
   }>;
 };
+
+export type FooterTelemetrySnapshot = {
+  totalCost: number;
+  quotaPercent?: number;
+};
+
+export type VimMode = 'insert' | 'normal' | 'visual' | 'visual-line' | 'ex';
 
 export type PromptStatusSnapshot = {
   protocol: 1;
@@ -666,6 +680,58 @@ export function parseHeaderActivityPath(
   return path;
 }
 
+function boundedCounterPair(
+  value: unknown,
+  completedKey: string,
+): { completed: number; total: number } | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const record = value as Record<string, unknown>;
+  const completed = record[completedKey];
+  const total = record.total;
+  if (
+    !Number.isInteger(completed) ||
+    !Number.isInteger(total) ||
+    Number(completed) < 0 ||
+    Number(total) < 0 ||
+    Number(completed) > Number(total) ||
+    Number(total) > 999_999
+  ) {
+    return undefined;
+  }
+  return { completed: Number(completed), total: Number(total) };
+}
+
+export function parseFooterTelemetry(raw: unknown): FooterTelemetrySnapshot | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const message = raw as Record<string, unknown>;
+  if (message.protocol !== 1 || message.type !== 'snapshot') return null;
+  if (
+    typeof message.totalCost !== 'number' ||
+    !Number.isFinite(message.totalCost) ||
+    message.totalCost < 0
+  ) {
+    return null;
+  }
+  if (message.quotaPercent === undefined) return { totalCost: message.totalCost };
+  if (
+    typeof message.quotaPercent !== 'number' ||
+    !Number.isFinite(message.quotaPercent) ||
+    message.quotaPercent < 0 ||
+    message.quotaPercent > 100
+  ) {
+    return null;
+  }
+  return { totalCost: message.totalCost, quotaPercent: message.quotaPercent };
+}
+
+export function parseVimMode(raw: unknown): VimMode | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const mode = (raw as Record<string, unknown>).mode;
+  return ['insert', 'normal', 'visual', 'visual-line', 'ex'].includes(String(mode))
+    ? (mode as VimMode)
+    : null;
+}
+
 export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const message = raw as Record<string, unknown>;
@@ -738,6 +804,14 @@ export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
     }
   }
 
+  const rawCounters =
+    message.counters && typeof message.counters === 'object'
+      ? (message.counters as Record<string, unknown>)
+      : {};
+  const agents = boundedCounterPair(rawCounters.agents, 'active');
+  const steps = boundedCounterPair(rawCounters.steps, 'completed');
+  const files = boundedCounterPair(rawCounters.files, 'completed');
+
   const progress = Array.isArray(message.progress)
     ? message.progress.flatMap((rawProgress) => {
         if (
@@ -774,6 +848,13 @@ export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
     backgroundActivity: message.backgroundActivity === true,
     approvalRequired: message.approvalRequired === true,
     blocked: message.blocked === true,
+    counters: {
+      agents: agents
+        ? { active: agents.completed, total: agents.total }
+        : { active: 0, total: 0 },
+      ...(steps ? { steps } : {}),
+      ...(files ? { files } : {}),
+    },
     progress,
   };
 }

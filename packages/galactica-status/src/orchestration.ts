@@ -62,17 +62,21 @@ function normalizeWorkflowState(value: unknown): WorkflowState {
   }
 }
 
+function workerList(value: Record<string, unknown>): unknown[] {
+  return Array.isArray(value.workers)
+    ? value.workers
+    : Array.isArray(value.agents)
+      ? value.agents
+      : [];
+}
+
 function activeWorkerCount(value: Record<string, unknown>): number {
   const explicit = number(
     value.activeWorkers ?? value.workerCount ?? value.activeAgents ?? value.agentCount,
   );
   if (explicit !== undefined) return Math.max(0, Math.trunc(explicit));
 
-  const workers = Array.isArray(value.workers)
-    ? value.workers
-    : Array.isArray(value.agents)
-      ? value.agents
-      : [];
+  const workers = workerList(value);
   return workers.filter((worker) => {
     if (!isRecord(worker)) return false;
     return ['running', 'active', 'working', 'in-progress'].includes(
@@ -120,6 +124,29 @@ export function parseOrchestrationState(
     now;
   const staleAfterMs = 600_000;
   const activeWorkers = activeWorkerCount(value);
+  const explicitTotalWorkers = number(
+    value.totalWorkers ?? value.totalWorkerCount ?? value.totalAgents,
+  );
+  const totalWorkers = Math.max(
+    activeWorkers,
+    Math.trunc(explicitTotalWorkers ?? workerList(value).length),
+  );
+  const progress = isRecord(value.progress) ? value.progress : {};
+  const fileProgress = isRecord(value.files)
+    ? value.files
+    : isRecord(progress.files)
+      ? progress.files
+      : {};
+  const rawCompletedFiles = number(
+    value.completedFiles ?? value.processedFiles ?? fileProgress.completed,
+  );
+  const rawTotalFiles = number(value.totalFiles ?? fileProgress.total);
+  const totalFiles =
+    rawTotalFiles === undefined ? undefined : Math.max(0, Math.trunc(rawTotalFiles));
+  const completedFiles =
+    rawCompletedFiles === undefined || totalFiles === undefined
+      ? undefined
+      : Math.max(0, Math.min(totalFiles, Math.trunc(rawCompletedFiles)));
 
   if (
     state === 'unknown' &&
@@ -135,6 +162,9 @@ export function parseOrchestrationState(
     ...(phase ? { phase } : {}),
     state,
     activeWorkers,
+    totalWorkers,
+    ...(completedFiles === undefined ? {} : { completedFiles }),
+    ...(totalFiles === undefined ? {} : { totalFiles }),
     ...(currentTask ? { currentTask } : {}),
     ...(openspecTaskId ? { openspecTaskId } : {}),
     ...(startedAt ? { startedAt } : {}),

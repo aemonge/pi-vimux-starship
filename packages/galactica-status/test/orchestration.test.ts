@@ -8,6 +8,7 @@ test('parses running orchestration state and active workers', () => {
       status: 'running',
       phase: 'reviewer',
       workers: [{ status: 'running' }, { status: 'working' }, { status: 'complete' }],
+      files: { completed: 37, total: 53 },
       currentTask: 'Review publisher',
       openspec: { taskId: '3.8' },
       startedAt: 1_000,
@@ -19,6 +20,9 @@ test('parses running orchestration state and active workers', () => {
   assert.equal(state.state, 'running');
   assert.equal(state.phase, 'reviewer');
   assert.equal(state.activeWorkers, 2);
+  assert.equal(state.totalWorkers, 3);
+  assert.equal(state.completedFiles, 37);
+  assert.equal(state.totalFiles, 53);
   assert.equal(state.openspecTaskId, '3.8');
   assert.equal(state.elapsedMs, 180_000);
 });

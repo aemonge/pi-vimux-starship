@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
-import { FANCY_FOOTER_WIDGET_CHANNEL } from "./api.ts";
+import {
+  FANCY_FOOTER_TELEMETRY_CHANNEL,
+  FANCY_FOOTER_WIDGET_CHANNEL,
+  parseFancyFooterTelemetry,
+} from "./api.ts";
 import fancyFooter from "./index.ts";
 
 test("model and thinking changes request an immediate render", async () => {
@@ -69,6 +76,74 @@ test("model and thinking changes request an immediate render", async () => {
   assert.equal(renderRequests, 2);
 
   footer.dispose();
+});
+
+test("telemetry mode publishes bounded cost without installing a footer", async (t) => {
+  const agentDir = await mkdtemp(join(tmpdir(), "pi-fancy-footer-telemetry-"));
+  const previousAgentDir = process.env.PI_CODING_AGENT_DIR;
+  process.env.PI_CODING_AGENT_DIR = agentDir;
+  t.after(async () => {
+    if (previousAgentDir === undefined) delete process.env.PI_CODING_AGENT_DIR;
+    else process.env.PI_CODING_AGENT_DIR = previousAgentDir;
+    await rm(agentDir, { recursive: true, force: true });
+  });
+
+  const handlers = new Map<string, (...args: never[]) => unknown>();
+  const emitted: Array<{ channel: string; message: unknown }> = [];
+  let setFooterCalls = 0;
+  const pi = {
+    events: {
+      emit(channel: string, message: unknown) {
+        emitted.push({ channel, message });
+      },
+      on() {
+        return () => {};
+      },
+    },
+    registerCommand() {},
+    on(event: string, handler: (...args: never[]) => unknown) {
+      handlers.set(event, handler);
+    },
+    getThinkingLevel() {
+      return "medium";
+    },
+    async exec() {
+      return { code: 1, stdout: "", stderr: "" };
+    },
+  };
+
+  fancyFooter(pi as never, { surface: "telemetry" });
+  await handlers.get("session_start")?.(
+    {} as never,
+    {
+      hasUI: true,
+      cwd: agentDir,
+      model: { id: "claude-fable-5" },
+      sessionManager: {
+        getBranch: () => [
+          {
+            type: "message",
+            message: { role: "assistant", usage: { cost: { total: 0.125 } } },
+          },
+        ],
+      },
+      ui: {
+        setFooter() {
+          setFooterCalls += 1;
+        },
+      },
+    } as never,
+  );
+
+  assert.equal(setFooterCalls, 0);
+  const telemetry = emitted
+    .filter(({ channel }) => channel === FANCY_FOOTER_TELEMETRY_CHANNEL)
+    .map(({ message }) => parseFancyFooterTelemetry(message))
+    .filter((message) => message !== null);
+  assert.ok(telemetry.length > 0);
+  assert.equal(telemetry[0]?.totalCost, 0.125);
+
+  await handlers.get("session_shutdown")?.();
 });
 
 test("compaction handling coexists with data widget listener cleanup", async () => {

@@ -518,6 +518,11 @@ export type HeaderStatusEvent = {
   backgroundActivity: boolean;
   approvalRequired: boolean;
   blocked: boolean;
+  counters: {
+    agents: { active: number; total: number };
+    steps?: { completed: number; total: number };
+    files?: { completed: number; total: number };
+  };
   progress: { icon: string; completed: number; total: number; color: WidgetColor }[];
 };
 
@@ -1046,6 +1051,31 @@ export function buildHeaderStatusEvent(
     approvalRequired:
       options.workFocus?.state === 'validation' || options.goal?.status === 'complete',
     blocked,
+    counters: {
+      agents: {
+        active: orchestration?.activeWorkers ?? 0,
+        total: orchestration
+          ? Math.max(orchestration.activeWorkers, orchestration.totalWorkers ?? 0)
+          : 0,
+      },
+      ...(options.openSpec
+        ? {
+            steps: {
+              completed: options.openSpec.completedTasks,
+              total: options.openSpec.totalTasks,
+            },
+          }
+        : {}),
+      ...(orchestration?.completedFiles === undefined ||
+      orchestration.totalFiles === undefined
+        ? {}
+        : {
+            files: {
+              completed: orchestration.completedFiles,
+              total: orchestration.totalFiles,
+            },
+          }),
+    },
     progress,
   };
 }

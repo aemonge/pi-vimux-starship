@@ -364,6 +364,51 @@ test('hides Pi working row and wires foreground activity-age lifecycle', () => {
   assert.doesNotMatch(extensionSource, /assistantMessageEvent|text_delta/u);
 });
 
+test('accepts only bounded Footer telemetry and Vim mode events', () => {
+  assert.deepEqual(
+    gaugeModule.parseFooterTelemetry({
+      protocol: 1,
+      type: 'snapshot',
+      totalCost: 5.16,
+      quotaPercent: 63,
+    }),
+    { totalCost: 5.16, quotaPercent: 63 },
+  );
+  assert.equal(
+    gaugeModule.parseFooterTelemetry({
+      protocol: 1,
+      type: 'snapshot',
+      totalCost: 1,
+      quotaPercent: 101,
+    }),
+    null,
+  );
+  assert.equal(gaugeModule.parseVimMode({ mode: 'normal' }), 'normal');
+  assert.equal(gaugeModule.parseVimMode({ mode: 'private-mode' }), null);
+});
+
+test('parses bounded work counters without accepting impossible progress', () => {
+  const parsed = gaugeModule.parseHeaderSnapshot({
+    protocol: 1,
+    counters: {
+      agents: { active: 2, total: 3 },
+      steps: { completed: 6, total: 16 },
+      files: { completed: 37, total: 53 },
+    },
+  });
+  assert.deepEqual(parsed?.counters, {
+    agents: { active: 2, total: 3 },
+    steps: { completed: 6, total: 16 },
+    files: { completed: 37, total: 53 },
+  });
+
+  const invalid = gaugeModule.parseHeaderSnapshot({
+    protocol: 1,
+    counters: { agents: { active: 4, total: 3 } },
+  });
+  assert.deepEqual(invalid?.counters, { agents: { active: 0, total: 0 } });
+});
+
 test('never derives title focus from conversation-shaped fields', () => {
   const untrusted = gaugeModule.parseHeaderSnapshot({
     protocol: 1,
@@ -615,6 +660,7 @@ test('keeps approval state in the narrative header instead of duplicating it on 
       backgroundActivity: false,
       approvalRequired: true,
       blocked: false,
+      counters: { agents: { active: 0, total: 0 } },
       progress: [],
     },
     'main',

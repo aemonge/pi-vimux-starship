@@ -5,6 +5,7 @@ import {
   buildCapabilityFooterWidget,
   CAPABILITY_WIDGET_ID,
   capabilityText,
+  parseLspCapability,
   parseMcpCapability,
 } from '../src/capabilities.ts';
 
@@ -36,9 +37,19 @@ test('normalizes MCP availability without treating lazy servers as failures', ()
   );
 });
 
+test('normalizes only bounded LSP availability counters', () => {
+  assert.deepEqual(parseLspCapability({ version: 1, healthy: 2, total: 3 }), {
+    healthy: 2,
+    total: 3,
+  });
+  assert.equal(parseLspCapability({ version: 1, healthy: 4, total: 3 }), null);
+  assert.equal(parseLspCapability({ version: 1, healthy: -1, total: 3 }), null);
+  assert.equal(parseLspCapability({ version: 2, healthy: 2, total: 3 }), null);
+});
+
 test('renders only MCP availability with a plug icon', () => {
   assert.equal(capabilityText({ healthy: 2, total: 3 }), '2/3');
-  assert.equal(capabilityText(null), '0/0');
+  assert.equal(capabilityText(null), '—');
 
   const message = buildCapabilityFooterWidget({ healthy: 2, total: 3 });
   assert.equal(message.type, 'upsert');
@@ -60,7 +71,7 @@ test('renders only MCP availability with a plug icon', () => {
 
   const empty = buildCapabilityFooterWidget(null);
   assert.equal(empty.type, 'upsert');
-  assert.equal(empty.widget.content.text, '0/0');
+  assert.equal(empty.widget.content.text, '—');
   assert.deepEqual(empty.widget.icon, {
     glyphs: { nerd: '', emoji: '🔌', unicode: '◇', ascii: 'MCP' },
     color: 'dim',

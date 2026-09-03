@@ -257,6 +257,7 @@ type ModalEditorOptions = {
   labelTransform?: ((s: string) => string) | null;
   getPromptRail?: () => PromptRailSnapshot;
   promptRailColorize?: PromptRailColorize;
+  promptRailsEnabled?: boolean;
 };
 
 export class ModalEditor extends CustomEditor {
@@ -314,6 +315,7 @@ export class ModalEditor extends CustomEditor {
   private lastCursorShapeSequence: CursorShapeSequence | null = null;
   private readonly getPromptRail: () => PromptRailSnapshot;
   private readonly promptRailColorize: PromptRailColorize;
+  private readonly promptRailsEnabled: boolean;
 
   private unnamedRegister: string = '';
   private preferRegisterForPut = false;
@@ -362,6 +364,7 @@ export class ModalEditor extends CustomEditor {
     this.getPromptRail =
       opts?.getPromptRail ?? (() => ({ widgets: new Map(), totalCost: 0 }));
     this.promptRailColorize = opts?.promptRailColorize ?? ((_color, text) => text);
+    this.promptRailsEnabled = opts?.promptRailsEnabled ?? true;
     this.installModeBorderColorizer();
   }
 
@@ -3972,6 +3975,7 @@ export class ModalEditor extends CustomEditor {
   render(width: number): string[] {
     const lines = super.render(width);
     this.syncCursorShapeForRender(lines);
+    if (!this.promptRailsEnabled) return lines;
     return renderPromptRails({
       lines,
       width,
@@ -3997,7 +4001,12 @@ export class ModalEditor extends CustomEditor {
   }
 }
 
-export default function (pi: ExtensionAPI) {
+export interface PiVimOptions {
+  surface?: 'rails' | 'editor-only';
+}
+
+export default function (pi: ExtensionAPI, options: PiVimOptions = {}) {
+  const editorOnly = options.surface === 'editor-only';
   let cursorShapeCleanup: CursorShapeCleanup | null = null;
   let promptExternalEditor: PromptExternalEditor | null = null;
   let requestPromptRender: (() => void) | null = null;
@@ -4056,6 +4065,7 @@ export default function (pi: ExtensionAPI) {
         offBorderColor,
         getPromptRail: () => promptRail.snapshot(),
         promptRailColorize: (color, text) => (t ? t.fg(color, text) : text),
+        promptRailsEnabled: !editorOnly,
       });
       editor.setClipboardMirrorPolicy(clipboardMirrorPolicy.policy);
       editor.setQuitFn(() => ctx.shutdown());
@@ -4069,6 +4079,10 @@ export default function (pi: ExtensionAPI) {
       });
       editor.setExternalEditorFn(() => promptExternalEditor?.open());
       editor.setModeChangeFn(modeChangeHandler);
+      if (editorOnly) {
+        const mode = editor.getMode();
+        pi.events.emit('pi-vim:mode-change', { mode, previousMode: mode });
+      }
       editor.setExCommandSettings(exCommand.settings);
       // Resolved at submit time so commands registered or reloaded mid-session
       // are dispatchable without restarting.

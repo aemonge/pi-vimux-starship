@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { COCKPIT_COMPOSITION } from '../src/index.ts';
 import {
   EXPECTED_EXTENSION_ENTRYPOINTS,
   inspectLocalPackage,
@@ -14,6 +15,15 @@ const EXPECTED_COMMANDS = [
   'work',
 ];
 const EXPECTED_TOOLS = ['openspec_focus', 'work_focus'];
+
+test('header deck composition selects one explicit mode per extension', () => {
+  assert.deepEqual(COCKPIT_COMPOSITION, [
+    'fancy-footer:telemetry',
+    'galactica-status:provider',
+    'galactica-context-header:deck',
+    'pi-vim:editor-only',
+  ]);
+});
 
 test('one package composes each imported extension exactly once in startup order', async () => {
   const result = await inspectLocalPackage();

@@ -69,7 +69,15 @@ const EMPTY_GIT: GitStatusSummary = {
   conflicts: 0,
 };
 
-export default function galacticaContextHeader(pi: ExtensionAPI): void {
+export interface ContextHeaderOptions {
+  surface?: 'legacy' | 'deck';
+}
+
+export default function galacticaContextHeader(
+  pi: ExtensionAPI,
+  options: ContextHeaderOptions = {},
+): void {
+  const deckMode = options.surface === 'deck';
   let clearWidget: (() => void) | undefined;
   let requestRender: (() => void) | undefined;
   let branch = '';
@@ -97,6 +105,7 @@ export default function galacticaContextHeader(pi: ExtensionAPI): void {
   const currentHeader = () => header;
 
   const publishPromptStatus = () => {
+    if (deckMode) return;
     pi.events.emit(
       PROMPT_STATUS_CHANNEL,
       buildPromptStatusSnapshot(currentHeader(), branch, gitStatus),
@@ -104,6 +113,7 @@ export default function galacticaContextHeader(pi: ExtensionAPI): void {
   };
 
   const publishFooter = () => {
+    if (deckMode) return;
     const ctx = activeCtx;
     if (!ctx) return;
     const usage = ctx.getContextUsage();
@@ -129,13 +139,14 @@ export default function galacticaContextHeader(pi: ExtensionAPI): void {
   };
 
   const publishLatestResourceFooter = () => {
-    if (!latestResourceTelemetry) return;
+    if (deckMode || !latestResourceTelemetry) return;
     for (const message of buildResourceFooterWidgets(latestResourceTelemetry)) {
       pi.events.emit(FANCY_FOOTER_WIDGET_CHANNEL, message);
     }
   };
 
   const publishCapabilityFooter = (force = false) => {
+    if (deckMode) return;
     const signature = [mcpCapability?.healthy ?? '', mcpCapability?.total ?? ''].join(
       ':',
     );
