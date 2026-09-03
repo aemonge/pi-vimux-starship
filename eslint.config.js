@@ -5,7 +5,7 @@ export default [
     ignores: ['node_modules/**', 'coverage/**', 'dist/**'],
   },
   {
-    files: ['packages/**/*.ts', 'scripts/**/*.ts', 'test/**/*.ts'],
+    files: ['packages/**/*.ts', 'scripts/**/*.ts', 'src/**/*.ts', 'test/**/*.ts'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {

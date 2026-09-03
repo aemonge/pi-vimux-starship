@@ -29,13 +29,13 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   behavior or push this Task beyond 90 minutes.
 - **Implementation confirmed at:** 2026-09-03T13:16:34Z
 - **Implementation started at:** 2026-09-03T13:17:16Z
-- **Work completed at:** Pending
-- **Assurance started at:** Pending
-- **Assurance completed at:** Pending
-- **Ready for validation at:** Pending
-- **Actual implementation:** Pending
-- **Observed Human wait:** Pending
-- **Estimate outcome:** Pending
+- **Work completed at:** 2026-09-03T14:12:00Z
+- **Assurance started at:** 2026-09-03T14:12:00Z
+- **Assurance completed at:** 2026-09-03T14:13:04Z
+- **Ready for validation at:** 2026-09-03T14:13:04Z
+- **Actual implementation:** Approximately 4m15s for direct Task work, excluding the separately estimated and validated toolchain Fix and Human wait.
+- **Observed Human wait:** Pending final parity validation; the dependency-install and Fix-validation waits remain separate from implementation.
+- **Estimate outcome:** Direct parity composition was much faster than the 35–60 minute low-confidence range because the four imported factories already formed a valid Pi package boundary; the materially larger toolchain repair was correctly split into its own accepted Fix.
 - **Final history target:** `feat(package): load the imported cockpit as one unit`
 - **Current non-Git boundary:** Not applicable after Human moves the scaffold and
   initializes Git.
@@ -58,13 +58,14 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: PASS — accepted Fix `5d75457` establishes a clean offline root install, current/original integrity, Prettier, zero-finding Biome and ESLint, strict TypeScript, 4 tooling tests, Status 108/108, Header 69/69, Footer 158/158, Vim 13/13, and schema-aware OpenSpec validation. A fresh root `npm run check` and `npm ls` reconfirmed the gate and unified Pi 0.84.4 peers.
   - Paths: Root toolchain and bounded repair paths are preserved in Fix Step commits `911227d`, `5ef919b`, and `ec3873e`; this checkpoint records matching consolidation progress only.
   - History: Expected `step(package): establish root verification toolchain`; prior failure remains recorded by `e4a55db`.
-- [ ] Step 1.3 Add composition and no-duplicate package-load checks, then demonstrate
+- [x] Step 1.3 Add composition and no-duplicate package-load checks, then demonstrate
       isolated local loading.
-  - Estimate: 15–20 minutes; uncertainty is the smallest reliable headless Pi smoke
+  - Estimate: 15–20 minutes; uncertainty was the smallest reliable headless Pi smoke
     boundary.
-  - Timing: Pending
-  - Check: Pending
-  - History: Pending
+  - Timing: 2026-09-03T14:10:35Z–2026-09-03T14:13:04Z (2m29s implementation and assurance).
+  - Check: PASS — 3 composition tests load all four default factories exactly once in manifest order, reject duplicate command/tool registrations, and verify Fancy Footer readiness; the probe reports 4 extensions, 6 unique commands, and 2 unique tools. The complete root gate passes 7 tooling, 108 Status, 69 Header, 158 Footer, and 13 Vim tests plus format, lint, strict typechecks, integrity, and OpenSpec checks. `pi --offline --no-extensions -e "$(pwd -P)" --list-models` loads the package and returns 204 model rows.
+  - Paths: `src/local-load-probe.ts`, `test/local-load-probe.test.ts`, `package.json`, `tsconfig.json`, `eslint.config.js`, and this Task ledger.
+  - History: Expected `step(package): prove one-package load parity`.
 
 ### Human validation
 
