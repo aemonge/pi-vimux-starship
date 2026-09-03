@@ -98,8 +98,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Human-wait estimate:** Separate and unbounded.
 - **Refinement trigger:** Split preset delivery from legacy compatibility if either
   becomes independently Human-validatable or total work approaches 90 minutes.
-- **Implementation confirmed at:** Pending
-- **Implementation started at:** Pending
+- **Implementation confirmed at:** 2026-09-03T14:19:54Z (`OK`; exact Task 2 brief confirmed earlier in this conversation and recorded when resumed after Task 1 validation).
+- **Implementation started at:** 2026-09-03T14:19:54Z
 - **Work completed at:** Pending
 - **Assurance started at:** Pending
 - **Assurance completed at:** Pending
@@ -112,13 +112,14 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   initializes Git.
 - **Human validation:** Pending
 
-- [ ] Step 2.1 Define and validate the `piVimuxStarship` configuration boundary and
+- [x] Step 2.1 Define and validate the `piVimuxStarship` configuration boundary and
       security-sensitive setting precedence.
-  - Estimate: 10–20 minutes; uncertainty is preserving project-versus-global trust
+  - Estimate: 10–20 minutes; uncertainty was preserving project-versus-global trust
     boundaries.
-  - Timing: Pending
-  - Check: Pending
-  - History: Pending
+  - Timing: 2026-09-03T14:21:36Z–2026-09-03T14:22:31Z (55s implementation and focused checks).
+  - Check: PASS — 4 focused namespace tests prove the exact `piVimuxStarship` key, malformed-container rejection, deep nested merge with array replacement, and explicit project-layer exclusion for command-capable status configuration. Root formatting, lint, and strict TypeScript checks pass; all 11 tooling/composition tests pass.
+  - Paths: `src/config.ts`, `test/config.test.ts`, and this Task ledger.
+  - History: Expected `step(config): define the package namespace`.
 - [ ] Step 2.2 Ship the Ramona Gruvbox preset, semantic defaults, Unicode fallbacks, and
       deterministic module configuration.
   - Estimate: 15–30 minutes; uncertainty is exact parity across three current config
