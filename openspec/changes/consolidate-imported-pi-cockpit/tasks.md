@@ -50,20 +50,14 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     dependencies; isolated offline loading and single-package registration passed.
   - Paths: `package.json`, `packages/*/package.json`, `baseline/source.sha256`.
   - History: Read-only verification; recorded with Step 1.2 progress.
-- [-] Step 1.2 Establish one root dependency, formatting, lint, typecheck, and test
-      environment without changing runtime behavior.
-  - Estimate: 15–30 minutes; uncertainty is reconciling the incomplete legacy tool
+- [x] Step 1.2 Establish one root dependency, formatting, lint, typecheck, and test
+      environment without changing visible runtime behavior.
+  - Estimate: 15–30 minutes; uncertainty was reconciling the incomplete legacy tool
     installations.
-  - Timing: 2026-09-03T13:17:16Z–2026-09-03T13:18:31Z (1 minute 15 seconds;
-    blocked before root metadata or runtime source mutation).
-  - Check: BLOCKED — an isolated `npm install --offline --ignore-scripts` could not
-    resolve `@earendil-works/pi-ai@0.84.3` (`ETARGET`). Substituting cached older Pi
-    packages would change the compatibility target; network access was excluded.
-    OpenSpec 1.6.0 strict validation also rejected all three planning-only changes for
-    missing spec deltas despite their declared `skip_specs: true` schema metadata.
-  - Paths: OpenSpec progress only; the failed install probe was confined to `/tmp`.
-  - History: Failure recorded by `e4a55db` (`error(package): offline toolchain cache incomplete`).
-  - Repair dependency: `repair-imported-development-toolchain` now has passing deterministic checks and a clean offline install; this Step remains interrupted until that Fix receives Human validation and focus returns here.
+  - Timing: Initial attempt 2026-09-03T13:17:16Z–2026-09-03T13:18:31Z (1m15s blocked); resumed after the accepted Fix at 2026-09-03T14:08:40Z–2026-09-03T14:09:02Z (22s focused verification). Repair implementation is recorded separately by `repair-imported-development-toolchain`.
+  - Check: PASS — accepted Fix `5d75457` establishes a clean offline root install, current/original integrity, Prettier, zero-finding Biome and ESLint, strict TypeScript, 4 tooling tests, Status 108/108, Header 69/69, Footer 158/158, Vim 13/13, and schema-aware OpenSpec validation. A fresh root `npm run check` and `npm ls` reconfirmed the gate and unified Pi 0.84.4 peers.
+  - Paths: Root toolchain and bounded repair paths are preserved in Fix Step commits `911227d`, `5ef919b`, and `ec3873e`; this checkpoint records matching consolidation progress only.
+  - History: Expected `step(package): establish root verification toolchain`; prior failure remains recorded by `e4a55db`.
 - [ ] Step 1.3 Add composition and no-duplicate package-load checks, then demonstrate
       isolated local loading.
   - Estimate: 15–20 minutes; uncertainty is the smallest reliable headless Pi smoke
