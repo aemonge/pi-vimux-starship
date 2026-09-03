@@ -36,11 +36,12 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: PASS — Footer 159/159, Status 108/108, Header 72/72, Vim 13/13, and root tooling 12/12 tests pass; strict TypeScript, zero-finding lint, Prettier, current 88-file integrity, and immutable 87-file import record pass. The root composition declares telemetry/provider/deck/editor-only modes; bounded cost/qta, agts/stps/files, LSP/MCP, and Vim-mode contracts reject malformed values without changing the currently loaded four-entrypoint surface.
   - Paths: `src/index.ts`, root composition test, Footer `api.ts`, `index.ts`, and `index.test.ts`; Status orchestration/types/publisher and focused tests; Header options, gauge/capability parsers and focused tests; Vim mode option; current source manifest; and this Plan/Task.
   - History: Expected `step(cockpit): centralize header deck composition`.
-- [ ] Step 1.2 Render the approved colored open-sided deck with deterministic responsive fallbacks.
-  - Estimate: 25–35 minutes; uncertainty is fitting icon-rich Unicode/ANSI groups without semantic truncation.
-  - Timing: Pending
-  - Check: Pending
-  - History: Pending
+- [x] Step 1.2 Render the approved colored open-sided deck with deterministic responsive fallbacks.
+  - Estimate: 25–35 minutes; uncertainty was fitting icon-rich Unicode/ANSI groups without semantic truncation.
+  - Timing: 2026-09-03T14:57:20Z–2026-09-03T15:01:46Z (4m26s implementation and focused checks).
+  - Check: PASS — 3 deck fixtures prove the exact open-sided wide structure, no spacer rows, two opposing ladybugs, compact labels, honest unavailable telemetry, and width-safe collapse at 160/100/79/59/39/20 cells. Header 75/75, strict TypeScript, zero-finding lint, Prettier, and current 90-file/original 87-file integrity pass. Context Header deck mode now renders live bounded state while legacy mode retains its accepted one-line surface.
+  - Paths: new Header `src/deck.ts` and `test/deck.test.ts`, Header `index.ts`, current source manifest, and this Task ledger.
+  - History: Expected `step(cockpit): render the open-sided header deck`.
 - [ ] Step 1.3 Retire visible footer and prompt rails in composed mode, then prove reload, cursor, and external-editor parity.
   - Estimate: 15–25 minutes; uncertainty is removing editor border rows without disturbing cursor-marker placement.
   - Timing: Pending

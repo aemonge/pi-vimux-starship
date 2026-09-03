@@ -9,6 +9,7 @@ import {
   countCompactions,
   ENVIRONMENT_WIDGET_ID,
   FANCY_FOOTER_READY_CHANNEL,
+  FOOTER_TELEMETRY_CHANNEL,
   FANCY_FOOTER_WIDGET_CHANNEL,
   formatFooterBranch,
   formatFooterPath,
@@ -19,11 +20,13 @@ import {
   GIT_MODIFIED_WIDGET_ID,
   GIT_STAGED_WIDGET_ID,
   GIT_UNTRACKED_WIDGET_ID,
+  type FooterTelemetrySnapshot,
   type GitStatusSummary,
   type HeaderSnapshot,
   LEGACY_GIT_WIDGET_ID,
   LOCATION_WIDGET_ID,
   normalizeContextPercent,
+  parseFooterTelemetry,
   parseGitBranch,
   parseGitStatus,
   parseHeaderSnapshot,
@@ -31,6 +34,9 @@ import {
   REASONING_WIDGET_ID,
   SCOPE_SEPARATOR_WIDGET_ID,
   runtimeHeaderWork,
+  parseVimMode,
+  VIM_MODE_CHANNEL,
+  type VimMode,
 } from './src/gauge.ts';
 import {
   buildRuntimeFooterWidgets,
@@ -41,8 +47,11 @@ import {
 import {
   buildCapabilityFooterWidget,
   CAPABILITY_WIDGET_ID,
+  LSP_STATUS_EVENT,
   MCP_STATUS_EVENT,
+  parseLspCapability,
   parseMcpCapability,
+  type LspCapability,
   type McpCapability,
 } from './src/capabilities.ts';
 import { shouldRefreshGitAfterTool } from './src/git-refresh.ts';
@@ -59,6 +68,7 @@ import {
   type ProcessTreeSample,
   type ResourceTelemetry,
 } from './src/process-resources.ts';
+import { renderHeaderDeck } from './src/deck.ts';
 import { layoutLifecycleTitle, renderLifecycleTitleSections } from './src/title.ts';
 
 const WIDGET_KEY = 'galactica.work-identity';
@@ -99,7 +109,10 @@ export default function galacticaContextHeader(
   let cpuSmoothing: CpuSmoothingState | undefined;
   let latestResourceTelemetry: ResourceTelemetry | undefined;
   let lastResourceSignature = '';
+  let lspCapability: LspCapability | null = null;
   let mcpCapability: McpCapability | null = null;
+  let footerTelemetry: FooterTelemetrySnapshot | undefined;
+  let vimMode: VimMode = 'insert';
   let lastCapabilitySignature = '';
 
   const currentHeader = () => header;
@@ -219,6 +232,7 @@ export default function galacticaContextHeader(
       : null;
 
   const publishRuntimeFooter = () => {
+    if (deckMode) return;
     const activityAge = currentActivityAge();
     const status = formatRailChronometer(activityAge);
     const active = activityAge !== null;
@@ -236,9 +250,26 @@ export default function galacticaContextHeader(
     publishRuntimeFooter();
     publishCapabilityFooter(true);
   });
+  const stopLspStatus = pi.events.on(LSP_STATUS_EVENT, (raw) => {
+    lspCapability = parseLspCapability(raw);
+    requestRender?.();
+  });
   const stopMcpStatus = pi.events.on(MCP_STATUS_EVENT, (raw) => {
     mcpCapability = parseMcpCapability(raw);
+    requestRender?.();
     publishCapabilityFooter();
+  });
+  const stopFooterTelemetry = pi.events.on(FOOTER_TELEMETRY_CHANNEL, (raw) => {
+    const next = parseFooterTelemetry(raw);
+    if (!next) return;
+    footerTelemetry = next;
+    requestRender?.();
+  });
+  const stopVimMode = pi.events.on(VIM_MODE_CHANNEL, (raw) => {
+    const next = parseVimMode(raw);
+    if (!next) return;
+    vimMode = next;
+    requestRender?.();
   });
   const stopHeader = pi.events.on(GALACTICA_HEADER_CHANNEL, (raw) => {
     header = parseHeaderSnapshot(raw);
@@ -261,7 +292,8 @@ export default function galacticaContextHeader(
 
   const refreshActivityAge = () => {
     if (currentActivityAge() === null) return;
-    publishRuntimeFooter();
+    if (deckMode) requestRender?.();
+    else publishRuntimeFooter();
   };
 
   pi.on('before_agent_start', (_event, ctx) => {
@@ -343,6 +375,10 @@ export default function galacticaContextHeader(
     gitStatus = { ...EMPTY_GIT };
     header = null;
     agentBusy = false;
+    lspCapability = null;
+    mcpCapability = null;
+    footerTelemetry = undefined;
+    vimMode = 'insert';
     resourceRefreshInFlight = false;
     previousResourceSample = undefined;
     cpuSmoothing = undefined;
@@ -371,6 +407,37 @@ export default function galacticaContextHeader(
         return {
           render(width: number): string[] {
             if (width <= 0) return [];
+            if (deckMode) {
+              const usage = ctx.getContextUsage();
+              return renderHeaderDeck(
+                {
+                  elapsedMs: currentActivityAge(),
+                  header: currentHeader(),
+                  cwd: formatFooterPath(activeCwd || ctx.cwd, process.env.HOME),
+                  devbox: process.env.DEVBOX_PROJECT_ROOT !== undefined,
+                  branch: formatFooterBranch(branch, 80),
+                  gitAvailable,
+                  git: gitStatus,
+                  model: ctx.model?.name || ctx.model?.id || 'no model',
+                  thinking: pi.getThinkingLevel(),
+                  contextPercent: normalizeContextPercent(
+                    usage?.percent,
+                    usage?.tokens,
+                    usage?.contextWindow ?? ctx.model?.contextWindow,
+                  ),
+                  compactionCount: countCompactions(ctx.sessionManager.getBranch()),
+                  ...(latestResourceTelemetry
+                    ? { resources: latestResourceTelemetry }
+                    : {}),
+                  ...(footerTelemetry ? { footerTelemetry } : {}),
+                  lsp: lspCapability,
+                  mcp: mcpCapability,
+                  mode: vimMode,
+                },
+                width,
+                theme,
+              );
+            }
             const { work, idle } = runtimeHeaderWork(currentHeader()?.work, agentBusy);
             const layout = layoutLifecycleTitle(work, width, agentBusy);
             const line = renderLifecycleTitleSections(
@@ -444,6 +511,9 @@ export default function galacticaContextHeader(
     removeFooterWidgets();
     stopHeader();
     stopReady();
+    stopLspStatus();
     stopMcpStatus();
+    stopFooterTelemetry();
+    stopVimMode();
   });
 }
