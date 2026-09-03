@@ -1,0 +1,7 @@
+node_modules/
+packages/pi-vim-top-border/
+baseline/*.sha256
+licenses/
+openspec/
+**/README.md
+**/LOCAL-CHANGES.md

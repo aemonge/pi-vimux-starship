@@ -9,12 +9,6 @@
     "@earendil-works/pi-tui": "*",
     "typebox": "*"
   },
-  "devDependencies": {
-    "@earendil-works/pi-ai": "*",
-    "@earendil-works/pi-coding-agent": "*",
-    "@earendil-works/pi-tui": "*",
-    "typebox": "*"
-  },
   "files": [
     "src",
     "README.md",
@@ -41,7 +35,11 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "test": "node --test --experimental-strip-types src/*.test.ts"
+    "format": "prettier --write src tsconfig.json",
+    "format:check": "prettier --check src tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types src/*.test.ts",
+    "check": "npm run format:check && npm run typecheck && npm test"
   },
   "publishConfig": {
     "access": "public"
