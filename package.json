@@ -1,0 +1,44 @@
+{
+  "name": "pi-vimux-starship",
+  "version": "0.1.0-baseline.0",
+  "private": true,
+  "description": "A Vim- and tmux-inspired command deck for Pi",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "vim",
+    "tmux",
+    "cockpit"
+  ],
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "check": "npm run check:baseline",
+    "check:baseline": "node scripts/check-baseline.mjs",
+    "test:status": "npm --prefix packages/galactica-status test",
+    "test:header": "npm --prefix packages/galactica-context-header test",
+    "test:footer": "npm --prefix packages/pi-fancy-footer-full-palette test",
+    "test:vim": "npm --prefix packages/pi-vim-top-border test",
+    "test:components": "npm run test:status && npm run test:header && npm run test:footer && npm run test:vim"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  },
+  "pi": {
+    "extensions": [
+      "./packages/pi-fancy-footer-full-palette/src/index.ts",
+      "./packages/galactica-status/index.ts",
+      "./packages/galactica-context-header/index.ts",
+      "./packages/pi-vim-top-border/index.ts"
+    ]
+  }
+}

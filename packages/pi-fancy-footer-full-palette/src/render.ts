@@ -1,0 +1,1059 @@
+import type { AssistantMessage } from '@earendil-works/pi-ai';
+import type {
+  ExtensionContext,
+  SessionEntry,
+  Theme,
+} from '@earendil-works/pi-coding-agent';
+import { truncateToWidth, visibleWidth } from '@earendil-works/pi-tui';
+import {
+  FOOTER_WIDGET_META,
+  MAX_WIDGET_MIN_WIDTH,
+  MAX_WIDGET_POSITION,
+  MAX_WIDGET_ROW,
+  type BuiltInFooterWidgetId,
+  type FooterConfigSnapshot,
+  type FooterWidgetConfigOverride,
+  type FooterIconFamily,
+  type FooterMetrics,
+  type FooterWidget,
+  type FooterWidgetSize,
+  type GitCounts,
+  type GitInfo,
+  type PreparedWidget,
+  type PreparedWidgetGroup,
+  type ProviderStatusConfigSnapshot,
+  type ProviderStatusSnapshot,
+  type SessionUsageMetrics,
+  type ThinkingLevel,
+  type WidgetRenderContext,
+  type GaugeColorsSnapshot,
+  type GaugeStyleDef,
+  buildGauge,
+  gaugeColorFor,
+  gaugeSeverity,
+  clampInt,
+  closeOpenTerminalHyperlinks,
+  formatThinkingLevel,
+  formatTerminalHyperlink,
+  formatTokens,
+  formatGaugePercent,
+  getThinkingLevelFromEntries,
+  getGaugeStyle,
+  getDefaultWidgetIcon,
+  getStatuslineSymbols,
+  normalizeModel,
+  normalizePath,
+  toNumber,
+} from './shared.ts';
+import {
+  resolveDataWidgetIcon,
+  type NormalizedFancyFooterDataWidget,
+} from './data-widgets.ts';
+import {
+  buildProviderStatusGauge,
+  formatProviderStatusText,
+  isProviderStatusRelevantToModel,
+  projectProviderStatusForModel,
+  providerStatusColor,
+  resetCountdownText,
+} from './provider-status.ts';
+
+function providerQuotaPercent(snapshot: ProviderStatusSnapshot): number | undefined {
+  const known = [snapshot.primary, snapshot.secondary].filter(
+    (window) => window !== undefined && !window.usageUnknown,
+  );
+  if (known.length === 0) return undefined;
+  return Math.max(...known.map((window) => window.usedPercent));
+}
+
+export function providerQuotaBatteryGlyph(usedPercent: number): string {
+  const used = Number.isFinite(usedPercent)
+    ? Math.max(0, Math.min(100, usedPercent))
+    : 0;
+  if (used <= 20) return '';
+  if (used <= 40) return '';
+  if (used <= 60) return '';
+  if (used <= 80) return '';
+  return '';
+}
+
+function buildProviderStatusPart(
+  snapshot: ProviderStatusSnapshot,
+  config: Pick<
+    ProviderStatusConfigSnapshot,
+    'display' | 'showCredits' | 'showReset' | 'resetMinUsedPercent'
+  >,
+  barStyle: GaugeStyleDef,
+  gaugeWidth: number,
+  gaugeColors: GaugeColorsSnapshot,
+  theme: Theme,
+  defaultTextColor: WidgetRenderContext['defaultTextColor'],
+  nowMs: number,
+): string {
+  if (config.display === 'percent') {
+    const percent = providerQuotaPercent(snapshot);
+    if (percent === undefined) return '';
+    const color = gaugeSeverity(100 - percent);
+    return theme.fg(
+      color,
+      `› ${providerQuotaBatteryGlyph(percent)} ${formatGaugePercent(percent)}`,
+    );
+  }
+
+  const text = formatProviderStatusText(snapshot, config, nowMs);
+  if (!text) return '';
+
+  const gauge =
+    config.display === 'gauge'
+      ? buildProviderStatusGauge(snapshot, barStyle, gaugeWidth)
+      : [];
+  let body: string;
+  if (gauge.length > 0) {
+    const pieces = gauge.map((segment) => {
+      let piece =
+        theme.fg(defaultTextColor, `${segment.label} `) +
+        theme.fg(gaugeColorFor(segment.color, gaugeColors), segment.filledGlyphs) +
+        theme.fg(gaugeColors.ok, segment.emptyGlyphs) +
+        theme.fg(defaultTextColor, ` ${segment.percentText}`);
+      const reset = resetCountdownText(segment, segment.role, config, nowMs);
+      if (reset) piece += theme.fg(gaugeColors.ok, ` ${reset}`);
+      return piece;
+    });
+    body = pieces.join(' ');
+    if (config.showCredits && snapshot.credits) {
+      body += theme.fg(defaultTextColor, ` cr:${snapshot.credits}`);
+    }
+  } else {
+    const color = providerStatusColor(snapshot);
+    body = theme.fg(
+      color === 'dim' ? defaultTextColor : gaugeColorFor(color, gaugeColors),
+      text,
+    );
+  }
+
+  return body;
+}
+
+export function formatCompactCost(cost: number): string {
+  const normalized = Number.isFinite(cost) ? Math.max(0, cost) : 0;
+  if (normalized === 0) return '$0';
+
+  const decimals =
+    normalized >= 0.01
+      ? 2
+      : Math.min(6, Math.max(3, Math.ceil(-Math.log10(normalized)) + 1));
+  return `$${normalized.toFixed(decimals).replace(/\.?0+$/, '')}`;
+}
+
+function getUsageData(entries: SessionEntry[]): SessionUsageMetrics {
+  let latest: SessionUsageMetrics['latest'];
+  let totalCost = 0;
+  let totalCacheRead = 0;
+  let totalCacheWrite = 0;
+
+  for (const entry of entries) {
+    if (entry.type !== 'message') continue;
+
+    const message = entry.message as Partial<AssistantMessage>;
+    if (message.role !== 'assistant' || !message.usage) continue;
+
+    const usage = message.usage;
+    latest = {
+      input: Math.max(0, toNumber(usage.input)),
+      cacheRead: Math.max(0, toNumber(usage.cacheRead)),
+      cacheWrite: Math.max(0, toNumber(usage.cacheWrite)),
+      cost: Math.max(0, toNumber(usage.cost?.total)),
+    };
+    totalCost += latest.cost;
+    totalCacheRead += latest.cacheRead;
+    totalCacheWrite += latest.cacheWrite;
+  }
+
+  return { latest, totalCost, totalCacheRead, totalCacheWrite };
+}
+
+export function collectSessionUsageMetrics(ctx: ExtensionContext): SessionUsageMetrics {
+  return getUsageData(ctx.sessionManager.getBranch());
+}
+
+function contextUsedPercent(totalTokens: number, usedTokens: number): number {
+  const total = Math.max(1, Math.floor(totalTokens));
+  const used = Math.max(0, Math.min(total, Math.floor(usedTokens)));
+  return (used / total) * 100;
+}
+
+function renderGauge(
+  usedPercent: number,
+  style: GaugeStyleDef,
+  cells: number,
+  colors: GaugeColorsSnapshot,
+  theme: Theme,
+  textColor: WidgetRenderContext['defaultTextColor'],
+): string {
+  const gauge = buildGauge(usedPercent, style, cells);
+  return (
+    theme.fg(gaugeColorFor(gauge.color, colors), gauge.filledGlyphs) +
+    theme.fg('dim', gauge.emptyGlyphs) +
+    theme.fg(textColor, ` ${gauge.percentText}`)
+  );
+}
+
+// Renders the context bar when it grows across the row: a used-tokens label
+// followed by a bar that fills the allocated width.
+function renderGrowGauge(
+  usedPercent: number,
+  usedTokens: number,
+  style: GaugeStyleDef,
+  availableWidth: number,
+  colors: GaugeColorsSnapshot,
+  theme: Theme,
+  textColor: WidgetRenderContext['defaultTextColor'],
+): string {
+  const label = `${formatTokens(usedTokens)} `;
+  const cells = Math.max(1, Math.floor(availableWidth) - visibleWidth(label));
+  const gauge = buildGauge(usedPercent, style, cells);
+  return (
+    theme.fg(textColor, label) +
+    theme.fg(gaugeColorFor(gauge.color, colors), gauge.filledGlyphs) +
+    theme.fg('dim', gauge.emptyGlyphs)
+  );
+}
+
+function buildGitStatus(
+  counts: GitCounts,
+  iconFamily: FooterIconFamily,
+): Pick<FooterMetrics, 'gitStatusSymbol' | 'gitStatusText'> {
+  const symbols = getStatuslineSymbols(iconFamily);
+
+  if (counts.ahead > 0 && counts.behind > 0) {
+    return {
+      gitStatusSymbol: symbols.gitDiverged,
+      gitStatusText: `${counts.ahead}/${counts.behind}`,
+    };
+  }
+  if (counts.ahead > 0) {
+    return {
+      gitStatusSymbol: symbols.gitAhead,
+      gitStatusText: `${counts.ahead}`,
+    };
+  }
+  if (counts.behind > 0) {
+    return {
+      gitStatusSymbol: symbols.gitBehind,
+      gitStatusText: `${counts.behind}`,
+    };
+  }
+  return { gitStatusSymbol: '', gitStatusText: '' };
+}
+
+function resolveGitStatusSymbolColor(
+  symbol: string,
+  configuredColor: FooterConfigSnapshot['defaultIconColor'],
+  iconFamily: FooterIconFamily,
+): FooterConfigSnapshot['defaultIconColor'] {
+  if (configuredColor !== 'text') return configuredColor;
+
+  const symbols = getStatuslineSymbols(iconFamily);
+  if (symbol === symbols.gitBehind) return 'warning';
+  if (symbol === symbols.gitAhead || symbol === symbols.gitDiverged) return 'accent';
+  return configuredColor;
+}
+
+function truncateFooterText(text: string, maxWidth: number, ellipsis = '...'): string {
+  return closeOpenTerminalHyperlinks(
+    truncateToWidth(text, maxWidth, ellipsis),
+    `\x1b[0m${ellipsis}`,
+  );
+}
+
+function widgetKey(widget: FooterWidget): string {
+  return `${widget.location.row}:${widget.id}`;
+}
+
+function resolveWidgetSize(
+  size: FooterWidgetSize | undefined,
+  renderCtx: WidgetRenderContext,
+): number {
+  if (typeof size === 'number') {
+    return clampInt(size, 0, MAX_WIDGET_MIN_WIDTH);
+  }
+  if (typeof size === 'function') {
+    return clampInt(size(renderCtx), 0, MAX_WIDGET_MIN_WIDTH);
+  }
+  return 0;
+}
+
+function isWidgetVisible(
+  widget: FooterWidget,
+  renderCtx: WidgetRenderContext,
+): boolean {
+  if (!widget.visible) return true;
+  return widget.visible(renderCtx);
+}
+
+function renderWidget(
+  widget: FooterWidget,
+  renderCtx: WidgetRenderContext,
+  allocatedWidth?: number,
+): string {
+  if (!isWidgetVisible(widget, renderCtx)) return '';
+
+  const hasIcon = Boolean(widget.icon?.text);
+  const iconText = widget.icon?.text ?? '';
+  const iconWidth = hasIcon ? visibleWidth(iconText) : 0;
+
+  const maxTotalWidth =
+    allocatedWidth === undefined ? undefined : Math.max(0, Math.floor(allocatedWidth));
+  const contentWidth =
+    maxTotalWidth === undefined
+      ? undefined
+      : Math.max(0, maxTotalWidth - iconWidth - (hasIcon ? 1 : 0));
+
+  const rawText = widget.renderText(renderCtx, contentWidth);
+  if (!rawText && !hasIcon) return '';
+  const styledText = widget.styled
+    ? rawText
+    : renderCtx.theme.fg(widget.textColor ?? 'dim', rawText);
+
+  const styledIcon =
+    hasIcon && widget.icon ? renderCtx.theme.fg(widget.icon.color, iconText) : '';
+
+  const iconGap = hasIcon && rawText ? ' ' : '';
+  const combined = `${styledIcon}${iconGap}${styledText}`;
+  const linked = widget.href
+    ? formatTerminalHyperlink(widget.href, combined)
+    : combined;
+  if (maxTotalWidth === undefined) return linked;
+  return truncateFooterText(linked, maxTotalWidth, '');
+}
+
+function prepareWidgetGroup(
+  widgets: FooterWidget[],
+  renderCtx: WidgetRenderContext,
+): PreparedWidgetGroup {
+  const sorted = [...widgets].sort((a, b) => a.location.position - b.location.position);
+  const prepared: PreparedWidget[] = [];
+
+  for (const widget of sorted) {
+    const fill = widget.fill ?? 'none';
+    if (fill === 'grow') {
+      prepared.push({
+        widget,
+        fill,
+        minWidth: resolveWidgetSize(widget.minWidth, renderCtx),
+        fixedText: '',
+        fixedWidth: 0,
+      });
+      continue;
+    }
+
+    const renderedText = renderWidget(widget, renderCtx);
+    const renderedWidth = visibleWidth(renderedText);
+    if (renderedWidth <= 0) continue;
+
+    const fixedWidth = Math.max(
+      renderedWidth,
+      resolveWidgetSize(widget.minWidth, renderCtx),
+    );
+    const fixedText = `${renderedText}${' '.repeat(fixedWidth - renderedWidth)}`;
+    prepared.push({
+      widget,
+      fill,
+      minWidth: 0,
+      fixedText,
+      fixedWidth,
+    });
+  }
+
+  const gaps = Math.max(0, prepared.length - 1);
+  const contentMinWidth = prepared.reduce((acc, item) => {
+    if (item.fill === 'grow') return acc + item.minWidth;
+    return acc + item.fixedWidth;
+  }, 0);
+
+  return {
+    widgets: prepared,
+    minWidth: contentMinWidth + gaps,
+  };
+}
+
+function renderGroup(
+  group: PreparedWidgetGroup,
+  renderCtx: WidgetRenderContext,
+  fillExtras: Map<string, number>,
+): string {
+  const parts: string[] = [];
+
+  for (const item of group.widgets) {
+    if (item.fill === 'grow') {
+      const extra = fillExtras.get(widgetKey(item.widget)) ?? 0;
+      const allocatedWidth = item.minWidth + extra;
+      const rendered = renderWidget(item.widget, renderCtx, allocatedWidth);
+      if (rendered) parts.push(rendered);
+      continue;
+    }
+
+    if (item.fixedText) parts.push(item.fixedText);
+  }
+
+  return parts.join(' ');
+}
+
+const ALIGNED_GROUP_GAP = 4;
+const RAMONA_AVATAR = '󰠭';
+const RAMONA_AVATAR_SLOT_WIDTH = 4;
+const RAMONA_AVATAR_MIN_TERMINAL_WIDTH = 100;
+
+function composeAlignedRow(
+  width: number,
+  left: string,
+  middle: string,
+  right: string,
+  theme: Theme,
+  insetWideRight = true,
+): string {
+  const leftWidth = visibleWidth(left);
+  const middleWidth = visibleWidth(middle);
+  const rightWidth = visibleWidth(right);
+
+  if (
+    insetWideRight &&
+    width >= RAMONA_AVATAR_MIN_TERMINAL_WIDTH &&
+    left &&
+    !middle &&
+    right
+  ) {
+    const effectiveWidth = width - RAMONA_AVATAR_SLOT_WIDTH;
+    if (leftWidth + rightWidth + ALIGNED_GROUP_GAP <= effectiveWidth) {
+      const avatarSlot = ` ${theme.fg('thinkingHigh', '⟨')} ${theme.fg('customMessageLabel', RAMONA_AVATAR)}`;
+      return `${composeAlignedRow(
+        effectiveWidth,
+        left,
+        '',
+        right,
+        theme,
+        false,
+      )}${avatarSlot}`;
+    }
+  }
+
+  const fallback = () => {
+    const joined = [left, middle, right].filter((part) => part).join(' ');
+    return truncateFooterText(joined, width, theme.fg('dim', '...'));
+  };
+
+  if (!middle) {
+    if (left && right) {
+      if (leftWidth + rightWidth + ALIGNED_GROUP_GAP > width) return fallback();
+      const gap = Math.max(ALIGNED_GROUP_GAP, width - leftWidth - rightWidth);
+      return truncateFooterText(
+        `${left}${' '.repeat(gap)}${right}`,
+        width,
+        theme.fg('dim', '...'),
+      );
+    }
+
+    if (left) return truncateFooterText(left, width, theme.fg('dim', '...'));
+    if (right) {
+      if (rightWidth > width) return fallback();
+      return `${' '.repeat(width - rightWidth)}${right}`;
+    }
+    return '';
+  }
+
+  if (!left && !right) {
+    if (middleWidth > width) return fallback();
+    const start = Math.max(0, Math.floor((width - middleWidth) / 2));
+    return truncateFooterText(
+      `${' '.repeat(start)}${middle}`,
+      width,
+      theme.fg('dim', '...'),
+    );
+  }
+
+  const gapLeftMiddle = left ? ALIGNED_GROUP_GAP : 0;
+  const gapMiddleRight = right ? ALIGNED_GROUP_GAP : 0;
+
+  const leftBoundary = leftWidth + gapLeftMiddle;
+  const rightBoundary = width - rightWidth - gapMiddleRight;
+  if (rightBoundary < leftBoundary) return fallback();
+
+  const slotWidth = rightBoundary - leftBoundary;
+  let middleText = middle;
+  if (middleWidth > slotWidth) {
+    middleText = truncateFooterText(middleText, slotWidth, '');
+  }
+
+  const middleTextWidth = visibleWidth(middleText);
+  const middleStart =
+    leftBoundary + Math.max(0, Math.floor((slotWidth - middleTextWidth) / 2));
+
+  const preMiddleSpaces = Math.max(0, middleStart - leftBoundary);
+  const postMiddleSpaces = Math.max(0, rightBoundary - (middleStart + middleTextWidth));
+
+  let out = '';
+  if (left) {
+    out += left;
+    out += ' ';
+  }
+  out += ' '.repeat(preMiddleSpaces);
+  out += middleText;
+  out += ' '.repeat(postMiddleSpaces);
+  if (right) {
+    out += ' ';
+    out += right;
+  }
+
+  return truncateFooterText(out, width, theme.fg('dim', '...'));
+}
+
+function computeFooterMetrics(
+  ctx: ExtensionContext,
+  git: GitInfo,
+  fallbackThinkingLevel: ThinkingLevel,
+  usageMetrics: SessionUsageMetrics,
+  iconFamily: FooterIconFamily,
+): FooterMetrics {
+  const { latest, totalCost, totalCacheRead, totalCacheWrite } = usageMetrics;
+
+  const contextUsage = ctx.getContextUsage();
+  const totalTokens = Math.max(
+    1,
+    Math.floor(
+      toNumber(contextUsage?.contextWindow ?? ctx.model?.contextWindow ?? 200_000),
+    ),
+  );
+
+  const contextTokensRaw = contextUsage?.tokens;
+  const contextTokensKnown =
+    typeof contextTokensRaw === 'number' && Number.isFinite(contextTokensRaw);
+  const contextTokens = contextTokensKnown
+    ? Math.max(0, Math.floor(contextTokensRaw))
+    : 0;
+  const contextUsageUnknown =
+    contextUsage?.tokens === null || contextUsage?.percent === null;
+
+  const usedRaw = contextUsage?.percent;
+  const hasUsedPercent =
+    typeof usedRaw === 'number' && Number.isFinite(usedRaw) && usedRaw >= 0;
+  const usedPct = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        hasUsedPercent ? usedRaw : (contextTokens * 100) / Math.max(1, totalTokens),
+      ),
+    ),
+  );
+
+  let inputTokens = latest ? latest.input : contextTokens;
+  let cacheTokens = latest ? latest.cacheRead + latest.cacheWrite : 0;
+
+  const minUsedTokens = Math.max(0, contextTokens);
+  if (inputTokens + cacheTokens < minUsedTokens) {
+    inputTokens += minUsedTokens - (inputTokens + cacheTokens);
+  }
+
+  const usageFromLatest = Math.max(0, Math.floor(inputTokens + cacheTokens));
+  const usageFromPercent = hasUsedPercent
+    ? Math.floor((usedPct * totalTokens) / 100)
+    : 0;
+  // Right after compaction, Pi deliberately reports null until the next model
+  // response supplies post-compaction usage. Empty the gauge instead of falling
+  // back to the latest assistant usage, which still describes the old context.
+  let usedTokensForBar: number;
+  if (contextUsageUnknown) {
+    usedTokensForBar = 0;
+  } else if (contextTokensKnown) {
+    usedTokensForBar = contextTokens;
+  } else {
+    usedTokensForBar = Math.max(usageFromPercent, usageFromLatest);
+  }
+
+  const model = normalizeModel(ctx.model?.name || ctx.model?.id || 'Claude');
+  // Providers carry a display name ("Anthropic", "OpenAI Codex"); fall back to
+  // the raw id for providers defined only in models.json.
+  const providerId = ctx.model?.provider ?? '';
+  const provider = providerId
+    ? (ctx.modelRegistry?.getProviderDisplayName(providerId) ?? providerId)
+    : '';
+  const thinking = formatThinkingLevel(
+    getThinkingLevelFromEntries(ctx.sessionManager.getBranch(), fallbackThinkingLevel),
+  );
+
+  const latestPromptTokens = latest
+    ? latest.input + latest.cacheRead + latest.cacheWrite
+    : 0;
+  const cacheHitRatePercent =
+    latest && latestPromptTokens > 0
+      ? (latest.cacheRead / latestPromptTokens) * 100
+      : undefined;
+
+  return {
+    model,
+    provider,
+    thinking,
+    totalTokens,
+    usedTokensForBar,
+    totalCost,
+    totalCacheRead,
+    totalCacheWrite,
+    cacheHitRatePercent,
+    locationText: git.repository || normalizePath(ctx.cwd),
+    branch: git.branch,
+    commit: git.commit,
+    added: git.added,
+    removed: git.removed,
+    ...buildGitStatus(git.counts, iconFamily),
+  };
+}
+
+function baseWidgetDefaults(
+  widgetId: BuiltInFooterWidgetId,
+  iconFamily: FooterIconFamily,
+): Pick<
+  FooterWidget,
+  'id' | 'location' | 'align' | 'fill' | 'defaultEnabled' | 'icon' | 'textColor'
+> {
+  const defaults = FOOTER_WIDGET_META[widgetId].defaults;
+
+  return {
+    id: widgetId,
+    location: {
+      row: defaults.row,
+      position: defaults.position,
+    },
+    align: defaults.align,
+    fill: defaults.fill,
+    defaultEnabled: defaults.enabled,
+    icon: getDefaultWidgetIcon(widgetId, iconFamily),
+    textColor: 'dim',
+  };
+}
+
+function buildFooterWidgets(
+  iconFamily: FooterIconFamily,
+  barStyle: GaugeStyleDef,
+): FooterWidget[] {
+  return [
+    {
+      ...baseWidgetDefaults('provider', iconFamily),
+      visible: ({ metrics }) => metrics.provider !== '',
+      renderText: ({ metrics }) => metrics.provider,
+    },
+    {
+      ...baseWidgetDefaults('model', iconFamily),
+      renderText: ({ metrics }) => metrics.model,
+    },
+    {
+      ...baseWidgetDefaults('thinking', iconFamily),
+      visible: ({ metrics }) => metrics.thinking !== '',
+      renderText: ({ metrics }) => metrics.thinking,
+    },
+    {
+      ...baseWidgetDefaults('context-capacity', iconFamily),
+      renderText: ({ metrics }) => formatTokens(metrics.totalTokens),
+    },
+    {
+      ...baseWidgetDefaults('context-bar', iconFamily),
+      minWidth: ({ width }) => (width >= 100 ? 12 : width >= 70 ? 8 : 4),
+      styled: true,
+      renderText: (
+        { metrics, theme, gaugeWidth, gaugeColors, defaultTextColor },
+        availableWidth,
+      ) => {
+        const usedPercent = contextUsedPercent(
+          metrics.totalTokens,
+          metrics.usedTokensForBar,
+        );
+        if (availableWidth === undefined) {
+          return renderGauge(
+            usedPercent,
+            barStyle,
+            gaugeWidth,
+            gaugeColors,
+            theme,
+            defaultTextColor,
+          );
+        }
+        return renderGrowGauge(
+          usedPercent,
+          metrics.usedTokensForBar,
+          barStyle,
+          availableWidth,
+          gaugeColors,
+          theme,
+          defaultTextColor,
+        );
+      },
+    },
+    {
+      ...baseWidgetDefaults('total-cost', iconFamily),
+      styled: true,
+      visible: ({ width, metrics }) => width >= 60 && metrics.totalCost > 0,
+      renderText: ({ metrics, theme }) =>
+        theme.fg('accent', `⟩ ${formatCompactCost(metrics.totalCost)}`),
+    },
+    {
+      ...baseWidgetDefaults('cache-read', iconFamily),
+      visible: ({ width, metrics }) => width >= 60 && metrics.totalCacheRead > 0,
+      renderText: ({ metrics }) => formatTokens(metrics.totalCacheRead),
+    },
+    {
+      ...baseWidgetDefaults('cache-write', iconFamily),
+      visible: ({ width, metrics }) => width >= 60 && metrics.totalCacheWrite > 0,
+      renderText: ({ metrics }) => formatTokens(metrics.totalCacheWrite),
+    },
+    {
+      ...baseWidgetDefaults('cache-hit-rate', iconFamily),
+      styled: true,
+      visible: ({ width, metrics }) =>
+        width >= 60 &&
+        (metrics.totalCacheRead > 0 || metrics.totalCacheWrite > 0) &&
+        metrics.cacheHitRatePercent !== undefined,
+      renderText: ({ metrics, theme }) =>
+        theme.fg(
+          'accent',
+          `› 󰍛 ${formatGaugePercent(metrics.cacheHitRatePercent ?? 0)}`,
+        ),
+    },
+    {
+      ...baseWidgetDefaults('location', iconFamily),
+      renderText: ({ metrics }) => metrics.locationText,
+    },
+    {
+      ...baseWidgetDefaults('branch', iconFamily),
+      visible: ({ metrics }) => metrics.branch !== '',
+      renderText: ({ metrics }) => metrics.branch,
+    },
+    {
+      ...baseWidgetDefaults('commit', iconFamily),
+      visible: ({ metrics }) => metrics.commit !== '',
+      renderText: ({ metrics }) => metrics.commit,
+    },
+    {
+      ...baseWidgetDefaults('provider-status', iconFamily),
+      styled: true,
+      visible: ({ providerStatuses, providerStatusConfig, nowMs }) =>
+        providerStatuses.some((snapshot) =>
+          providerStatusConfig.display === 'percent'
+            ? providerQuotaPercent(snapshot) !== undefined
+            : formatProviderStatusText(snapshot, providerStatusConfig, nowMs) !== '',
+        ),
+      renderText: ({
+        providerStatuses,
+        providerStatusConfig,
+        theme,
+        gaugeWidth,
+        gaugeColors,
+        defaultTextColor,
+        nowMs,
+      }) => {
+        const parts: string[] = [];
+        for (const snapshot of providerStatuses) {
+          const part = buildProviderStatusPart(
+            snapshot,
+            providerStatusConfig,
+            barStyle,
+            gaugeWidth,
+            gaugeColors,
+            theme,
+            defaultTextColor,
+            nowMs,
+          );
+          if (part) parts.push(part);
+        }
+        const text = parts.join(' ');
+        if (!text) return '';
+        return providerStatusConfig.display === 'percent'
+          ? text
+          : `${theme.fg(defaultTextColor, 'qta')} ${text}`;
+      },
+    },
+    {
+      ...baseWidgetDefaults('diff-added', iconFamily),
+      visible: ({ metrics }) => metrics.added > 0,
+      renderText: ({ metrics }) => `${metrics.added}`,
+    },
+    {
+      ...baseWidgetDefaults('diff-removed', iconFamily),
+      visible: ({ metrics }) => metrics.removed > 0,
+      renderText: ({ metrics }) => `${metrics.removed}`,
+    },
+    {
+      ...baseWidgetDefaults('git-status', iconFamily),
+      styled: true,
+      visible: ({ metrics }) => metrics.gitStatusSymbol !== '',
+      renderText: ({ metrics, theme, defaultIconColor, defaultTextColor }) => {
+        const symbolColor = resolveGitStatusSymbolColor(
+          metrics.gitStatusSymbol,
+          defaultIconColor,
+          iconFamily,
+        );
+        return `${theme.fg(symbolColor, metrics.gitStatusSymbol)}${theme.fg(defaultTextColor, metrics.gitStatusText)}`;
+      },
+    },
+  ];
+}
+
+function buildExtensionWidgets(
+  widgets: readonly NormalizedFancyFooterDataWidget[],
+  iconFamily: FooterIconFamily,
+): FooterWidget[] {
+  return widgets.map((widget) => {
+    const icon = resolveDataWidgetIcon(widget.icon, iconFamily);
+    const showIconWhenEmpty = widget.defaults.enabled !== false;
+    return {
+      id: widget.id,
+      location: {
+        row: clampInt(widget.defaults.row, 0, MAX_WIDGET_ROW),
+        position: clampInt(widget.defaults.position, 0, MAX_WIDGET_POSITION),
+      },
+      align: widget.defaults.align,
+      fill: widget.defaults.fill,
+      defaultEnabled: widget.defaults.enabled,
+      minWidth:
+        widget.defaults.minWidth !== undefined
+          ? clampInt(widget.defaults.minWidth, 0, MAX_WIDGET_MIN_WIDTH)
+          : undefined,
+      icon,
+      href: widget.content.href,
+      preferredIconColor: widget.icon ? widget.icon.color : undefined,
+      preferredTextColor: widget.preferredTextColor,
+      styled: widget.bold === true,
+      forceVisibleWhenEnabled: false,
+      visible: () =>
+        widget.content.text !== '' || (showIconWhenEmpty && icon !== undefined),
+      renderText: ({ theme, defaultTextColor }, availableWidth) => {
+        const rendered = widget.bold
+          ? theme.fg(defaultTextColor, theme.bold(widget.content.text))
+          : widget.content.text;
+        return availableWidth === undefined
+          ? rendered
+          : truncateFooterText(rendered, availableWidth, '...');
+      },
+    };
+  });
+}
+
+function applyWidgetConfigOverrides(
+  widgets: FooterWidget[],
+  overrides: Record<string, FooterWidgetConfigOverride | undefined>,
+  defaultTextColor: FooterConfigSnapshot['defaultTextColor'],
+  defaultIconColor: FooterConfigSnapshot['defaultIconColor'],
+  iconFamily: FooterIconFamily,
+): FooterWidget[] {
+  return widgets.map((widget) => {
+    const override = overrides[widget.id] ?? {};
+
+    const location = {
+      row: clampInt(override.row ?? widget.location.row, 0, MAX_WIDGET_ROW),
+      position: clampInt(
+        override.position ?? widget.location.position,
+        0,
+        MAX_WIDGET_POSITION,
+      ),
+    };
+
+    const textColor =
+      override.textColor ?? widget.preferredTextColor ?? defaultTextColor;
+    const resolvedIconColor =
+      override.iconColor ?? widget.preferredIconColor ?? defaultIconColor;
+
+    let icon = widget.icon;
+    if (override.icon === 'hide') {
+      icon = undefined;
+    } else if (!icon) {
+      icon = getDefaultWidgetIcon(widget.id, iconFamily);
+    }
+
+    if (icon) {
+      icon = {
+        ...icon,
+        color: resolvedIconColor,
+      };
+    }
+
+    let visible = widget.visible;
+    let renderText = widget.renderText;
+
+    const baseRenderText = renderText;
+    renderText = (renderCtx, availableWidth) =>
+      baseRenderText(
+        {
+          ...renderCtx,
+          defaultIconColor: resolvedIconColor,
+          defaultTextColor: textColor,
+        },
+        availableWidth,
+      );
+
+    if ((override.enabled ?? widget.defaultEnabled ?? true) === false) {
+      visible = () => false;
+    } else if (override.enabled === true && widget.forceVisibleWhenEnabled !== false) {
+      visible = () => true;
+      const originalRenderText = renderText;
+      renderText = (renderCtx, availableWidth) => {
+        const out = originalRenderText(renderCtx, availableWidth);
+        if (visibleWidth(out) > 0) return out;
+        return widget.styled ? renderCtx.theme.fg('dim', '·') : '·';
+      };
+    }
+
+    return {
+      ...widget,
+      location,
+      align: override.align ?? widget.align,
+      fill: override.fill ?? widget.fill,
+      minWidth:
+        override.minWidth !== undefined
+          ? clampInt(override.minWidth, 0, MAX_WIDGET_MIN_WIDTH)
+          : widget.minWidth,
+      icon,
+      textColor,
+      visible,
+      renderText,
+    };
+  });
+}
+
+function renderWidgetRow(
+  width: number,
+  rowWidgets: FooterWidget[],
+  renderCtx: WidgetRenderContext,
+  insetWideRight = false,
+): string {
+  if (width <= 0 || rowWidgets.length === 0) return '';
+
+  const visibleWidgets = rowWidgets.filter((widget) =>
+    isWidgetVisible(widget, renderCtx),
+  );
+  if (visibleWidgets.length === 0) return '';
+
+  const leftGroup = prepareWidgetGroup(
+    visibleWidgets.filter((widget) => widget.align === 'left'),
+    renderCtx,
+  );
+  const middleGroup = prepareWidgetGroup(
+    visibleWidgets.filter((widget) => widget.align === 'middle'),
+    renderCtx,
+  );
+  const rightGroup = prepareWidgetGroup(
+    visibleWidgets.filter((widget) => widget.align === 'right'),
+    renderCtx,
+  );
+
+  const groups = [leftGroup, middleGroup, rightGroup];
+  const occupiedGroups = groups.filter((group) => group.widgets.length > 0);
+  const interGroupGaps = Math.max(0, occupiedGroups.length - 1) * ALIGNED_GROUP_GAP;
+
+  const minRequiredWidth =
+    groups.reduce((acc, group) => acc + group.minWidth, 0) + interGroupGaps;
+
+  const fillExtras = new Map<string, number>();
+
+  if (minRequiredWidth <= width) {
+    const fillWidgets = groups.flatMap((group) =>
+      group.widgets.filter((item) => item.fill === 'grow'),
+    );
+    if (fillWidgets.length > 0) {
+      const extraSpace = width - minRequiredWidth;
+      const baseExtra = Math.floor(extraSpace / fillWidgets.length);
+      let remainder = extraSpace % fillWidgets.length;
+
+      for (const item of fillWidgets) {
+        const add = baseExtra + (remainder > 0 ? 1 : 0);
+        if (remainder > 0) remainder -= 1;
+        fillExtras.set(widgetKey(item.widget), add);
+      }
+    }
+  }
+
+  const leftText = renderGroup(leftGroup, renderCtx, fillExtras);
+  const middleText = renderGroup(middleGroup, renderCtx, fillExtras);
+  const rightText = renderGroup(rightGroup, renderCtx, fillExtras);
+
+  if (minRequiredWidth > width) {
+    const fallback = [leftText, middleText, rightText].filter((part) => part).join(' ');
+    return truncateFooterText(fallback, width, renderCtx.theme.fg('dim', '...'));
+  }
+
+  return composeAlignedRow(
+    width,
+    leftText,
+    middleText,
+    rightText,
+    renderCtx.theme,
+    insetWideRight,
+  );
+}
+
+export function renderFooterLines(
+  width: number,
+  ctx: ExtensionContext,
+  git: GitInfo,
+  fallbackThinkingLevel: ThinkingLevel,
+  theme: Theme,
+  usageMetrics: SessionUsageMetrics,
+  footerConfig: FooterConfigSnapshot,
+  extensionWidgets: readonly NormalizedFancyFooterDataWidget[] = [],
+  providerStatuses: readonly ProviderStatusSnapshot[] = [],
+  nowMs = Date.now(),
+): string[] {
+  if (width <= 0) return ['', ''];
+
+  const metrics = computeFooterMetrics(
+    ctx,
+    git,
+    fallbackThinkingLevel,
+    usageMetrics,
+    footerConfig.iconFamily,
+  );
+  // Model-scoped quota windows resolve here rather than at fetch time: the
+  // cached snapshot stays model-agnostic, so switching models updates the
+  // footer without another usage request.
+  const activeProviderStatuses = providerStatuses
+    .filter((snapshot) => isProviderStatusRelevantToModel(snapshot.provider, ctx.model))
+    .map((snapshot) => projectProviderStatusForModel(snapshot, ctx.model));
+  const renderCtx: WidgetRenderContext = {
+    width,
+    nowMs,
+    theme,
+    ctx,
+    gaugeWidth: footerConfig.gaugeWidth,
+    gaugeColors: footerConfig.gaugeColors,
+    metrics,
+    providerStatuses: activeProviderStatuses,
+    providerStatusConfig: footerConfig.providerStatus,
+    defaultIconColor: footerConfig.defaultIconColor,
+    defaultTextColor: footerConfig.defaultTextColor,
+  };
+
+  const barStyle = getGaugeStyle(footerConfig.gaugeStyle);
+  const widgets = applyWidgetConfigOverrides(
+    [
+      ...buildFooterWidgets(footerConfig.iconFamily, barStyle),
+      ...buildExtensionWidgets(extensionWidgets, footerConfig.iconFamily),
+    ],
+    {
+      ...(footerConfig.widgets as Record<string, FooterWidgetConfigOverride>),
+      ...footerConfig.extensionWidgets,
+    },
+    footerConfig.defaultTextColor,
+    footerConfig.defaultIconColor,
+    footerConfig.iconFamily,
+  );
+  const visibleRows = widgets
+    .filter((widget) => isWidgetVisible(widget, renderCtx))
+    .map((widget) => widget.location.row);
+  const highestRow = clampInt(Math.max(0, ...visibleRows), 0, MAX_WIDGET_ROW);
+
+  const rows: string[] = [];
+  for (let row = 0; row <= highestRow; row++) {
+    const rowWidgets = widgets.filter((widget) => widget.location.row === row);
+    const line = renderWidgetRow(width, rowWidgets, renderCtx, highestRow === 0);
+    rows.push(truncateFooterText(line, width, theme.fg('dim', '...')));
+  }
+
+  return rows;
+}

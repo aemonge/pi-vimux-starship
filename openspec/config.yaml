@@ -1,0 +1,5 @@
+---
+schema: ramona-idea
+
+# Standalone planning context for pi-vimux-starship.
+# Individual changes select their own Ramona schema in .openspec.yaml.
