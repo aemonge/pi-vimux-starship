@@ -15,11 +15,11 @@
 - **Refinement trigger:** Stop and split if a repair changes visible runtime behavior, requires another network operation, expands outside the named paths, or approaches 90 minutes.
 - **Implementation confirmed at:** 2026-09-03T13:38:04Z
 - **Implementation started at:** 2026-09-03T13:38:04Z
-- **Work completed at:** 2026-09-03T13:59:00Z
-- **Assurance started at:** 2026-09-03T13:59:00Z
-- **Assurance completed at:** 2026-09-03T14:00:04Z
-- **Ready for validation at:** 2026-09-03T14:00:04Z
-- **Human validation:** Pending
+- **Work completed at:** 2026-09-03T14:00:32Z
+- **Assurance started at:** 2026-09-03T14:00:32Z
+- **Assurance completed at:** 2026-09-03T14:02:48Z
+- **Ready for validation at:** 2026-09-03T14:02:48Z
+- **Human validation:** VALID — original response `VALID`, recorded at 2026-09-03T14:06:08Z.
 
 ## Fix characterization
 
@@ -34,14 +34,14 @@ Human can develop `pi-vimux-starship` as a clean standalone workspace whose veri
 
 ## Acceptance criteria
 
-- [ ] One root lockfile and pinned root development dependencies reproduce the workspace with offline `npm ci` after the Human-populated cache.
-- [ ] Repository-owned Prettier, Biome, ESLint, and TypeScript configuration runs without rewriting unrelated imported source.
-- [ ] Status, Header, Footer, and Vim checks pass; strict typechecking covers every authored TypeScript package.
-- [ ] The missing Header fixture and bounded Footer TypeBox/type defects are repaired without changing visible cockpit behavior.
-- [ ] The original import hash manifest remains immutable and distinct from the intentionally evolved current-source manifest.
-- [ ] A tested repository-local validator honors planning-only `skip_specs: true` while retaining strict upstream validation for changes that own spec deltas.
-- [ ] Offline isolated Pi package loading still succeeds and no Pi, Neovim, bridge, or protected settings are changed.
-- [ ] Human validates the clean development boundary before the blocked consolidation Task resumes.
+- [x] One root lockfile and pinned root development dependencies reproduce the workspace with offline `npm ci` after the Human-populated cache.
+- [x] Repository-owned Prettier, Biome, ESLint, and TypeScript configuration runs without rewriting unrelated imported source.
+- [x] Status, Header, Footer, and Vim checks pass; strict typechecking covers every authored TypeScript package.
+- [x] The missing Header fixture and bounded Footer TypeBox/type defects are repaired without changing visible cockpit behavior.
+- [x] The original import hash manifest remains immutable and distinct from the intentionally evolved current-source manifest.
+- [x] A tested repository-local validator honors planning-only `skip_specs: true` while retaining strict upstream validation for changes that own spec deltas.
+- [x] Offline isolated Pi package loading still succeeds and no Pi, Neovim, bridge, or protected settings are changed.
+- [x] Human validates the clean development boundary before the blocked consolidation Task resumes.
 
 ## Scope and boundaries
 
