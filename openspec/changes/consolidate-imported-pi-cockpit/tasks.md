@@ -27,8 +27,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Human-wait estimate:** Separate and unbounded.
 - **Refinement trigger:** Split before dependency repair if it would change production
   behavior or push this Task beyond 90 minutes.
-- **Implementation confirmed at:** Pending
-- **Implementation started at:** Pending
+- **Implementation confirmed at:** 2026-09-03T13:16:34Z
+- **Implementation started at:** 2026-09-03T13:17:16Z
 - **Work completed at:** Pending
 - **Assurance started at:** Pending
 - **Assurance completed at:** Pending
@@ -41,19 +41,28 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   initializes Git.
 - **Human validation:** Pending
 
-- [ ] Step 1.1 Verify the imported baseline hashes, entrypoints, startup order, and
+- [x] Step 1.1 Verify the imported baseline hashes, entrypoints, startup order, and
       runtime dependencies.
   - Estimate: 5–10 minutes; uncertainty is module resolution outside Galactica.
-  - Timing: Pending
-  - Check: Pending
-  - History: Pending
-- [ ] Step 1.2 Establish one root dependency, formatting, lint, typecheck, and test
+  - Timing: 2026-09-03T13:17:04Z–2026-09-03T13:17:05Z (1 second).
+  - Check: PASS — baseline integrity covered 87 files; the four exact entrypoints
+    exist in declared order; all imported packages have no undeclared runtime
+    dependencies; isolated offline loading and single-package registration passed.
+  - Paths: `package.json`, `packages/*/package.json`, `baseline/source.sha256`.
+  - History: Read-only verification; recorded with Step 1.2 progress.
+- [-] Step 1.2 Establish one root dependency, formatting, lint, typecheck, and test
       environment without changing runtime behavior.
   - Estimate: 15–30 minutes; uncertainty is reconciling the incomplete legacy tool
     installations.
-  - Timing: Pending
-  - Check: Pending
-  - History: Pending
+  - Timing: 2026-09-03T13:17:16Z–2026-09-03T13:18:31Z (1 minute 15 seconds;
+    blocked before root metadata or runtime source mutation).
+  - Check: BLOCKED — an isolated `npm install --offline --ignore-scripts` could not
+    resolve `@earendil-works/pi-ai@0.84.3` (`ETARGET`). Substituting cached older Pi
+    packages would change the compatibility target; network access was excluded.
+    OpenSpec 1.6.0 strict validation also rejected all three planning-only changes for
+    missing spec deltas despite their declared `skip_specs: true` schema metadata.
+  - Paths: OpenSpec progress only; the failed install probe was confined to `/tmp`.
+  - History: Expected `error(package): offline toolchain cache incomplete`.
 - [ ] Step 1.3 Add composition and no-duplicate package-load checks, then demonstrate
       isolated local loading.
   - Estimate: 15–20 minutes; uncertainty is the smallest reliable headless Pi smoke
