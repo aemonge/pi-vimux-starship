@@ -335,7 +335,8 @@ export class ModalEditor extends CustomEditor {
     commandLine,
   ) => {
     const submit = this.onSubmit as
-      ((text: string) => CommandDispatchResult) | undefined;
+      | ((text: string) => CommandDispatchResult)
+      | undefined;
     if (!submit) return;
     this.setText(commandLine);
     return submit(commandLine);

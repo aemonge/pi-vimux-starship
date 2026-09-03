@@ -1,17 +1,17 @@
-import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type {
   FooterIconFamily,
   FooterWidgetAlign,
   FooterWidgetColor,
   FooterWidgetFill,
-} from './shared.ts';
+} from "./shared.ts";
 
 export const FANCY_FOOTER_PROTOCOL_VERSION = 1 as const;
-export const FANCY_FOOTER_WIDGET_CHANNEL = 'pi-fancy-footer:widget';
-export const FANCY_FOOTER_READY_CHANNEL = 'pi-fancy-footer:ready';
+export const FANCY_FOOTER_WIDGET_CHANNEL = "pi-fancy-footer:widget";
+export const FANCY_FOOTER_READY_CHANNEL = "pi-fancy-footer:ready";
 
 export interface FancyFooterTextContent {
-  type: 'text';
+  type: "text";
   text: string;
   /** Optional HTTP(S) destination for the complete rendered widget. */
   href?: string;
@@ -54,12 +54,12 @@ export interface FancyFooterDataWidget {
 export type FancyFooterWidgetMessage =
   | {
       protocol: typeof FANCY_FOOTER_PROTOCOL_VERSION;
-      type: 'upsert';
+      type: "upsert";
       widget: FancyFooterDataWidget;
     }
   | {
       protocol: typeof FANCY_FOOTER_PROTOCOL_VERSION;
-      type: 'remove';
+      type: "remove";
       id: string;
     };
 
@@ -75,7 +75,7 @@ export interface FancyFooterClient {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /** Create a typed client over the same import-free event-bus protocol. */
@@ -84,7 +84,7 @@ export function createFancyFooterClient(pi: ExtensionAPI): FancyFooterClient {
     upsert: (widget) => {
       const message: FancyFooterWidgetMessage = {
         protocol: FANCY_FOOTER_PROTOCOL_VERSION,
-        type: 'upsert',
+        type: "upsert",
         widget,
       };
       pi.events.emit(FANCY_FOOTER_WIDGET_CHANNEL, message);
@@ -92,7 +92,7 @@ export function createFancyFooterClient(pi: ExtensionAPI): FancyFooterClient {
     remove: (id) => {
       const message: FancyFooterWidgetMessage = {
         protocol: FANCY_FOOTER_PROTOCOL_VERSION,
-        type: 'remove',
+        type: "remove",
         id,
       };
       pi.events.emit(FANCY_FOOTER_WIDGET_CHANNEL, message);
@@ -102,7 +102,7 @@ export function createFancyFooterClient(pi: ExtensionAPI): FancyFooterClient {
         if (
           !isRecord(raw) ||
           raw.protocol !== FANCY_FOOTER_PROTOCOL_VERSION ||
-          typeof raw.version !== 'string'
+          typeof raw.version !== "string"
         ) {
           return;
         }
@@ -116,4 +116,4 @@ export type {
   FooterWidgetAlign,
   FooterWidgetColor,
   FooterWidgetFill,
-} from './shared.ts';
+} from "./shared.ts";

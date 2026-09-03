@@ -4,11 +4,12 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "allowImportingTsExtensions": true,
+    "allowJs": true,
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
     "types": ["node"],
     "verbatimModuleSyntax": true
   },
-  "include": ["test/**/*.ts"]
+  "include": ["scripts/**/*.mjs", "test/**/*.ts"]
 }

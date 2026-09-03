@@ -53,10 +53,7 @@ test("typed client emits the raw data-widget protocol", () => {
         },
       },
     ],
-    [
-      FANCY_FOOTER_WIDGET_CHANNEL,
-      { protocol: 1, type: "remove", id: "acme.status" },
-    ],
+    [FANCY_FOOTER_WIDGET_CHANNEL, { protocol: 1, type: "remove", id: "acme.status" }],
   ]);
 });
 

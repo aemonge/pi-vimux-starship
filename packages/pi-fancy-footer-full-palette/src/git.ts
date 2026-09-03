@@ -1,10 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import {
-  EMPTY_GIT_INFO,
-  type GitInfo,
-  parseNumstat,
-  toNumber,
-} from "./shared.ts";
+import { EMPTY_GIT_INFO, type GitInfo, parseNumstat, toNumber } from "./shared.ts";
 
 interface ExecResult {
   code: number;
@@ -13,7 +8,6 @@ interface ExecResult {
 }
 
 const DEFAULT_COMMAND_TIMEOUT_MS = 2_000;
-const PULL_REQUEST_REFRESH_MS = 60_000;
 const GIT_NO_OPTIONAL_LOCKS_ARG = "--no-optional-locks";
 async function execResult(
   pi: ExtensionAPI,
@@ -35,51 +29,23 @@ async function execResult(
   }
 }
 
-async function exec(
-  pi: ExtensionAPI,
-  command: string,
-  args: string[],
-  cwd: string,
-): Promise<string> {
-  const result = await execResult(pi, command, args, cwd);
-  if (result.code !== 0) return "";
-  return result.stdout;
-}
-
 async function execGitResult(
   pi: ExtensionAPI,
   args: string[],
   cwd: string,
   timeout = DEFAULT_COMMAND_TIMEOUT_MS,
 ): Promise<ExecResult> {
-  return execResult(
-    pi,
-    "git",
-    [GIT_NO_OPTIONAL_LOCKS_ARG, ...args],
-    cwd,
-    timeout,
-  );
+  return execResult(pi, "git", [GIT_NO_OPTIONAL_LOCKS_ARG, ...args], cwd, timeout);
 }
 
-async function execGit(
-  pi: ExtensionAPI,
-  args: string[],
-  cwd: string,
-): Promise<string> {
+async function execGit(pi: ExtensionAPI, args: string[], cwd: string): Promise<string> {
   const result = await execGitResult(pi, args, cwd);
   if (result.code !== 0) return "";
   return result.stdout;
 }
 
-export async function collectGitInfo(
-  pi: ExtensionAPI,
-  cwd: string,
-): Promise<GitInfo> {
-  const porcelainV2 = await execGit(
-    pi,
-    ["status", "--porcelain=2", "--branch"],
-    cwd,
-  );
+export async function collectGitInfo(pi: ExtensionAPI, cwd: string): Promise<GitInfo> {
+  const porcelainV2 = await execGit(pi, ["status", "--porcelain=2", "--branch"], cwd);
 
   if (!porcelainV2) return { ...EMPTY_GIT_INFO };
 
@@ -120,11 +86,7 @@ export async function collectGitInfo(
       continue;
     }
 
-    if (
-      line.startsWith("1 ") ||
-      line.startsWith("2 ") ||
-      line.startsWith("u ")
-    ) {
+    if (line.startsWith("1 ") || line.startsWith("2 ") || line.startsWith("u ")) {
       const xy = line.split(" ")[1] || "..";
       const x = xy[0] || ".";
       const y = xy[1] || ".";

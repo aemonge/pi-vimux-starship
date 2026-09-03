@@ -15,10 +15,10 @@
 - **Refinement trigger:** Stop and split if a repair changes visible runtime behavior, requires another network operation, expands outside the named paths, or approaches 90 minutes.
 - **Implementation confirmed at:** 2026-09-03T13:38:04Z
 - **Implementation started at:** 2026-09-03T13:38:04Z
-- **Work completed at:** Pending
-- **Assurance started at:** Pending
-- **Assurance completed at:** Pending
-- **Ready for validation at:** Pending
+- **Work completed at:** 2026-09-03T13:59:00Z
+- **Assurance started at:** 2026-09-03T13:59:00Z
+- **Assurance completed at:** 2026-09-03T14:00:04Z
+- **Ready for validation at:** 2026-09-03T14:00:04Z
 - **Human validation:** Pending
 
 ## Fix characterization
@@ -47,11 +47,11 @@ Human can develop `pi-vimux-starship` as a clean standalone workspace whose veri
 
 Included paths are root package metadata and lockfile, root formatter/linter/typecheck configuration, baseline manifests and checker, a repository-local OpenSpec checker and test, bounded imported package manifests/config/type/test defects, development documentation, this Fix progress, and the blocked consolidation Task progress.
 
-The exact confirmed path set is `AGENTS.md`, `package.json`, `package-lock.json`, `.prettierignore`, `.prettierrc.json`, `biome.json`, `eslint.config.js`, `tsconfig.json`, `baseline/source.sha256`, new `baseline/imported-source.sha256`, `scripts/check-baseline.mjs`, new `scripts/check-openspec.mjs`, new `test/check-openspec.test.ts`, `docs/baseline-evidence.md`, `docs/development.md`, the four workspace `package.json` files, removal of the two child `package-lock.json` files, new Footer and Vim `tsconfig.json` files, `packages/galactica-context-header/test/gauge.test.ts` plus its local fixture, Footer `src/config.ts`, `src/render.ts`, and `src/shared.ts`, this change's artifacts, and `openspec/changes/consolidate-imported-pi-cockpit/tasks.md`.
+The exact confirmed path set is `AGENTS.md`, `package.json`, `package-lock.json`, `.prettierignore`, `.prettierrc.json`, `biome.json`, `eslint.config.js`, `tsconfig.json`, `baseline/source.sha256`, new `baseline/imported-source.sha256`, `scripts/check-baseline.mjs`, new `scripts/check-openspec.mjs`, new `test/check-openspec.test.ts`, `docs/baseline-evidence.md`, `docs/development.md`, the four workspace `package.json` files, removal of the two child `package-lock.json` files, new Footer and Vim `tsconfig.json` files, `packages/galactica-context-header/test/gauge.test.ts` plus its local fixture, all Footer `src/*.ts` files for one mechanical formatter boundary (with logic repairs limited to `config.ts`, `render.ts`, `shared.ts`, and `git.ts`), Vim `index.ts`, `prompt-rail.ts`, `word-boundary-cache.ts`, `test/external-editor-intercept.test.ts`, `test/prompt-external-editor.test.ts`, and `test/prompt-rail.test.ts`, this change's artifacts, and `openspec/changes/consolidate-imported-pi-cockpit/tasks.md`.
 
 Excluded are header-deck visuals, telemetry redesign, Insert routing, Pi settings, Neovim configuration, bridge changes, global OpenSpec installation, further network operations, publication, destructive cleanup, and history rewriting. The Human-created root lockfile is expected scope. Original import evidence remains recoverable at Git root commit `9d7bb84`.
 
-Read-only preflight and the final revised brief were presented before mutation. Human confirmed the exact revised brief with `YES` at 2026-09-03T13:38:04Z. No protected Pi configuration or network authority carries from that confirmation.
+Read-only preflight and the final revised brief were presented before mutation. Human confirmed the exact revised brief with `YES` at 2026-09-03T13:38:04Z. The clean lint gate then exposed six Vim formatting/safe-regex paths plus one Footer dead-code path; Human confirmed that exact nonbehavioral addendum with `OK` at 2026-09-03T13:53:52Z. The complete formatting gate subsequently exposed 14 untouched Footer TypeScript files; Human confirmed their exact formatter-only addendum with `OK` at 2026-09-03T13:56:36Z. No protected Pi configuration or network authority carries from any confirmation.
 
 ## Method and execution
 

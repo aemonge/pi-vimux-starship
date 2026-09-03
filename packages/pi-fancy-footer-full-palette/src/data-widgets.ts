@@ -1,10 +1,10 @@
-import { Type } from 'typebox';
-import { Compile } from 'typebox/compile';
+import { Type } from "typebox";
+import { Compile } from "typebox/compile";
 import {
   FANCY_FOOTER_PROTOCOL_VERSION,
   type FancyFooterDataWidget,
   type FancyFooterDataWidgetIcon,
-} from './api.ts';
+} from "./api.ts";
 import {
   FOOTER_ICON_FAMILIES,
   FOOTER_WIDGET_COLORS,
@@ -18,7 +18,7 @@ import {
   type FooterWidgetEditorDefaults,
   type FooterWidgetFill,
   type FooterWidgetIcon,
-} from './shared.ts';
+} from "./shared.ts";
 
 export const MAX_DATA_WIDGET_TEXT_CODE_POINTS = 512;
 export const MAX_DATA_WIDGET_ID_LENGTH = 128;
@@ -53,7 +53,7 @@ const dataWidgetSchema = Type.Object(
     description: Type.Optional(Type.String({ minLength: 1 })),
     content: Type.Object(
       {
-        type: Type.Literal('text'),
+        type: Type.Literal("text"),
         text: Type.String(),
         href: Type.Optional(Type.String()),
       },
@@ -88,8 +88,8 @@ const dataWidgetSchema = Type.Object(
           position: Type.Optional(
             Type.Integer({ minimum: 0, maximum: MAX_WIDGET_POSITION }),
           ),
-          align: Type.Optional(literalUnion(['left', 'middle', 'right'])),
-          fill: Type.Optional(literalUnion(['none', 'grow'])),
+          align: Type.Optional(literalUnion(["left", "middle", "right"])),
+          fill: Type.Optional(literalUnion(["none", "grow"])),
           minWidth: Type.Optional(
             Type.Integer({ minimum: 0, maximum: MAX_WIDGET_MIN_WIDTH }),
           ),
@@ -103,7 +103,7 @@ const dataWidgetSchema = Type.Object(
 const upsertMessageSchema = Type.Object(
   {
     protocol: Type.Literal(FANCY_FOOTER_PROTOCOL_VERSION),
-    type: Type.Literal('upsert'),
+    type: Type.Literal("upsert"),
     widget: dataWidgetSchema,
   },
   { additionalProperties: false },
@@ -111,7 +111,7 @@ const upsertMessageSchema = Type.Object(
 const removeMessageSchema = Type.Object(
   {
     protocol: Type.Literal(FANCY_FOOTER_PROTOCOL_VERSION),
-    type: Type.Literal('remove'),
+    type: Type.Literal("remove"),
     id: dataWidgetIdSchema,
   },
   { additionalProperties: false },
@@ -123,7 +123,7 @@ export interface NormalizedFancyFooterDataWidget {
   id: string;
   label: string;
   description: string;
-  content: { type: 'text'; text: string; href?: string };
+  content: { type: "text"; text: string; href?: string };
   icon?: FancyFooterDataWidgetIcon | false;
   preferredTextColor?: FooterWidgetColor;
   bold?: boolean;
@@ -132,10 +132,10 @@ export interface NormalizedFancyFooterDataWidget {
 
 function sanitizeInlineText(text: string, maxCodePoints: number): string {
   const inline = text
-    .replace(/[\u0000-\u001f\u007f-\u009f]/gu, ' ')
-    .replace(/\s+/gu, ' ')
+    .replace(/[\u0000-\u001f\u007f-\u009f]/gu, " ")
+    .replace(/\s+/gu, " ")
     .trim();
-  return Array.from(inline).slice(0, maxCodePoints).join('');
+  return Array.from(inline).slice(0, maxCodePoints).join("");
 }
 
 export function sanitizeDataWidgetText(text: string): string {
@@ -158,12 +158,12 @@ function sanitizeGlyph(text: string): string {
 }
 
 function normalizeIcon(
-  icon: FancyFooterDataWidget['icon'],
+  icon: FancyFooterDataWidget["icon"],
 ): FancyFooterDataWidgetIcon | false | undefined {
   if (icon === undefined || icon === false) return icon;
   const sourceGlyphs = icon.glyphs;
   const glyphs =
-    typeof sourceGlyphs === 'string'
+    typeof sourceGlyphs === "string"
       ? sanitizeGlyph(sourceGlyphs)
       : Object.fromEntries(
           FOOTER_ICON_FAMILIES.flatMap((family) => {
@@ -188,7 +188,7 @@ function normalizeWidget(
     label,
     description,
     content: {
-      type: 'text',
+      type: "text",
       text: sanitizeDataWidgetText(widget.content.text),
       ...(href ? { href } : {}),
     },
@@ -199,8 +199,8 @@ function normalizeWidget(
       enabled: widget.layout?.enabled,
       row: widget.layout?.row ?? 1,
       position: widget.layout?.position ?? 0,
-      align: (widget.layout?.align ?? 'right') as FooterWidgetAlign,
-      fill: (widget.layout?.fill ?? 'none') as FooterWidgetFill,
+      align: (widget.layout?.align ?? "right") as FooterWidgetAlign,
+      fill: (widget.layout?.fill ?? "none") as FooterWidgetFill,
       minWidth: widget.layout?.minWidth,
     },
   };
@@ -218,7 +218,7 @@ export class FancyFooterDataWidgetStore {
     }
     if (validateRemoveMessage.Check(raw)) {
       const id = sanitizeInlineText(raw.id as string, 128);
-      return id !== '' && !isFooterWidgetId(id) && this.widgets.delete(id);
+      return id !== "" && !isFooterWidgetId(id) && this.widgets.delete(id);
     }
     return false;
   }
@@ -237,13 +237,13 @@ export class FancyFooterDataWidgetStore {
 }
 
 export function resolveDataWidgetIcon(
-  icon: NormalizedFancyFooterDataWidget['icon'],
+  icon: NormalizedFancyFooterDataWidget["icon"],
   iconFamily: FooterIconFamily,
 ): FooterWidgetIcon | undefined {
   if (!icon) return undefined;
   const text =
-    typeof icon.glyphs === 'string' ? icon.glyphs : (icon.glyphs[iconFamily] ?? '');
-  return text ? { text, color: icon.color ?? 'text' } : undefined;
+    typeof icon.glyphs === "string" ? icon.glyphs : (icon.glyphs[iconFamily] ?? "");
+  return text ? { text, color: icon.color ?? "text" } : undefined;
 }
 
 export function createMicrotaskCoalescer(callback: () => void): () => void {

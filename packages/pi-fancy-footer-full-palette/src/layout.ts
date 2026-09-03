@@ -12,11 +12,7 @@ import {
   type ConfigurableWidgetMeta,
 } from "./config.ts";
 
-export const WIDGET_ALIGNS: readonly FooterWidgetAlign[] = [
-  "left",
-  "middle",
-  "right",
-];
+export const WIDGET_ALIGNS: readonly FooterWidgetAlign[] = ["left", "middle", "right"];
 
 export interface EffectivePlacement {
   row: number;
@@ -76,10 +72,7 @@ export function buildLayoutModel(
   const bench = chips.filter((chip) => chip.placement.benched);
   const placed = chips.filter((chip) => !chip.placement.benched);
 
-  const highestRow = placed.reduce(
-    (acc, chip) => Math.max(acc, chip.placement.row),
-    1,
-  );
+  const highestRow = placed.reduce((acc, chip) => Math.max(acc, chip.placement.row), 1);
 
   const rows: LayoutRow[] = [];
   for (let row = 0; row <= highestRow; row++) {
@@ -152,8 +145,7 @@ function renumberGroup(
       chip.widget.defaults.row === row &&
       chip.widget.defaults.align === align &&
       (index === 0 ||
-        group[index - 1]!.widget.defaults.position <
-          chip.widget.defaults.position),
+        group[index - 1]!.widget.defaults.position < chip.widget.defaults.position),
   );
 
   for (const [index, chip] of group.entries()) {
@@ -186,8 +178,7 @@ export function moveHorizontal(
     return;
   }
 
-  const nextAlign =
-    WIDGET_ALIGNS[WIDGET_ALIGNS.indexOf(align) + direction];
+  const nextAlign = WIDGET_ALIGNS[WIDGET_ALIGNS.indexOf(align) + direction];
   if (!nextAlign) return;
 
   group.splice(index, 1);
@@ -308,14 +299,11 @@ function unbenchToBottomRow(
   const bottomRow = model.rows.length - 1;
   if (chip.placement.row === bottomRow) return;
 
-  const source = model.rows[chip.placement.row]!.groups[
-    chip.placement.align
-  ].filter((entry) => entry.widget.id !== widgetId);
+  const source = model.rows[chip.placement.row]!.groups[chip.placement.align].filter(
+    (entry) => entry.widget.id !== widgetId,
+  );
   renumberGroup(config, source, chip.placement.row, chip.placement.align);
 
-  const target = [
-    ...model.rows[bottomRow]!.groups[chip.placement.align],
-    chip,
-  ];
+  const target = [...model.rows[bottomRow]!.groups[chip.placement.align], chip];
   renumberGroup(config, target, bottomRow, chip.placement.align);
 }

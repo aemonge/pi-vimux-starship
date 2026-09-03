@@ -22,12 +22,15 @@ preserve the current startup order:
 3. `packages/galactica-context-header/index.ts`
 4. `packages/pi-vim-top-border/index.ts`
 
-The imported trees are the comparison baseline. Keep them byte-identical until a
-confirmed OpenSpec Task explicitly replaces their role. New consolidated code should use
-bounded modules rather than one oversized entrypoint.
+The imported trees began as the comparison baseline and stayed byte-identical until the
+confirmed `repair-imported-development-toolchain` Fix replaced their development-tooling
+role. Preserve the original import at Git commit `9d7bb84` and in the immutable
+`baseline/imported-source.sha256`; `baseline/source.sha256` verifies the intentionally
+evolved current package tree. New consolidated code should use bounded modules rather
+than one oversized entrypoint.
 
-The imported source contains no `node_modules`, generated artifacts, credentials, or
-repository metadata. `baseline/source.sha256` is the initial integrity manifest.
+The imported source contained no `node_modules`, generated artifacts, credentials, or
+repository metadata. Keep those exclusions after every intentional evolution.
 
 ## Product boundaries
 
@@ -111,11 +114,14 @@ coverage for startup order, event protocols, responsive rendering, Unicode, ANSI
 optional capability absence, malformed inputs, Vim key sequences, and external-editor
 handoff.
 
-Before changing the imported baseline, run:
+Before changing the current package tree, run `npm run check:baseline`; after the
+confirmed change passes focused checks, update the current manifest with
+`node scripts/check-baseline.mjs --write` and rerun the check. Never modify
+`baseline/imported-source.sha256`.
 
-```bash
-npm run check:baseline
-```
+Use `npm run check:openspec` for the repository's schema-aware planning boundary.
+Planning-only `ramona-idea` and `ramona-plan` changes with `skip_specs: true` must have
+complete artifacts; every other change retains upstream strict validation.
 
 Packed-artifact and local-package checks must be offline and credential-free unless
 Human separately authorizes otherwise. Static checks do not prove live TUI behavior;

@@ -5,9 +5,15 @@ import fancyFooter from "./index.ts";
 
 test("model and thinking changes request an immediate render", async () => {
   const handlers = new Map<string, (...args: never[]) => unknown>();
-  let createFooter: ((tui: unknown, theme: unknown, footerData: unknown) => {
-    dispose(): void;
-  }) | undefined;
+  let createFooter:
+    | ((
+        tui: unknown,
+        theme: unknown,
+        footerData: unknown,
+      ) => {
+        dispose(): void;
+      })
+    | undefined;
   let renderRequests = 0;
 
   const pi = {

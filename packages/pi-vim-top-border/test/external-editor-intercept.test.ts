@@ -17,20 +17,15 @@ function makeEditor(hostSynced = false) {
     ex: (text: string) => `[ex]${text}`,
   };
 
-  return new ModalEditor(
-    tui as never,
-    theme as never,
-    keybindings as never,
-    {
-      borderColorizers: modeColors,
-      borderSync: hostSynced
-        ? { insert: 'host', normal: 'host', visual: 'host', ex: 'host' }
-        : undefined,
-      labelSync: hostSynced
-        ? { insert: 'mode', normal: 'mode', visual: 'mode', ex: 'mode' }
-        : undefined,
-    },
-  );
+  return new ModalEditor(tui as never, theme as never, keybindings as never, {
+    borderColorizers: modeColors,
+    borderSync: hostSynced
+      ? { insert: 'host', normal: 'host', visual: 'host', ex: 'host' }
+      : undefined,
+    labelSync: hostSynced
+      ? { insert: 'mode', normal: 'mode', visual: 'mode', ex: 'mode' }
+      : undefined,
+  });
 }
 
 test('intercepts Pi external-editor input before the builtin handler', () => {

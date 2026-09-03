@@ -624,7 +624,6 @@ function gaugeStyleSettingValue(style: GaugeStyleDef): string {
 }
 
 export function plainSettingValue(value: string): string {
-  // eslint-disable-next-line no-control-regex
   const stripped = value.replace(/\x1b\[[0-9;]*m/g, "").trim();
   const parts = stripped.split(/\s+/);
   return parts[parts.length - 1] ?? stripped;

@@ -62,7 +62,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     OpenSpec 1.6.0 strict validation also rejected all three planning-only changes for
     missing spec deltas despite their declared `skip_specs: true` schema metadata.
   - Paths: OpenSpec progress only; the failed install probe was confined to `/tmp`.
-  - History: Expected `error(package): offline toolchain cache incomplete`.
+  - History: Failure recorded by `e4a55db` (`error(package): offline toolchain cache incomplete`).
+  - Repair dependency: `repair-imported-development-toolchain` now has passing deterministic checks and a clean offline install; this Step remains interrupted until that Fix receives Human validation and focus returns here.
 - [ ] Step 1.3 Add composition and no-duplicate package-load checks, then demonstrate
       isolated local loading.
   - Estimate: 15–20 minutes; uncertainty is the smallest reliable headless Pi smoke

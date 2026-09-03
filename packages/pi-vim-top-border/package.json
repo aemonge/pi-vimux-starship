@@ -23,7 +23,7 @@
   "scripts": {
     "build": "echo 'nothing to build'",
     "format": "biome check --write .",
-    "lint": "biome check . && eslint .",
+    "lint": "biome check --config-path=../../biome.json . && eslint --config ../../eslint.config.js .",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx/esm --test 'test/**/*.test.ts'",
     "test:nvim": "node --import tsx/esm --test 'test/nvim-parity*.ts'",

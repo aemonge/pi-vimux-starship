@@ -42,11 +42,7 @@ test("default widget icons honor widgets without built-in footer icons", () => {
 
 test("isFooterIconFamily accepts all valid families and rejects invalid ones", () => {
   for (const family of FOOTER_ICON_FAMILIES) {
-    assert.equal(
-      isFooterIconFamily(family),
-      true,
-      `expected '${family}' to be valid`,
-    );
+    assert.equal(isFooterIconFamily(family), true, `expected '${family}' to be valid`);
   }
   assert.equal(isFooterIconFamily("bogus"), false);
   assert.equal(isFooterIconFamily(""), false);
@@ -58,10 +54,7 @@ test("every widget returns a non-empty icon for every icon family", () => {
   for (const family of FOOTER_ICON_FAMILIES) {
     for (const widgetId of FOOTER_WIDGET_IDS) {
       const icon = getWidgetSettingIcon(widgetId, family);
-      assert.ok(
-        icon.length > 0,
-        `${widgetId}/${family} should have a non-empty icon`,
-      );
+      assert.ok(icon.length > 0, `${widgetId}/${family} should have a non-empty icon`);
     }
   }
 });
@@ -176,17 +169,12 @@ test("getThinkingLevelFromEntries preserves Pi thinking levels", () => {
 
 test("getThinkingLevelFromEntries falls back when the session has no change", () => {
   assert.equal(getThinkingLevelFromEntries([], "high"), "high");
-  assert.equal(
-    getThinkingLevelFromEntries([{ type: "message" }], "off"),
-    "off",
-  );
+  assert.equal(getThinkingLevelFromEntries([{ type: "message" }], "off"), "off");
 });
 
 // ── widgetSummary ──────────────────────────────────────────────────────
 
-function withWidgets(
-  widgets: FooterConfigSnapshot["widgets"],
-): FooterConfigSnapshot {
+function withWidgets(widgets: FooterConfigSnapshot["widgets"]): FooterConfigSnapshot {
   return { ...DEFAULT_FOOTER_CONFIG, widgets };
 }
 
@@ -207,10 +195,7 @@ test("widgetSummary shows only deltas from defaults", () => {
   // context-bar default: row 0, position 0, left, none
   // Only icon hidden is a real change.
   assert.equal(
-    widgetSummary(
-      withWidgets({ "context-bar": { icon: "hide" } }),
-      "context-bar",
-    ),
+    widgetSummary(withWidgets({ "context-bar": { icon: "hide" } }), "context-bar"),
     "icon:hidden",
   );
 
@@ -233,16 +218,10 @@ test("widgetSummary shows only deltas from defaults", () => {
 
 test("widgetSummary shows enabled/disabled state", () => {
   assert.equal(
-    widgetSummary(
-      withWidgets({ "total-cost": { enabled: false } }),
-      "total-cost",
-    ),
+    widgetSummary(withWidgets({ "total-cost": { enabled: false } }), "total-cost"),
     "off",
   );
-  assert.equal(
-    widgetSummary(withWidgets({ model: { enabled: true } }), "model"),
-    "on",
-  );
+  assert.equal(widgetSummary(withWidgets({ model: { enabled: true } }), "model"), "on");
 });
 
 test("widgetSummary shows color overrides", () => {
@@ -292,10 +271,7 @@ test("widgetSummary hides icon-only overrides for iconless widgets", () => {
 
 test("widgetSummary shows icon color overrides", () => {
   assert.equal(
-    widgetSummary(
-      withWidgets({ branch: { iconColor: "accent" } }),
-      "branch",
-    ),
+    widgetSummary(withWidgets({ branch: { iconColor: "accent" } }), "branch"),
     "icon:accent",
   );
 });
@@ -303,18 +279,12 @@ test("widgetSummary shows icon color overrides", () => {
 test("widgetSummary shows fill only when it differs from the widget default", () => {
   // context-bar defaults to fill:none, so fill:none is not a delta.
   assert.equal(
-    widgetSummary(
-      withWidgets({ "context-bar": { fill: "none" } }),
-      "context-bar",
-    ),
+    widgetSummary(withWidgets({ "context-bar": { fill: "none" } }), "context-bar"),
     "default",
   );
   // fill:grow on context-bar IS a delta.
   assert.equal(
-    widgetSummary(
-      withWidgets({ "context-bar": { fill: "grow" } }),
-      "context-bar",
-    ),
+    widgetSummary(withWidgets({ "context-bar": { fill: "grow" } }), "context-bar"),
     "fill:grow",
   );
   // model defaults to fill:none, so fill:grow IS a delta.
@@ -326,10 +296,7 @@ test("widgetSummary shows fill only when it differs from the widget default", ()
 
 test("widgetSummary shows minWidth override", () => {
   assert.equal(
-    widgetSummary(
-      withWidgets({ "context-bar": { minWidth: 12 } }),
-      "context-bar",
-    ),
+    widgetSummary(withWidgets({ "context-bar": { minWidth: 12 } }), "context-bar"),
     "width:12",
   );
 });

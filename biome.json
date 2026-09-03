@@ -17,6 +17,21 @@
   "assist": {
     "enabled": false
   },
+  "overrides": [
+    {
+      "includes": [
+        "packages/pi-vim-top-border/prompt-rail.ts",
+        "packages/pi-vim-top-border/test/prompt-rail.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "useRegexLiterals": "off"
+          }
+        }
+      }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "single",

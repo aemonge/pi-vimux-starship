@@ -44,8 +44,7 @@ interface OpenFooterConfigEditorOptions {
 }
 
 type Selection =
-  | { area: "grid" | "bench"; widgetId: string }
-  | { area: "globals"; index: number };
+  { area: "grid" | "bench"; widgetId: string } | { area: "globals"; index: number };
 
 interface ChipSpan {
   start: number;
@@ -99,8 +98,7 @@ export async function openFooterConfigEditor({
 
     // Non-empty chip rows in navigation order: grid rows, then the bench.
     type NavRow =
-      | { kind: "grid"; row: LayoutRow }
-      | { kind: "bench"; chips: LayoutChip[] };
+      { kind: "grid"; row: LayoutRow } | { kind: "bench"; chips: LayoutChip[] };
 
     const navRows = (current: LayoutModel): NavRow[] => {
       const rows: NavRow[] = current.rows
@@ -343,8 +341,7 @@ export async function openFooterConfigEditor({
     const chipText = (chip: LayoutChip, mode: ChipMode): string => {
       const icon = chip.widget.defaultIcon?.text ?? "◌";
       if (mode === "icon") return icon;
-      const label =
-        mode === "full" ? chip.widget.label : chip.widget.shortLabel;
+      const label = mode === "full" ? chip.widget.label : chip.widget.shortLabel;
       const grow = chip.placement.fill === "grow" ? " ↔" : "";
       return `${icon} ${label}${grow}`;
     };
@@ -359,14 +356,10 @@ export async function openFooterConfigEditor({
       if (chip.placement.benched) return theme.fg("dim", plain);
 
       const icon = chip.widget.defaultIcon?.text ?? "◌";
-      const iconColor = chip.widget.defaultIcon
-        ? draft.defaultIconColor
-        : "dim";
+      const iconColor = chip.widget.defaultIcon ? draft.defaultIconColor : "dim";
       if (mode === "icon") return theme.fg(iconColor, icon);
-      const label =
-        mode === "full" ? chip.widget.label : chip.widget.shortLabel;
-      const grow =
-        chip.placement.fill === "grow" ? theme.fg("dim", " ↔") : "";
+      const label = mode === "full" ? chip.widget.label : chip.widget.shortLabel;
+      const grow = chip.placement.fill === "grow" ? theme.fg("dim", " ↔") : "";
       return `${theme.fg(iconColor, icon)} ${label}${grow}`;
     };
 
@@ -383,11 +376,7 @@ export async function openFooterConfigEditor({
         0,
       );
 
-    const rowFits = (
-      contentWidth: number,
-      row: LayoutRow,
-      mode: ChipMode,
-    ): boolean => {
+    const rowFits = (contentWidth: number, row: LayoutRow, mode: ChipMode): boolean => {
       const blocks = [
         groupWidth(row.groups.left, mode),
         groupWidth(row.groups.middle, mode),
@@ -463,11 +452,7 @@ export async function openFooterConfigEditor({
           line += " ".repeat(entry.column - column);
           column = entry.column;
         }
-        line += styledChip(
-          entry.chip,
-          mode,
-          entry.chip.widget.id === selectedId,
-        );
+        line += styledChip(entry.chip, mode, entry.chip.widget.id === selectedId);
         chipSpans.set(entry.chip.widget.id, {
           start: gutterWidth + entry.column,
           end: gutterWidth + entry.column + entry.width,
@@ -506,10 +491,7 @@ export async function openFooterConfigEditor({
 
         const gutterDigits = String(current.rows.length - 1).length;
         for (const row of current.rows) {
-          const gutter = theme.fg(
-            "dim",
-            `${String(row.row).padStart(gutterDigits)}│ `,
-          );
+          const gutter = theme.fg("dim", `${String(row.row).padStart(gutterDigits)}│ `);
           if (row.ordered.length === 0) {
             lines.push(
               truncateToWidth(`${gutter}${theme.fg("dim", "(empty)")}`, width),
@@ -528,8 +510,7 @@ export async function openFooterConfigEditor({
           const contentWidth = Math.max(10, width - gutterDigits - 2);
           const mode =
             CHIP_MODES.find(
-              (candidate) =>
-                groupWidth(current.bench, candidate) <= contentWidth,
+              (candidate) => groupWidth(current.bench, candidate) <= contentWidth,
             ) ?? "icon";
           const placedBench: PlacedChip[] = [];
           let column = 0;
@@ -538,9 +519,7 @@ export async function openFooterConfigEditor({
             placedBench.push({ chip, column, width: chipWidth });
             column += chipWidth + CHIP_GAP;
           }
-          lines.push(
-            renderChipLine(width, gutter, placedBench, mode, selectedId),
-          );
+          lines.push(renderChipLine(width, gutter, placedBench, mode, selectedId));
         }
 
         if (selection.area !== "globals") {
@@ -555,9 +534,7 @@ export async function openFooterConfigEditor({
             const group = placement.benched
               ? current.bench
               : current.rows[placement.row]!.groups[placement.align];
-            const index = group.findIndex(
-              (entry) => entry.widget.id === widgetId,
-            );
+            const index = group.findIndex((entry) => entry.widget.id === widgetId);
             const info = placement.benched
               ? "hidden"
               : `row ${placement.row} · ${placement.align} · pos ${index}${
@@ -581,8 +558,7 @@ export async function openFooterConfigEditor({
           Math.max(8, width - 12),
         );
         for (const [index, item] of globals.entries()) {
-          const selected =
-            selection.area === "globals" && selection.index === index;
+          const selected = selection.area === "globals" && selection.index === index;
           const prefix = selected ? theme.fg("accent", "→ ") : "  ";
           const label = truncateToWidth(item.label, labelWidth, "");
           const paddedLabel =
@@ -600,10 +576,7 @@ export async function openFooterConfigEditor({
         const description = selectedDescription();
         if (description) {
           lines.push("");
-          for (const line of wrapTextWithAnsi(
-            description,
-            Math.max(10, width - 2),
-          )) {
+          for (const line of wrapTextWithAnsi(description, Math.max(10, width - 2))) {
             lines.push(truncateToWidth(theme.fg("dim", line), width));
           }
         }
@@ -611,10 +584,7 @@ export async function openFooterConfigEditor({
         lines.push("");
         lines.push(
           truncateToWidth(
-            theme.fg(
-              "dim",
-              selection.area === "globals" ? globalsHints : chipHints,
-            ),
+            theme.fg("dim", selection.area === "globals" ? globalsHints : chipHints),
             width,
           ),
         );

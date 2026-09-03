@@ -90,12 +90,9 @@ export default function (pi: ExtensionAPI) {
     pi.events.emit(FANCY_FOOTER_READY_CHANNEL, message);
   };
 
-  const stopDataWidgetListener = pi.events.on(
-    FANCY_FOOTER_WIDGET_CHANNEL,
-    (raw) => {
-      if (dataWidgets.apply(raw)) refreshDataWidgets();
-    },
-  );
+  const stopDataWidgetListener = pi.events.on(FANCY_FOOTER_WIDGET_CHANNEL, (raw) => {
+    if (dataWidgets.apply(raw)) refreshDataWidgets();
+  });
 
   const installFooter = (ctx: ExtensionContext) => {
     if (!ctx.hasUI) return;
@@ -150,10 +147,7 @@ export default function (pi: ExtensionAPI) {
             }
 
             providerStatusRefreshAt = Date.now();
-            const next = await collectProviderStatus(
-              pi,
-              footerConfig.providerStatus,
-            );
+            const next = await collectProviderStatus(pi, footerConfig.providerStatus);
             if (!isActiveFooter()) return;
             providerStatuses = new Map(
               next.map((snapshot) => [snapshot.provider, snapshot]),

@@ -30,9 +30,7 @@ const CLAUDE_SECONDARY_WINDOW_LABEL = "7d";
 
 type HeaderLike = Record<string, string | number | boolean | undefined | null>;
 
-type TokenRefreshResult =
-  | { ok: true; stdout: string }
-  | { ok: false; error: Error };
+type TokenRefreshResult = { ok: true; stdout: string } | { ok: false; error: Error };
 
 export interface ProviderStatusSource {
   id: string;
@@ -40,10 +38,7 @@ export interface ProviderStatusSource {
   usageUrl: string;
   preserveMissingWindows: boolean;
   fetch(pi: ExtensionAPI): Promise<ProviderStatusSnapshot>;
-  parseHeaders(
-    headers: HeaderLike,
-    now?: Date,
-  ): ProviderStatusSnapshot | undefined;
+  parseHeaders(headers: HeaderLike, now?: Date): ProviderStatusSnapshot | undefined;
 }
 
 const CODEX_SOURCE: ProviderStatusSource = {
@@ -204,19 +199,14 @@ function applyScopedWindow(
   window: ProviderStatusWindow | undefined,
   scoped: readonly ProviderStatusScopedWindow[],
 ): ProviderStatusWindow | undefined {
-  const matches = scoped.filter(
-    (candidate) => candidate.label === window?.label,
-  );
+  const matches = scoped.filter((candidate) => candidate.label === window?.label);
   if (matches.length === 0) return window;
 
   let strictest = window;
   for (const match of matches) {
     if (strictest) {
       if (match.usageUnknown) continue;
-      if (
-        !strictest.usageUnknown &&
-        match.usedPercent <= strictest.usedPercent
-      ) {
+      if (!strictest.usageUnknown && match.usedPercent <= strictest.usedPercent) {
         continue;
       }
     }
@@ -246,15 +236,9 @@ interface AuthCredentials {
 }
 
 export function resetCountdownText(
-  window: Pick<
-    ProviderStatusWindow,
-    "usedPercent" | "resetAt" | "usageUnknown"
-  >,
+  window: Pick<ProviderStatusWindow, "usedPercent" | "resetAt" | "usageUnknown">,
   role: "primary" | "secondary",
-  config: Pick<
-    ProviderStatusConfigSnapshot,
-    "showReset" | "resetMinUsedPercent"
-  >,
+  config: Pick<ProviderStatusConfigSnapshot, "showReset" | "resetMinUsedPercent">,
   nowMs: number,
 ): string {
   const roleEnabled =
@@ -281,8 +265,7 @@ export function formatProviderStatusText(
   nowMs = Date.now(),
 ): string {
   if (!snapshot) return "";
-  const hasWindows =
-    snapshot.primary !== undefined || snapshot.secondary !== undefined;
+  const hasWindows = snapshot.primary !== undefined || snapshot.secondary !== undefined;
   if (
     snapshot.state === "unavailable" &&
     !hasWindows &&
@@ -379,10 +362,12 @@ async function collectProviderStatusFromSource(
   if (isProviderStatusFresh(cached, config.cacheTtlMs)) {
     // A window can reset within the cache TTL, which leaves the cached
     // percentages describing the previous period.
-    return displayableCachedStatus(cached, { requireResetAt: false }) ?? {
-      ...cached,
-      source: "cache",
-    };
+    return (
+      displayableCachedStatus(cached, { requireResetAt: false }) ?? {
+        ...cached,
+        source: "cache",
+      }
+    );
   }
 
   try {
@@ -455,9 +440,7 @@ function displayableCachedStatus(
     ...(primary ? { primary } : {}),
     ...(secondary ? { secondary } : {}),
     ...(scoped && scoped.length > 0 ? { scoped } : {}),
-    ...(error === undefined
-      ? {}
-      : { error: providerStatusErrorMessage(error) }),
+    ...(error === undefined ? {} : { error: providerStatusErrorMessage(error) }),
   };
 }
 
@@ -527,8 +510,7 @@ export async function updateProviderStatusFromHeaders(
       // A duration-bearing weekly primary with no secondary is an explicit
       // weekly-only Codex layout, not a sparse update.
       preserveMissingWindows:
-        source.preserveMissingWindows ||
-        !isWeeklyOnlyCodexStatus(parsed),
+        source.preserveMissingWindows || !isWeeklyOnlyCodexStatus(parsed),
     });
     await writeProviderStatusCache(merged).catch(() => undefined);
     updated.push(merged);
@@ -625,8 +607,7 @@ export function normalizeClaudeUsageResponse(
   // entries in `limits` so a response that drops the flat fields still reports
   // quota instead of hiding the widget.
   const limits = normalizeClaudeLimits(obj.limits, now);
-  const resolvedPrimary =
-    primary ?? limits?.account.get(CLAUDE_PRIMARY_WINDOW_LABEL);
+  const resolvedPrimary = primary ?? limits?.account.get(CLAUDE_PRIMARY_WINDOW_LABEL);
   const resolvedSecondary =
     secondary ?? limits?.account.get(CLAUDE_SECONDARY_WINDOW_LABEL);
   if (!resolvedPrimary && !resolvedSecondary) return undefined;
@@ -805,11 +786,7 @@ async function fetchClaudeProviderStatus(
 }
 
 async function resolveCodexAuth(): Promise<AuthCredentials> {
-  const pi = await readAuthFile(
-    "pi",
-    homePath(".pi/agent/auth.json"),
-    "openai-codex",
-  );
+  const pi = await readAuthFile("pi", homePath(".pi/agent/auth.json"), "openai-codex");
   if (pi) return refreshIfNeeded(pi);
 
   const codex = await readAuthFile(
@@ -825,11 +802,7 @@ async function resolveCodexAuth(): Promise<AuthCredentials> {
 }
 
 async function resolveClaudeAuth(): Promise<AuthCredentials> {
-  const pi = await readAuthFile(
-    "pi",
-    homePath(".pi/agent/auth.json"),
-    "anthropic",
-  );
+  const pi = await readAuthFile("pi", homePath(".pi/agent/auth.json"), "anthropic");
   if (pi) return refreshIfNeeded(pi);
 
   throw new Error(
@@ -837,9 +810,7 @@ async function resolveClaudeAuth(): Promise<AuthCredentials> {
   );
 }
 
-async function refreshIfNeeded(
-  auth: AuthCredentials,
-): Promise<AuthCredentials> {
+async function refreshIfNeeded(auth: AuthCredentials): Promise<AuthCredentials> {
   if (!auth.refreshToken || !auth.expiresAtMs) return auth;
   if (auth.expiresAtMs > Date.now() + 5 * 60 * 1000) return auth;
   return refreshAuth(auth);
@@ -880,21 +851,16 @@ async function refreshAuth(auth: AuthCredentials): Promise<AuthCredentials> {
   const refreshed = JSON.parse(result.stdout) as Record<string, unknown>;
   const accessToken = stringValue(refreshed.access_token);
   if (!accessToken) {
-    throw new Error(
-      `${refreshConfig.label} auth refresh did not return access_token`,
-    );
+    throw new Error(`${refreshConfig.label} auth refresh did not return access_token`);
   }
 
-  const refreshToken =
-    stringValue(refreshed.refresh_token) ?? auth.refreshToken;
+  const refreshToken = stringValue(refreshed.refresh_token) ?? auth.refreshToken;
   const expiresIn = numberValue(refreshed.expires_in);
   const next: AuthCredentials = {
     ...auth,
     accessToken,
     refreshToken,
-    ...(expiresIn !== undefined
-      ? { expiresAtMs: Date.now() + expiresIn * 1000 }
-      : {}),
+    ...(expiresIn !== undefined ? { expiresAtMs: Date.now() + expiresIn * 1000 } : {}),
   };
   await persistAuth(next);
   return next;
@@ -915,9 +881,7 @@ async function requestTokenRefresh(
     if (!response.ok) {
       return {
         ok: false,
-        error: new Error(
-          `${label} failed (${response.status}): ${text.slice(0, 500)}`,
-        ),
+        error: new Error(`${label} failed (${response.status}): ${text.slice(0, 500)}`),
       };
     }
     return { ok: true, stdout: text };
@@ -994,10 +958,7 @@ function parseCodexAuth(
 }
 
 async function persistAuth(auth: AuthCredentials): Promise<void> {
-  const raw = JSON.parse(await readFile(auth.path, "utf8")) as Record<
-    string,
-    unknown
-  >;
+  const raw = JSON.parse(await readFile(auth.path, "utf8")) as Record<string, unknown>;
 
   if (auth.source === "pi") {
     const entry = objectValue(raw[auth.provider]);
@@ -1121,9 +1082,7 @@ function windowDurationMinutes(label: string): number {
   return value;
 }
 
-function isWeeklyOnlyCodexStatus(
-  snapshot: ProviderStatusSnapshot,
-): boolean {
+function isWeeklyOnlyCodexStatus(snapshot: ProviderStatusSnapshot): boolean {
   return (
     snapshot.provider === CODEX_SOURCE.id &&
     snapshot.primary?.label === CODEX_SECONDARY_WINDOW_LABEL &&
@@ -1137,26 +1096,17 @@ function parseHeaderWindow(
   label: string,
   now: Date,
 ): ProviderStatusWindow | undefined {
-  const usedPercent = numberString(
-    headerValue(headers, `${prefix}-used-percent`),
-  );
+  const usedPercent = numberString(headerValue(headers, `${prefix}-used-percent`));
   const resetAt = normalizeResetAt(
     numberString(headerValue(headers, `${prefix}-reset-at`)),
   );
-  const windowMinutes = numberString(
-    headerValue(headers, `${prefix}-window-minutes`),
-  );
+  const windowMinutes = numberString(headerValue(headers, `${prefix}-window-minutes`));
   if (usedPercent === undefined && resetAt === undefined) return undefined;
   const durationLabel =
     windowMinutes === undefined
       ? undefined
       : windowLabelFromSeconds(windowMinutes * 60);
-  return windowFromUsedPercent(
-    durationLabel ?? label,
-    usedPercent ?? 0,
-    resetAt,
-    now,
-  );
+  return windowFromUsedPercent(durationLabel ?? label, usedPercent ?? 0, resetAt, now);
 }
 
 function normalizeApiWindow(
@@ -1169,8 +1119,7 @@ function normalizeApiWindow(
   const resetAt = normalizeResetAt(numberValue(value.reset_at));
   if (usedPercent === undefined && resetAt === undefined) return undefined;
   const label =
-    windowLabelFromSeconds(numberValue(value.limit_window_seconds)) ??
-    fallbackLabel;
+    windowLabelFromSeconds(numberValue(value.limit_window_seconds)) ?? fallbackLabel;
   return windowFromUsedPercent(label, usedPercent ?? 0, resetAt, now);
 }
 
@@ -1181,8 +1130,7 @@ function normalizeClaudeUsageWindow(
 ): ProviderStatusWindow | undefined {
   if (!value) return undefined;
   const usedPercent =
-    numberValue(value.utilization) ??
-    numberString(stringValue(value.utilization));
+    numberValue(value.utilization) ?? numberString(stringValue(value.utilization));
   if (usedPercent === undefined) return undefined;
 
   return windowFromUsedPercent(
@@ -1193,9 +1141,7 @@ function normalizeClaudeUsageWindow(
   );
 }
 
-function windowLabelFromSeconds(
-  seconds: number | undefined,
-): string | undefined {
+function windowLabelFromSeconds(seconds: number | undefined): string | undefined {
   if (seconds === undefined || seconds <= 0) return undefined;
   if (seconds % 86_400 === 0) return `${seconds / 86_400}d`;
   if (seconds % 3_600 === 0) return `${seconds / 3_600}h`;
@@ -1233,10 +1179,7 @@ function computeProviderStatusState(
   return severity === "success" ? "ok" : severity;
 }
 
-export function formatResetCountdown(
-  resetAt: number,
-  nowMs = Date.now(),
-): string {
+export function formatResetCountdown(resetAt: number, nowMs = Date.now()): string {
   if (!Number.isFinite(resetAt) || !Number.isFinite(nowMs) || resetAt <= 0) {
     return "";
   }
@@ -1308,9 +1251,7 @@ function stringValue(value: unknown): string | undefined {
 }
 
 function numberValue(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isFinite(value)
-    ? value
-    : undefined;
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
 function numberString(value: string | undefined): number | undefined {

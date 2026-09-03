@@ -19,13 +19,15 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Refinement trigger:** Stop and split if a repair changes visible runtime behavior, requires another network operation, expands outside the named paths, or approaches 90 minutes.
 - **Implementation confirmed at:** 2026-09-03T13:38:04Z
 - **Implementation started at:** 2026-09-03T13:38:04Z
-- **Work completed at:** Pending
-- **Assurance started at:** Pending
-- **Assurance completed at:** Pending
-- **Ready for validation at:** Pending
-- **Actual implementation:** Pending
-- **Observed Human wait:** Pending
-- **Estimate outcome:** Pending
+- **Takeover confirmed at:** 2026-09-03T14:00:32Z
+- **Takeover resumed at:** 2026-09-03T14:00:32Z
+- **Work completed at:** 2026-09-03T13:59:00Z
+- **Assurance started at:** 2026-09-03T13:59:00Z
+- **Assurance completed at:** 2026-09-03T14:00:04Z
+- **Ready for validation at:** 2026-09-03T14:00:04Z
+- **Actual implementation:** Approximately 16–18 minutes; 21 minutes elapsed to final assurance start, including two bounded Human confirmation waits.
+- **Observed Human wait:** Approximately 3–5 minutes across the two scope addenda; exact prompt-delivery timestamps were unavailable.
+- **Estimate outcome:** Faster than the 45–75 minute low-confidence range because the Human-populated cache resolved the pinned graph and both source defects were already discriminated; formatter and stale-lock discovery added scope but remained mechanical.
 - **Symptom:** Root checks depend on missing parent configuration, version-skewed workspace installs, one missing fixture, three TypeBox-diagnostic mismatches, two Footer type defects, and unsupported planning-only strict validation.
 - **Cause:** The imported authored trees omitted Galactica's parent development environment and retained package-local dependency assumptions rather than one standalone root boundary.
 - **Bounded repair:** Centralize tooling, repair only diagnosed nonvisual defects, separate original and current integrity manifests, and add schema-aware local planning validation.
@@ -46,11 +48,12 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: Header 69/69 and Footer 158/158 tests pass under root dependencies; Footer strict TypeScript and focused Prettier checks pass; current source integrity passes for 88 files and the immutable original import record passes for 87 files.
   - Paths: `baseline/source.sha256`, new `baseline/imported-source.sha256`, `scripts/check-baseline.mjs`, Header fixture and its test reference, Footer `src/config.ts`, `src/render.ts`, `src/shared.ts`, and this Task ledger.
   - History: Expected `step(tooling): repair imported verification defects`.
-- [ ] Step 1.3 Add schema-aware planning validation, document the standalone boundary, and prove a clean offline reinstall.
-  - Estimate: 15–25 minutes; uncertainty is clean-install behavior after removing child lockfiles.
-  - Timing: Pending
-  - Check: Pending
-  - History: Pending
+- [x] Step 1.3 Add schema-aware planning validation, document the standalone boundary, and prove a clean offline reinstall.
+  - Estimate: 15–25 minutes; uncertainty was clean-install behavior after removing child lockfiles.
+  - Timing: 2026-09-03T13:47:39Z–2026-09-03T14:00:04Z (12m25s wall time including two Human confirmation waits and final assurance).
+  - Check: Root `npm run check` passes current/original integrity, Prettier, zero-finding Biome and ESLint, strict TypeScript, 4 tooling tests, Status 108/108, Header 69/69, Footer 158/158, Vim 13/13, and four schema-aware OpenSpec changes. A clean offline `npm ci` installs 241 packages with no child `node_modules`; all workspace Pi peers resolve to 0.84.4. Isolated offline Pi loading passes with 204 model rows, and `npm pack --dry-run` reports 122 credential-free files with no generated dependency trees.
+  - Paths: `.prettierignore`, `AGENTS.md`, `biome.json`, `package.json`, `package-lock.json`, `tsconfig.json`, `scripts/check-openspec.mjs`, `test/check-openspec.test.ts`, `docs/baseline-evidence.md`, `docs/development.md`, current source manifest, approved mechanical Footer/Vim formatting and dead-code cleanup, this Fix Plan/Task, and blocked consolidation Task progress.
+  - History: Expected `step(tooling): prove standalone verification boundary`.
 
 ### Human validation
 

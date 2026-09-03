@@ -50,15 +50,8 @@ test("buildLayoutModel groups default widgets like the renderer", () => {
 
   assert.equal(model.rows.length, 2);
   // context-capacity and commit are hidden by default and start on the bench.
-  assert.deepEqual(ids(model.bench), [
-    "provider",
-    "context-capacity",
-    "commit",
-  ]);
-  assert.deepEqual(ids(model.rows[0]!.groups.left), [
-    "context-bar",
-    "provider-status",
-  ]);
+  assert.deepEqual(ids(model.bench), ["provider", "context-capacity", "commit"]);
+  assert.deepEqual(ids(model.rows[0]!.groups.left), ["context-bar", "provider-status"]);
   assert.deepEqual(ids(model.rows[0]!.groups.right), [
     "cache-read",
     "cache-write",
@@ -73,10 +66,11 @@ test("buildLayoutModel groups default widgets like the renderer", () => {
     "git-status",
   ]);
   assert.deepEqual(ids(model.rows[1]!.groups.right), ["model", "thinking"]);
-  assert.deepEqual(
-    ids(model.rows[1]!.ordered),
-    [...ids(model.rows[1]!.groups.left), "model", "thinking"],
-  );
+  assert.deepEqual(ids(model.rows[1]!.ordered), [
+    ...ids(model.rows[1]!.groups.left),
+    "model",
+    "thinking",
+  ]);
 });
 
 test("buildLayoutModel breaks position ties by base order", () => {
@@ -93,10 +87,7 @@ test("buildLayoutModel breaks position ties by base order", () => {
   const model = buildLayoutModel(config, widgets);
   // "location" also defaults to row 1 / left / position 0 and precedes the
   // extension widget in base order.
-  assert.deepEqual(ids(model.rows[1]!.groups.left).slice(0, 2), [
-    "location",
-    "ext-a",
-  ]);
+  assert.deepEqual(ids(model.rows[1]!.groups.left).slice(0, 2), ["location", "ext-a"]);
 });
 
 test("buildLayoutModel puts disabled widgets on the bench", () => {
@@ -254,11 +245,7 @@ test("moveVertical unbenches onto the bottom-most row", () => {
   moveVertical(config, widgets, "context-bar", -1);
 
   const model = buildLayoutModel(config, widgets);
-  assert.deepEqual(ids(model.bench), [
-    "provider",
-    "context-capacity",
-    "commit",
-  ]);
+  assert.deepEqual(ids(model.bench), ["provider", "context-capacity", "commit"]);
   const left = ids(model.rows[1]!.groups.left);
   assert.equal(left[left.length - 1], "context-bar");
 });
@@ -280,11 +267,7 @@ test("setBenched round-trips a default-hidden widget with a minimal override", (
   setBenched(config, widgets, "context-capacity", true);
   assert.deepEqual(config.widgets, {});
   model = buildLayoutModel(config, widgets);
-  assert.deepEqual(ids(model.bench), [
-    "provider",
-    "context-capacity",
-    "commit",
-  ]);
+  assert.deepEqual(ids(model.bench), ["provider", "context-capacity", "commit"]);
 });
 
 test("moveVertical clamps at row 0 and MAX_WIDGET_ROW", () => {

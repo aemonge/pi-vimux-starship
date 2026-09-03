@@ -330,8 +330,8 @@ test("projectProviderStatusForModel matches multi-token and prefixed model names
   };
 
   assert.equal(
-    projectProviderStatusForModel(snapshot, "eu.anthropic.claude-fable-5")
-      .secondary?.usedPercent,
+    projectProviderStatusForModel(snapshot, "eu.anthropic.claude-fable-5").secondary
+      ?.usedPercent,
     96,
   );
   assert.equal(
@@ -441,8 +441,7 @@ test("formatProviderStatusText keeps default output provider-neutral", () => {
 
 test("formatResetCountdown truncates at unit boundaries", () => {
   const nowMs = 1_800_000_000_000;
-  const resetAtAfter = (remainingMs: number) =>
-    (nowMs + remainingMs) / 1000;
+  const resetAtAfter = (remainingMs: number) => (nowMs + remainingMs) / 1000;
 
   assert.equal(formatResetCountdown(Number.NaN, nowMs), "");
   assert.equal(formatResetCountdown(Number.POSITIVE_INFINITY, nowMs), "");
@@ -452,27 +451,15 @@ test("formatResetCountdown truncates at unit boundaries", () => {
   assert.equal(formatResetCountdown(resetAtAfter(1), nowMs), "~now");
   assert.equal(formatResetCountdown(resetAtAfter(59_000), nowMs), "~now");
   assert.equal(formatResetCountdown(resetAtAfter(60_000), nowMs), "~1m");
-  assert.equal(
-    formatResetCountdown(resetAtAfter(59 * 60_000 + 59_000), nowMs),
-    "~59m",
-  );
+  assert.equal(formatResetCountdown(resetAtAfter(59 * 60_000 + 59_000), nowMs), "~59m");
   assert.equal(formatResetCountdown(resetAtAfter(60 * 60_000), nowMs), "~1h");
   assert.equal(
-    formatResetCountdown(
-      resetAtAfter(4 * 60 * 60_000 + 32 * 60_000 + 59_000),
-      nowMs,
-    ),
+    formatResetCountdown(resetAtAfter(4 * 60 * 60_000 + 32 * 60_000 + 59_000), nowMs),
     "~4h32m",
   );
+  assert.equal(formatResetCountdown(resetAtAfter(24 * 60 * 60_000), nowMs), "~1d");
   assert.equal(
-    formatResetCountdown(resetAtAfter(24 * 60 * 60_000), nowMs),
-    "~1d",
-  );
-  assert.equal(
-    formatResetCountdown(
-      resetAtAfter(31 * 60 * 60_000 + 59 * 60_000),
-      nowMs,
-    ),
+    formatResetCountdown(resetAtAfter(31 * 60 * 60_000 + 59 * 60_000), nowMs),
     "~1d7h",
   );
 });
@@ -505,19 +492,11 @@ test("formatProviderStatusText places countdowns next to their windows", () => {
   };
 
   assert.equal(
-    formatProviderStatusText(
-      snapshot,
-      { ...config, showReset: "off" },
-      nowMs,
-    ),
+    formatProviderStatusText(snapshot, { ...config, showReset: "off" }, nowMs),
     "5h:2% 7d:97% cr:12",
   );
   assert.equal(
-    formatProviderStatusText(
-      snapshot,
-      { ...config, showReset: "primary" },
-      nowMs,
-    ),
+    formatProviderStatusText(snapshot, { ...config, showReset: "primary" }, nowMs),
     "5h:2% ~4h32m 7d:97% cr:12",
   );
   assert.equal(
@@ -587,11 +566,7 @@ test("formatProviderStatusText treats unreported usage as below the threshold", 
 
   assert.equal(formatProviderStatusText(snapshot, config, nowMs), "5h:0%");
   assert.equal(
-    formatProviderStatusText(
-      snapshot,
-      { ...config, resetMinUsedPercent: 0 },
-      nowMs,
-    ),
+    formatProviderStatusText(snapshot, { ...config, resetMinUsedPercent: 0 }, nowMs),
     "5h:0% ~1h",
   );
 });
@@ -807,10 +782,9 @@ test("collectProviderStatus does not present expired cache as live status after 
     "provider-status",
     "openai-codex.json",
   );
-  await mkdir(
-    join(process.env.XDG_CACHE_HOME, "pi-fancy-footer", "provider-status"),
-    { recursive: true },
-  );
+  await mkdir(join(process.env.XDG_CACHE_HOME, "pi-fancy-footer", "provider-status"), {
+    recursive: true,
+  });
   await writeFile(
     cachePath,
     JSON.stringify({
@@ -1174,11 +1148,7 @@ test("collectProviderStatus marks rolled-over cached quota unknown", async (t) =
     resetMinUsedPercent: 0,
   };
   assert.equal(formatProviderStatusText(snapshot, textConfig), "5h:— 7d:—");
-  const gauge = buildProviderStatusGauge(
-    snapshot,
-    getGaugeStyle("parallelograms"),
-    5,
-  );
+  const gauge = buildProviderStatusGauge(snapshot, getGaugeStyle("parallelograms"), 5);
   assert.equal(gauge[0]?.filledGlyphs, "");
   assert.equal(gauge[0]?.emptyGlyphs, "▱▱▱▱▱");
   assert.equal(gauge[0]?.percentText, "—");

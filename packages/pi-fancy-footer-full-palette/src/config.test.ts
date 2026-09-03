@@ -71,10 +71,7 @@ test("footerConfigValidationErrors explains reset mode migration", () => {
 
 test("the default provider status gates reset countdowns at 75%", () => {
   assert.equal(DEFAULT_FOOTER_CONFIG.providerStatus.showReset, "all");
-  assert.equal(
-    DEFAULT_FOOTER_CONFIG.providerStatus.resetMinUsedPercent,
-    75,
-  );
+  assert.equal(DEFAULT_FOOTER_CONFIG.providerStatus.resetMinUsedPercent, 75);
 });
 
 test("footerConfigValidationErrors validates reset usage thresholds", () => {
@@ -205,9 +202,7 @@ test("footerConfigValidationErrors suggests close matches for typos", () => {
     footerConfigValidationErrors({
       widgets: { "context-bar": { minWdth: 3 } },
     }),
-    [
-      '  - /widgets/context-bar: unknown key "minWdth" (did you mean "minWidth"?)',
-    ],
+    ['  - /widgets/context-bar: unknown key "minWdth" (did you mean "minWidth"?)'],
   );
 });
 
@@ -218,10 +213,7 @@ test("footerConfigValidationErrors reports plain value errors with their path", 
 });
 
 test("footerConfigValidationErrors accepts partial gaugeColors", () => {
-  assert.deepEqual(
-    footerConfigValidationErrors({ gaugeColors: { ok: "dim" } }),
-    [],
-  );
+  assert.deepEqual(footerConfigValidationErrors({ gaugeColors: { ok: "dim" } }), []);
   assert.deepEqual(footerConfigValidationErrors({ gaugeColors: { okay: "dim" } }), [
     '  - /gaugeColors: unknown key "okay" (did you mean "ok"?)',
   ]);

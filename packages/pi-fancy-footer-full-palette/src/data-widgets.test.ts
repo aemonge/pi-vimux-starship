@@ -1,5 +1,5 @@
-import assert from 'node:assert/strict';
-import test from 'node:test';
+import assert from "node:assert/strict";
+import test from "node:test";
 import {
   createMicrotaskCoalescer,
   FancyFooterDataWidgetStore,
@@ -7,7 +7,7 @@ import {
   MAX_DATA_WIDGET_TEXT_CODE_POINTS,
   resolveDataWidgetIcon,
   sanitizeDataWidgetText,
-} from './data-widgets.ts';
+} from "./data-widgets.ts";
 
 function upsert(
   id: string,
@@ -16,30 +16,30 @@ function upsert(
 ): Record<string, unknown> {
   return {
     protocol: 1,
-    type: 'upsert',
+    type: "upsert",
     widget: {
       id,
-      content: { type: 'text', text },
+      content: { type: "text", text },
       ...extra,
     },
   };
 }
 
-test('data widget upserts are complete last-writer-wins snapshots', () => {
+test("data widget upserts are complete last-writer-wins snapshots", () => {
   const store = new FancyFooterDataWidgetStore();
   assert.equal(
     store.apply(
-      upsert('acme.status', 'first', {
-        label: 'First label',
-        layout: { row: 0, position: 7, align: 'middle', fill: 'grow' },
+      upsert("acme.status", "first", {
+        label: "First label",
+        layout: { row: 0, position: 7, align: "middle", fill: "grow" },
       }),
     ),
     true,
   );
   assert.equal(
     store.apply(
-      upsert('acme.status', 'second', {
-        label: 'Second label',
+      upsert("acme.status", "second", {
+        label: "Second label",
         layout: { enabled: false },
       }),
     ),
@@ -47,87 +47,87 @@ test('data widget upserts are complete last-writer-wins snapshots', () => {
   );
 
   const [widget] = store.values();
-  assert.equal(widget?.label, 'Second label');
-  assert.equal(widget?.content.text, 'second');
+  assert.equal(widget?.label, "Second label");
+  assert.equal(widget?.content.text, "second");
   assert.deepEqual(widget?.defaults, {
     enabled: false,
     row: 1,
     position: 0,
-    align: 'right',
-    fill: 'none',
+    align: "right",
+    fill: "none",
     minWidth: undefined,
   });
 });
 
-test('empty content retains a configurable widget and remove drops it', () => {
+test("empty content retains a configurable widget and remove drops it", () => {
   const store = new FancyFooterDataWidgetStore();
-  assert.equal(store.apply(upsert('acme.status', '')), true);
+  assert.equal(store.apply(upsert("acme.status", "")), true);
   assert.equal(store.values().length, 1);
-  assert.equal(store.values()[0]?.content.text, '');
-  assert.equal(store.apply({ protocol: 1, type: 'remove', id: 'acme.status' }), true);
+  assert.equal(store.values()[0]?.content.text, "");
+  assert.equal(store.apply({ protocol: 1, type: "remove", id: "acme.status" }), true);
   assert.deepEqual(store.values(), []);
-  assert.equal(store.apply({ protocol: 1, type: 'remove', id: 'acme.status' }), false);
+  assert.equal(store.apply({ protocol: 1, type: "remove", id: "acme.status" }), false);
 });
 
-test('data widgets sanitize terminal controls and clamp text', () => {
-  assert.equal(sanitizeDataWidgetText('  hello\n\x1b[31mworld\t  '), 'hello [31mworld');
+test("data widgets sanitize terminal controls and clamp text", () => {
+  assert.equal(sanitizeDataWidgetText("  hello\n\x1b[31mworld\t  "), "hello [31mworld");
   assert.equal(
-    Array.from(sanitizeDataWidgetText('😀'.repeat(600))).length,
+    Array.from(sanitizeDataWidgetText("😀".repeat(600))).length,
     MAX_DATA_WIDGET_TEXT_CODE_POINTS,
   );
 
   const store = new FancyFooterDataWidgetStore();
   assert.equal(
     store.apply(
-      upsert('acme.status', 'ok', {
-        label: ' Status\nwidget ',
+      upsert("acme.status", "ok", {
+        label: " Status\nwidget ",
         icon: {
-          glyphs: { unicode: '✓\n', ascii: '+' },
-          color: 'success',
+          glyphs: { unicode: "✓\n", ascii: "+" },
+          color: "success",
         },
-        style: { textColor: 'warning', bold: true },
+        style: { textColor: "warning", bold: true },
       }),
     ),
     true,
   );
   const [widget] = store.values();
-  assert.equal(widget?.id, 'acme.status');
-  assert.equal(widget?.label, 'Status widget');
-  assert.equal(widget?.preferredTextColor, 'warning');
+  assert.equal(widget?.id, "acme.status");
+  assert.equal(widget?.label, "Status widget");
+  assert.equal(widget?.preferredTextColor, "warning");
   assert.equal(widget?.bold, true);
-  assert.deepEqual(resolveDataWidgetIcon(widget?.icon, 'unicode'), {
-    text: '✓',
-    color: 'success',
+  assert.deepEqual(resolveDataWidgetIcon(widget?.icon, "unicode"), {
+    text: "✓",
+    color: "success",
   });
 });
 
-test('data widgets accept native Pi palette tokens', () => {
+test("data widgets accept native Pi palette tokens", () => {
   const store = new FancyFooterDataWidgetStore();
   assert.equal(
     store.apply(
-      upsert('galactica.palette', 'color', {
-        icon: { glyphs: '◆', color: 'customMessageLabel' },
-        style: { textColor: 'mdHeading' },
+      upsert("galactica.palette", "color", {
+        icon: { glyphs: "◆", color: "customMessageLabel" },
+        style: { textColor: "mdHeading" },
       }),
     ),
     true,
   );
 
   const [widget] = store.values();
-  assert.equal(widget?.preferredTextColor, 'mdHeading');
-  assert.deepEqual(resolveDataWidgetIcon(widget?.icon, 'nerd'), {
-    text: '◆',
-    color: 'customMessageLabel',
+  assert.equal(widget?.preferredTextColor, "mdHeading");
+  assert.deepEqual(resolveDataWidgetIcon(widget?.icon, "nerd"), {
+    text: "◆",
+    color: "customMessageLabel",
   });
 });
 
-test('data widgets retain safe links and omit unsafe destinations', () => {
+test("data widgets retain safe links and omit unsafe destinations", () => {
   const store = new FancyFooterDataWidgetStore();
-  const href = 'https://github.com/acme/repo/actions/runs/1';
+  const href = "https://github.com/acme/repo/actions/runs/1";
   assert.equal(
     store.apply(
-      upsert('acme.status', 'passing', {
-        content: { type: 'text', text: 'passing', href },
+      upsert("acme.status", "passing", {
+        content: { type: "text", text: "passing", href },
       }),
     ),
     true,
@@ -135,14 +135,14 @@ test('data widgets retain safe links and omit unsafe destinations', () => {
   assert.equal(store.values()[0]?.content.href, href);
 
   for (const invalid of [
-    'javascript:alert(1)',
-    'https://example.com/unsafe\ntext',
-    `https://example.com/${'x'.repeat(MAX_DATA_WIDGET_HREF_LENGTH)}`,
+    "javascript:alert(1)",
+    "https://example.com/unsafe\ntext",
+    `https://example.com/${"x".repeat(MAX_DATA_WIDGET_HREF_LENGTH)}`,
   ]) {
     assert.equal(
       store.apply(
-        upsert('acme.status', 'unsafe', {
-          content: { type: 'text', text: 'unsafe', href: invalid },
+        upsert("acme.status", "unsafe", {
+          content: { type: "text", text: "unsafe", href: invalid },
         }),
       ),
       true,
@@ -151,52 +151,52 @@ test('data widgets retain safe links and omit unsafe destinations', () => {
   }
 });
 
-test('data widgets reject invalid, conflicting, and unsupported messages', () => {
+test("data widgets reject invalid, conflicting, and unsupported messages", () => {
   const store = new FancyFooterDataWidgetStore();
-  assert.equal(store.apply(upsert('model', 'collision')), false);
+  assert.equal(store.apply(upsert("model", "collision")), false);
   for (const id of [
-    'constructor',
-    'toString',
-    '__proto__',
-    'acme',
-    'acme..status',
-    ' acme.status ',
+    "constructor",
+    "toString",
+    "__proto__",
+    "acme",
+    "acme..status",
+    " acme.status ",
   ]) {
-    assert.equal(store.apply(upsert(id, 'invalid ID')), false);
-    assert.equal(store.apply({ protocol: 1, type: 'remove', id }), false);
+    assert.equal(store.apply(upsert(id, "invalid ID")), false);
+    assert.equal(store.apply({ protocol: 1, type: "remove", id }), false);
   }
-  assert.equal(store.apply({ ...upsert('acme.status', 'ok'), protocol: 2 }), false);
-  assert.equal(store.apply(upsert('acme.status', 'ok', { unknown: true })), false);
+  assert.equal(store.apply({ ...upsert("acme.status", "ok"), protocol: 2 }), false);
+  assert.equal(store.apply(upsert("acme.status", "ok", { unknown: true })), false);
   assert.equal(
-    store.apply(upsert('acme.status', 'ok', { style: { textColor: 'pink' } })),
+    store.apply(upsert("acme.status", "ok", { style: { textColor: "pink" } })),
     false,
   );
   assert.equal(
     store.apply(
-      upsert('acme.status', 'ok', {
-        icon: { glyphs: { unsupported: '?' } },
+      upsert("acme.status", "ok", {
+        icon: { glyphs: { unsupported: "?" } },
       }),
     ),
     false,
   );
   assert.equal(
-    store.apply(upsert('acme.status', 'ok', { layout: { unknown: true } })),
+    store.apply(upsert("acme.status", "ok", { layout: { unknown: true } })),
     false,
   );
   assert.deepEqual(store.values(), []);
 });
 
-test('data widgets sort by their normalized labels', () => {
+test("data widgets sort by their normalized labels", () => {
   const store = new FancyFooterDataWidgetStore();
-  store.apply(upsert('acme.z', 'z', { label: 'Zulu' }));
-  store.apply(upsert('acme.a', 'a', { label: 'Alpha' }));
+  store.apply(upsert("acme.z", "z", { label: "Zulu" }));
+  store.apply(upsert("acme.a", "a", { label: "Alpha" }));
   assert.deepEqual(
     store.values().map((widget) => widget.id),
-    ['acme.a', 'acme.z'],
+    ["acme.a", "acme.z"],
   );
 });
 
-test('microtask coalescing emits once per turn', async () => {
+test("microtask coalescing emits once per turn", async () => {
   let calls = 0;
   const request = createMicrotaskCoalescer(() => {
     calls += 1;

@@ -44,7 +44,7 @@ function surface(initial = 'original') {
 }
 
 test('round-trips the prompt without Pi external-editor output', async () => {
-  const { root, agentDir, cwd } = await fixture("printf 'edited\\n' > \"$1\"");
+  const { root, agentDir, cwd } = await fixture('printf \'edited\\n\' > "$1"');
   const prompt = surface();
   const errors: string[] = [];
   const muted = (value: string) => `[muted]${value}`;
