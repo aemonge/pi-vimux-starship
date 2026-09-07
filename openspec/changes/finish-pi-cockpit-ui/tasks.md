@@ -17,22 +17,22 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Estimate confidence:** Medium-low because public seams are known, but cross-extension lifecycle and short-terminal clipping are new composition behavior.
 - **Human-wait estimate:** Separate and unbounded after deterministic checks.
 - **Refinement trigger:** Stop and split or redesign if border removal changes prompt text/cursor geometry, application keybindings, mode transitions, bridge behavior, or requires Pi core/settings changes.
-- **Implementation confirmed at:** 2026-09-07T12:29:09Z; revised timer/emphasis scope confirmed at 2026-09-07T12:39:00Z; public-API composition repair confirmed at 2026-09-07T13:49:33Z
+- **Implementation confirmed at:** 2026-09-07T12:29:09Z; revised timer/emphasis scope 2026-09-07T12:39:00Z; public-API composition 2026-09-07T13:49:33Z; blue-title repair 2026-09-07T14:15:26Z; final emphasis/progress repair 2026-09-07T14:31:34Z
 - **Implementation started at:** 2026-09-07T12:29:09Z
-- **Work completed at:** Public-API composition repair completed 2026-09-07T14:05:12Z after prior delivery reopened at 2026-09-07T13:28:15Z
-- **Assurance started at:** Final assurance start was not separately timestamped; it followed focused checks and independent review within Step 1.7.
-- **Assurance completed at:** 2026-09-07T14:05:12Z
+- **Work completed at:** Final emphasis/progress repair completed 2026-09-07T14:36:49Z after successive Human-directed refinements; every prior result and rejection remains preserved.
+- **Assurance started at:** Final assurance start was not separately timestamped; focused checks followed each bounded repair immediately.
+- **Assurance completed at:** 2026-09-07T14:39:28Z after independent Step 1.11 history verification
 - **Ready for validation at:** 2026-09-07T14:39:28Z after independent Step 1.11 history verification
-- **Actual implementation:** Prior delivery 26m32s plus 15m39s for the public-API composition repair, including focused/full checks and independent-review provider latency; Human wait excluded because no reliable finer provider-latency split was captured.
-- **Observed Human wait:** 6m24s before timer/emphasis confirmation plus 21m18s between spacing failure evidence and public-API repair confirmation; current validation wait pending.
-- **Estimate outcome:** Public-API repair completed below its 35–60 minute range because the typed bridge and existing editor seam composed directly; prior repair history remains preserved.
+- **Actual implementation:** 65m42s across the prior delivery and all accepted repair Steps, including focused/full checks and independent-review provider latency; Human wait excluded.
+- **Observed Human wait:** 6m24s before timer/emphasis confirmation; 21m18s before composition confirmation; then 6m34s, 4m11s, and 5m07s across the three live revalidation cycles.
+- **Estimate outcome:** The composition repair plus two accepted visual refinements used 39m10s implementation/assurance, within the 35–60 minute additional range; Human wait remained separate and rejected history is preserved.
 - **Symptom:** Contextual lifecycle color leaks into Plan/Task text, progress lacks completion color, and inherited editor rails duplicate the accepted header frame.
 - **Cause:** Rich-deck rendering reuses `work.color` broadly and hardcodes available progress as accent; editor-only disables telemetry but not inherited border rows.
 - **Bounded repair:** Preserve fixed-width activity age and contextual bold lifecycle, keep `next direction › Plan` and current Task accent blue but regular, render every available Task/Step progress group in success green with only Task bold, and retain the existing typed public-API editor surface without touching dynamic telemetry.
 - **Regression check:** Timer/emphasis/color fixtures discriminate regular blue titles, contextual bold lifecycle, green available progress with Task-only bold, and dim unavailable progress; existing surface/editor/root tests preserve composition and dynamic telemetry behavior.
 - **Final history target:** `fix(cockpit): finish header and prompt chrome`
 - **Current non-Git boundary:** Not applicable; the repository uses Git.
-- **Human validation:** Prior `NOT VALID` and title-color `CHANGE` evidence are preserved; `CHANGE` at 2026-09-07T14:31:34Z requests a regular second-row title and an all-green available progress group with Task bold and Steps regular.
+- **Human validation:** Canonical `VALID` at 2026-09-07T14:44:35Z from original response `VALID`; prior `NOT VALID` and both `CHANGE` refinements remain preserved below.
 
 - [x] Step 1.1 Separate contextual lifecycle, stable title, and completion-aware progress colors.
   - Estimate: 8–15 minutes; uncertainty was retaining existing separator and responsive ANSI contracts while distinguishing every role.
@@ -109,7 +109,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 
 ### Human validation
 
-- [ ] Human reloads Pi and validates lifecycle/title/progress colors plus borderless single- and multi-line prompts; preserve original response, canonical outcome, and UTC.
+- [x] Human reloads Pi and validates lifecycle/title/progress colors plus borderless single- and multi-line prompts; preserve original response, canonical outcome, and UTC.
   - Evidence: `NOT VALID` at 2026-09-07T13:28:15Z. Original decisive feedback: “I think you put the title color less :( :( :(” and “Feel like extra space,” with one blank row annotated before the deck and three after it.
   - Evidence: `CHANGE` at 2026-09-07T14:15:26Z. Original decisive feedback: “just blue and keep waiting in bold” and “blue for all ‘next direction › finish pi cockpit ui’ and ‘Separate contextual lifecycle, stable title, and completion-aware progress colors’.”
   - Evidence: `CHANGE` at 2026-09-07T14:31:34Z. Original decisive feedback: “Don't bold the second row title” and “All this on green ` task 0/1 ›  stps 10/10` task bold steps not bold”; Human confirmed the rest of the dynamic telemetry is perfect.
+  - Evidence: Canonical `VALID` at 2026-09-07T14:44:35Z. Original response: `VALID`.

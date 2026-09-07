@@ -13,13 +13,13 @@
 - **Estimate confidence:** Medium-low because the public seams are known, but cross-extension reload/invalidation and short-terminal clipping are new composition behavior.
 - **Human-wait estimate:** Separate and unbounded after deterministic checks.
 - **Refinement trigger:** Stop and split or redesign if the typed surface cannot preserve prompt/cursor/autocomplete behavior, requires Pi core/settings/private layout mutation, or cannot fail soft across reload.
-- **Implementation confirmed at:** 2026-09-07T12:29:09Z; revised timer/emphasis scope confirmed at 2026-09-07T12:39:00Z; public-API composition repair confirmed at 2026-09-07T13:49:33Z
+- **Implementation confirmed at:** 2026-09-07T12:29:09Z; revised timer/emphasis scope 2026-09-07T12:39:00Z; public-API composition 2026-09-07T13:49:33Z; blue-title repair 2026-09-07T14:15:26Z; final emphasis/progress repair 2026-09-07T14:31:34Z
 - **Implementation started at:** 2026-09-07T12:29:09Z
-- **Work completed at:** Public-API composition repair completed 2026-09-07T14:05:12Z after prior delivery reopened at 2026-09-07T13:28:15Z
-- **Assurance started at:** Final assurance start was not separately timestamped; it followed focused checks and independent review within Step 1.7.
-- **Assurance completed at:** 2026-09-07T14:05:12Z
+- **Work completed at:** Final emphasis/progress repair completed 2026-09-07T14:36:49Z after successive Human-directed refinements; every prior result and rejection remains preserved.
+- **Assurance started at:** Final assurance start was not separately timestamped; focused checks followed each bounded repair immediately.
+- **Assurance completed at:** 2026-09-07T14:39:28Z after independent Step 1.11 history verification
 - **Ready for validation at:** 2026-09-07T14:39:28Z after independent Step 1.11 history verification
-- **Human validation:** Prior `NOT VALID` and title-color `CHANGE` evidence are preserved; `CHANGE` at 2026-09-07T14:31:34Z requests a regular second-row title and green available progress with only Task bold.
+- **Human validation:** Canonical `VALID` at 2026-09-07T14:44:35Z from original response `VALID`; prior `NOT VALID` and both `CHANGE` refinements remain preserved in the Task ledger.
 
 ## Symptom, cause, repair, and regression check
 
@@ -43,7 +43,7 @@ Human sees one calm regular blue-titled cockpit composed contiguously with its u
 - [x] Remaining Pi-owned spacing is honest: one host row above the editor dock, one actual empty prompt row, and a possible reserved empty footer row; no Pi core, settings, dependency, or private layout mutation is used.
 - [x] Rails mode remains behaviorally compatible and retains inherited/editor telemetry rails.
 - [x] The accepted header structure, telemetry, responsive widths, footer suppression, and package composition remain unchanged.
-- [ ] Human validates colors and the borderless prompt after `/reload`.
+- [x] Human validates colors and the borderless prompt after `/reload`; canonical `VALID` recorded at 2026-09-07T14:44:35Z.
 
 ## Scope and boundaries
 
