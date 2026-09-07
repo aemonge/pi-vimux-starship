@@ -1,4 +1,8 @@
-import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+  Theme,
+} from '@earendil-works/pi-coding-agent';
 import { truncateToWidth } from '@earendil-works/pi-tui';
 
 import {
@@ -79,8 +83,14 @@ const EMPTY_GIT: GitStatusSummary = {
   conflicts: 0,
 };
 
+export interface ContextHeaderDeckSurface {
+  setRenderer(renderer: ((width: number, theme: Theme) => string[]) | null): void;
+  requestRender(): void;
+}
+
 export interface ContextHeaderOptions {
-  surface?: 'legacy' | 'deck';
+  surface?: 'legacy' | 'deck' | 'editor-deck';
+  deckSurface?: ContextHeaderDeckSurface;
 }
 
 export function installEmptyDeckFooter(ctx: ExtensionContext): () => void {
@@ -97,7 +107,9 @@ export default function galacticaContextHeader(
   pi: ExtensionAPI,
   options: ContextHeaderOptions = {},
 ): void {
-  const deckMode = options.surface === 'deck';
+  const deckMode = options.surface === 'deck' || options.surface === 'editor-deck';
+  const editorDeckSurface =
+    options.surface === 'editor-deck' ? options.deckSurface : undefined;
   let clearWidget: (() => void) | undefined;
   let clearFooter: (() => void) | undefined;
   let requestRender: (() => void) | undefined;
@@ -418,55 +430,63 @@ export default function galacticaContextHeader(
     activeCwd = ctx.cwd;
     void refreshGit();
 
+    const renderDeck = (width: number, theme: Theme): string[] => {
+      if (width <= 0) return [];
+      const usage = ctx.getContextUsage();
+      const contextWindow = usage?.contextWindow ?? ctx.model?.contextWindow;
+      const hasContext =
+        typeof usage?.percent === 'number' || typeof usage?.tokens === 'number';
+      return renderHeaderDeck(
+        {
+          elapsedMs: currentActivityAge(),
+          header: currentHeader(),
+          cwd: formatFooterPath(activeCwd || ctx.cwd, process.env.HOME),
+          devbox: process.env.DEVBOX_PROJECT_ROOT !== undefined,
+          branch: formatFooterBranch(branch, 80),
+          gitAvailable,
+          git: gitStatus,
+          model: ctx.model?.name || ctx.model?.id || 'no model',
+          thinking: pi.getThinkingLevel(),
+          ...(hasContext
+            ? {
+                contextPercent: normalizeContextPercent(
+                  usage?.percent,
+                  usage?.tokens,
+                  contextWindow,
+                ),
+              }
+            : {}),
+          ...(typeof usage?.tokens === 'number' ? { contextTokens: usage.tokens } : {}),
+          ...(typeof contextWindow === 'number' ? { contextWindow } : {}),
+          compactionCount: countCompactions(ctx.sessionManager.getBranch()),
+          ...(latestResourceTelemetry ? { resources: latestResourceTelemetry } : {}),
+          ...(footerTelemetry ? { footerTelemetry } : {}),
+          lsp: lspCapability,
+          mcp: mcpCapability,
+          mode: vimMode,
+        },
+        width,
+        theme,
+      );
+    };
+
+    if (editorDeckSurface) {
+      requestRender = () => editorDeckSurface.requestRender();
+      editorDeckSurface.setRenderer(renderDeck);
+      clearWidget = () => {
+        requestRender = undefined;
+        editorDeckSurface.setRenderer(null);
+      };
+      return;
+    }
+
     ctx.ui.setWidget(
       WIDGET_KEY,
       (tui, theme) => {
         requestRender = () => tui.requestRender();
         return {
           render(width: number): string[] {
-            if (width <= 0) return [];
-            if (deckMode) {
-              const usage = ctx.getContextUsage();
-              const contextWindow = usage?.contextWindow ?? ctx.model?.contextWindow;
-              const hasContext =
-                typeof usage?.percent === 'number' || typeof usage?.tokens === 'number';
-              return renderHeaderDeck(
-                {
-                  elapsedMs: currentActivityAge(),
-                  header: currentHeader(),
-                  cwd: formatFooterPath(activeCwd || ctx.cwd, process.env.HOME),
-                  devbox: process.env.DEVBOX_PROJECT_ROOT !== undefined,
-                  branch: formatFooterBranch(branch, 80),
-                  gitAvailable,
-                  git: gitStatus,
-                  model: ctx.model?.name || ctx.model?.id || 'no model',
-                  thinking: pi.getThinkingLevel(),
-                  ...(hasContext
-                    ? {
-                        contextPercent: normalizeContextPercent(
-                          usage?.percent,
-                          usage?.tokens,
-                          contextWindow,
-                        ),
-                      }
-                    : {}),
-                  ...(typeof usage?.tokens === 'number'
-                    ? { contextTokens: usage.tokens }
-                    : {}),
-                  ...(typeof contextWindow === 'number' ? { contextWindow } : {}),
-                  compactionCount: countCompactions(ctx.sessionManager.getBranch()),
-                  ...(latestResourceTelemetry
-                    ? { resources: latestResourceTelemetry }
-                    : {}),
-                  ...(footerTelemetry ? { footerTelemetry } : {}),
-                  lsp: lspCapability,
-                  mcp: mcpCapability,
-                  mode: vimMode,
-                },
-                width,
-                theme,
-              );
-            }
+            if (deckMode) return renderDeck(width, theme);
             const { work, idle } = runtimeHeaderWork(currentHeader()?.work, agentBusy);
             const layout = layoutLifecycleTitle(work, width, agentBusy);
             const line = renderLifecycleTitleSections(

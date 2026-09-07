@@ -2,6 +2,7 @@ import {
   CustomEditor,
   getAgentDir,
   type ExtensionAPI,
+  type Theme,
 } from '@earendil-works/pi-coding-agent';
 import { Key, matchesKey } from '@earendil-works/pi-tui';
 import {
@@ -259,6 +260,7 @@ type ModalEditorOptions = {
   promptRailColorize?: PromptRailColorize;
   promptRailsEnabled?: boolean;
   editorFrameEnabled?: boolean;
+  deckRenderer?: ((width: number) => string[]) | null;
 };
 
 export class ModalEditor extends CustomEditor {
@@ -318,6 +320,7 @@ export class ModalEditor extends CustomEditor {
   private readonly promptRailColorize: PromptRailColorize;
   private readonly promptRailsEnabled: boolean;
   private readonly editorFrameEnabled: boolean;
+  private readonly deckRenderer: ((width: number) => string[]) | null;
 
   private unnamedRegister: string = '';
   private preferRegisterForPut = false;
@@ -368,6 +371,7 @@ export class ModalEditor extends CustomEditor {
     this.promptRailColorize = opts?.promptRailColorize ?? ((_color, text) => text);
     this.promptRailsEnabled = opts?.promptRailsEnabled ?? true;
     this.editorFrameEnabled = opts?.editorFrameEnabled ?? true;
+    this.deckRenderer = opts?.deckRenderer ?? null;
     this.installModeBorderColorizer();
   }
 
@@ -4001,17 +4005,23 @@ export class ModalEditor extends CustomEditor {
   render(width: number): string[] {
     const lines = super.render(width);
     this.syncCursorShapeForRender(lines);
-    if (!this.editorFrameEnabled) {
-      return this.withoutInheritedEditorFrame(lines, width);
+    const editorLines = !this.editorFrameEnabled
+      ? this.withoutInheritedEditorFrame(lines, width)
+      : !this.promptRailsEnabled
+        ? lines
+        : renderPromptRails({
+            lines,
+            width,
+            snapshot: this.getPromptRail(),
+            mode: this.getModeRailItem(),
+            colorize: this.promptRailColorize,
+          });
+    if (!this.deckRenderer) return editorLines;
+    try {
+      return [...this.deckRenderer(width), ...editorLines];
+    } catch {
+      return editorLines;
     }
-    if (!this.promptRailsEnabled) return lines;
-    return renderPromptRails({
-      lines,
-      width,
-      snapshot: this.getPromptRail(),
-      mode: this.getModeRailItem(),
-      colorize: this.promptRailColorize,
-    });
   }
 
   private getModeLabelColorizer(): ((s: string) => string) | null {
@@ -4030,8 +4040,14 @@ export class ModalEditor extends CustomEditor {
   }
 }
 
+export interface PiVimDeckSurface {
+  render(width: number, theme: Theme): string[];
+  setRequestRender(requestRender: (() => void) | null): void;
+}
+
 export interface PiVimOptions {
   surface?: 'rails' | 'editor-only';
+  deckSurface?: PiVimDeckSurface;
 }
 
 export default function (pi: ExtensionAPI, options: PiVimOptions = {}) {
@@ -4086,6 +4102,7 @@ export default function (pi: ExtensionAPI, options: PiVimOptions = {}) {
     ctx.ui.setEditorComponent((tui, theme, kb) => {
       cursorShapeCleanup = enableCursorShapeSupport(tui);
       requestPromptRender = () => tui.requestRender();
+      options.deckSurface?.setRequestRender(requestPromptRender);
       const editor = new ModalEditor(tui, theme, kb, {
         labelColorizers,
         borderColorizers,
@@ -4096,6 +4113,10 @@ export default function (pi: ExtensionAPI, options: PiVimOptions = {}) {
         promptRailColorize: (color, text) => (t ? t.fg(color, text) : text),
         promptRailsEnabled: !editorOnly,
         editorFrameEnabled: !editorOnly,
+        deckRenderer:
+          editorOnly && options.deckSurface
+            ? (width) => options.deckSurface?.render(width, ctx.ui.theme) ?? []
+            : null,
       });
       editor.setClipboardMirrorPolicy(clipboardMirrorPolicy.policy);
       editor.setQuitFn(() => ctx.shutdown());
@@ -4139,6 +4160,7 @@ export default function (pi: ExtensionAPI, options: PiVimOptions = {}) {
       promptRail.clear();
       getSessionEntries = null;
       requestPromptRender = null;
+      options.deckSurface?.setRequestRender(null);
       cancelModeChangeCommands();
       promptExternalEditor = null;
       cursorShapeCleanup = null;

@@ -363,13 +363,16 @@ export function renderHeaderDeck(
       ? [
           color(theme, 'text', 'next direction'),
           ...(planTitle
-            ? [minorSeparator(theme, 'text'), color(theme, 'text', planTitle)]
+            ? [
+                minorSeparator(theme, 'customMessageLabel'),
+                color(theme, 'customMessageLabel', planTitle),
+              ]
             : []),
         ]
-      : [color(theme, 'text', planTitle || current.focus)]),
+      : [color(theme, 'customMessageLabel', planTitle || current.focus)]),
   ].join(' ');
   const focusLines = narrativeLines(state, boundedWidth, 2).map((line) =>
-    color(theme, 'text', line, true),
+    color(theme, 'customMessageLabel', line, true),
   );
 
   const rows = [

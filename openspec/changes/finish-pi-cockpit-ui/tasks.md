@@ -10,29 +10,29 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Method contract:** Characterize the visible color-role and duplicate-editor-rule symptoms, repair only their diagnosed rendering seams, and prove each with discriminating render regressions.
 - **Execution source:** native-direct
 - **Execution name:** Sequential render-only chrome repair
-- **Execution reason:** Header color roles, runtime/emphasis hierarchy, and Pi Vim editor-only borders are separate small render seams; direct sequential work keeps each source/history boundary independently verifiable.
-- **Execution outline:** Separate lifecycle, title, and progress colors; sharpen the timer and bold hierarchy; then make only editor-only rendering borderless while preserving editor behavior; run focused and complete assurance.
-- **Estimate basis:** The accepted rich-header Steps completed comparable render fixes in 7–20 minutes, and the current causes are isolated in pure render branches with existing tests.
-- **Estimated implementation:** 25–45 minutes total from initial confirmation; Human wait excluded.
-- **Estimate confidence:** Medium because render seams are known, but removing inherited editor rails must preserve multiline cursor geometry and indicators.
+- **Execution reason:** Header color roles, runtime/emphasis, and editor composition are bounded render seams; direct sequential work keeps source/history boundaries independently verifiable while the typed bridge preserves package responsibilities.
+- **Execution outline:** Preserve completed colors/timer/emphasis, restore stable violet Plan/Task chroma, publish the pure deck through a typed in-memory surface instead of an above-editor widget, prepend it in the existing borderless editor, and run focused/full assurance.
+- **Estimate basis:** Prior rich-header render Steps completed in 3–20 minutes, while the public-API composition adds new cross-extension reload/invalidation behavior.
+- **Estimated implementation:** Prior delivery took 26m32s; confirmed public-API composition repair is 35–60 additional minutes; Human wait excluded.
+- **Estimate confidence:** Medium-low because public seams are known, but cross-extension lifecycle and short-terminal clipping are new composition behavior.
 - **Human-wait estimate:** Separate and unbounded after deterministic checks.
 - **Refinement trigger:** Stop and split or redesign if border removal changes prompt text/cursor geometry, application keybindings, mode transitions, bridge behavior, or requires Pi core/settings changes.
-- **Implementation confirmed at:** 2026-09-07T12:29:09Z; revised timer/emphasis scope confirmed at 2026-09-07T12:39:00Z
+- **Implementation confirmed at:** 2026-09-07T12:29:09Z; revised timer/emphasis scope confirmed at 2026-09-07T12:39:00Z; public-API composition repair confirmed at 2026-09-07T13:49:33Z
 - **Implementation started at:** 2026-09-07T12:29:09Z
-- **Work completed at:** Prior delivery completed 2026-09-07T13:07:08Z; reopened after Human validation failure at 2026-09-07T13:28:15Z
-- **Assurance started at:** Prior assurance started 2026-09-07T13:09:20Z
-- **Assurance completed at:** Prior assurance completed 2026-09-07T13:10:13Z; repair assurance pending
-- **Ready for validation at:** Prior delivery was ready 2026-09-07T13:10:13Z; no longer ready
-- **Actual implementation:** 26m32s elapsed across five Steps, including focused/full checks and independent-review provider latency; Human wait excluded because no reliable finer provider-latency split was captured.
-- **Observed Human wait:** 6m24s between initial Step evidence and revised timer/emphasis confirmation; final validation wait pending.
-- **Estimate outcome:** Within the revised 25–45 minute range; known render seams kept implementation small, while autocomplete ordering required one assurance-driven repair.
+- **Work completed at:** Public-API composition repair completed 2026-09-07T14:05:12Z after prior delivery reopened at 2026-09-07T13:28:15Z
+- **Assurance started at:** Final assurance start was not separately timestamped; it followed focused checks and independent review within Step 1.7.
+- **Assurance completed at:** 2026-09-07T14:05:12Z
+- **Ready for validation at:** Pending verified Step 1.7 history boundary
+- **Actual implementation:** Prior delivery 26m32s plus 15m39s for the public-API composition repair, including focused/full checks and independent-review provider latency; Human wait excluded because no reliable finer provider-latency split was captured.
+- **Observed Human wait:** 6m24s before timer/emphasis confirmation plus 21m18s between spacing failure evidence and public-API repair confirmation; current validation wait pending.
+- **Estimate outcome:** Public-API repair completed below its 35–60 minute range because the typed bridge and existing editor seam composed directly; prior repair history remains preserved.
 - **Symptom:** Contextual lifecycle color leaks into Plan/Task text, progress lacks completion color, and inherited editor rails duplicate the accepted header frame.
 - **Cause:** Rich-deck rendering reuses `work.color` broadly and hardcodes available progress as accent; editor-only disables telemetry but not inherited border rows.
-- **Bounded repair:** Separate semantic color roles, use a fixed-width `MM:SS'cc` activity age, apply bold only to current control/status anchors, and strip only first/last inherited editor rows in editor-only mode.
-- **Regression check:** Timer/emphasis/color-call fixtures discriminate each role and editor-only fixtures compare bordered rails mode against borderless content-preserving output.
+- **Bounded repair:** Preserve semantic colors and fixed-width activity age, restore stable violet Plan/Task chroma, and compose the deck inside the existing borderless editor through a typed public-API surface without Pi core or private layout mutation.
+- **Regression check:** Timer/emphasis/color fixtures discriminate roles; surface tests prove render/invalidation/cleanup; editor tests prove deck → prompt → autocomplete ordering and unchanged editor state; root composition proves editor-deck wiring.
 - **Final history target:** `fix(cockpit): finish header and prompt chrome`
 - **Current non-Git boundary:** Not applicable; the repository uses Git.
-- **Human validation:** `NOT VALID` at 2026-09-07T13:28:15Z — original decisive feedback: “I think you put the title color less :( :( :(” and “Feel like extra space,” with evidence marking one blank row before the deck and three blank rows after it.
+- **Human validation:** Prior `NOT VALID` at 2026-09-07T13:28:15Z is preserved; public-API minimum repair awaits revalidation.
 
 - [x] Step 1.1 Separate contextual lifecycle, stable title, and completion-aware progress colors.
   - Estimate: 8–15 minutes; uncertainty was retaining existing separator and responsive ANSI contracts while distinguishing every role.
@@ -70,11 +70,12 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: PASS — Plan/Task were deliberately changed from contextual color to plain `text`; Pi unconditionally inserts one row before above-editor widgets, fullscreen allocates at least three editor rows, and its footer reserves one row. The borderless empty prompt emits one content row, exposing two editor filler rows. Public widget/editor options provide no gap or minimum-height control.
   - Paths: Read-only evidence from Context Header, Pi Vim, root composition, Pi 0.84.4 TUI documentation, and installed Pi/TUI layout source.
   - History: Read-only diagnosis; no source checkpoint.
-- [ ] Step 1.7 Implement only a newly confirmed title-color and spacing repair.
-  - Estimate: Pending exact architecture selection.
-  - Timing: Pending
-  - Check: Pending
-  - History: Pending exact conventional subject.
+- [x] Step 1.7 Compose the rich deck into the existing editor through a typed public-API surface and restore stable violet Plan/Task chroma.
+  - Estimate: 35–60 minutes; uncertainty was cross-extension reload/invalidation lifecycle plus short-terminal clipping while preserving the existing editor instance's cursor and autocomplete rows.
+  - Timing: 2026-09-07T13:49:33Z–2026-09-07T14:05:12Z (15m39s including focused/full checks and independent review).
+  - Check: PASS — tooling 14/14 proves renderer/invalidation/reconnect/fail-soft behavior and editor-deck root composition; Header 86/86 proves editor-deck renderer lifecycle without above-editor widget registration plus violet Plan/Task chroma; Vim 17/17 proves contiguous deck → borderless prompt → autocomplete ordering with unchanged text/mode. Full gate PASS with formatting, lint, strict TypeScript, 385 tests, current 92-file and immutable 87-file integrity, one-extension/six-command/two-tool composition, six valid OpenSpec changes, and credential-free offline Pi load with 213 rows. Independent review PASS with no Critical/High/Medium findings; its low ledger-drift finding was corrected before the full gate.
+  - Paths: New typed root surface and tests, root composition/probe, Context Header renderer/surface/tests, Pi Vim editor composition/test, Plan/Task evidence, and current baseline manifest.
+  - History: Expected `fix(cockpit): compose deck with editor surface`.
 
 ### Human validation
 

@@ -204,11 +204,13 @@ test('keeps only lifecycle contextual and colors progress by completion', () => 
   assert.ok(colors.includes('text:next direction'));
   assert.ok(
     colors.includes(
-      'text:Read-only preflight for the interrupted one-line Review ledger fix',
+      'customMessageLabel:Read-only preflight for the interrupted one-line Review ledger fix',
     ),
   );
   assert.ok(
-    colors.includes('text:before further OpenSpec validation and implementation'),
+    colors.includes(
+      'customMessageLabel:before further OpenSpec validation and implementation',
+    ),
   );
   assert.ok(colors.includes('accent: task 0/1'));
   assert.ok(colors.includes('accent: stps 6/16'));

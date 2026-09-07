@@ -3,7 +3,10 @@ import test from 'node:test';
 
 import { ModalEditor } from '../index.js';
 
-function makeEditor(editorFrameEnabled: boolean): ModalEditor {
+function makeEditor(
+  editorFrameEnabled: boolean,
+  deckRenderer: ((width: number) => string[]) | null = null,
+): ModalEditor {
   const tui = { requestRender() {}, terminal: { rows: 40 } };
   const theme = {
     borderColor: (text: string) => text,
@@ -13,6 +16,7 @@ function makeEditor(editorFrameEnabled: boolean): ModalEditor {
   return new ModalEditor(tui as never, theme as never, keybindings as never, {
     promptRailsEnabled: false,
     editorFrameEnabled,
+    deckRenderer,
   });
 }
 
@@ -68,6 +72,27 @@ test('editor-only keeps every autocomplete row after removing the inner bottom f
     editorOnlyLines.some((line) => /^─+$/u.test(line)),
     false,
   );
+});
+
+test('editor deck renders contiguously before prompt and autocomplete rows', () => {
+  const editor = makeEditor(false, (width) => [`deck top ${width}`, 'deck bottom']);
+  editor.setText('/command');
+  const completions = ['first completion', 'second completion'];
+  const internals = editor as unknown as {
+    autocompleteState: string;
+    autocompleteList: { render: () => string[] };
+  };
+  internals.autocompleteState = 'regular';
+  internals.autocompleteList = { render: () => completions };
+
+  const lines = editor.render(48);
+
+  assert.deepEqual(lines.slice(0, 2), ['deck top 48', 'deck bottom']);
+  assert.equal(lines[2]?.includes('/command'), true);
+  assert.equal(lines.at(-2)?.includes('first completion'), true);
+  assert.equal(lines.at(-1)?.includes('second completion'), true);
+  assert.equal(editor.getText(), '/command');
+  assert.equal(editor.getMode(), 'insert');
 });
 
 test('rails surface retains the inherited editor frame', () => {

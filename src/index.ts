@@ -4,10 +4,11 @@ import galacticaContextHeader from '../packages/galactica-context-header/index.j
 import galacticaStatus from '../packages/galactica-status/index.js';
 import fancyFooter from '../packages/pi-fancy-footer-full-palette/src/index.js';
 import piVim from '../packages/pi-vim-top-border/index.js';
+import { createCockpitDeckSurface } from './deck-surface.js';
 
 export const COCKPIT_SURFACES = {
   footer: 'telemetry',
-  contextHeader: 'deck',
+  contextHeader: 'editor-deck',
   vim: 'editor-only',
 } as const;
 
@@ -19,8 +20,12 @@ export const COCKPIT_COMPOSITION = [
 ] as const;
 
 export default function piVimuxStarship(pi: ExtensionAPI): void {
+  const deckSurface = createCockpitDeckSurface();
   fancyFooter(pi, { surface: COCKPIT_SURFACES.footer });
   galacticaStatus(pi);
-  galacticaContextHeader(pi, { surface: COCKPIT_SURFACES.contextHeader });
-  piVim(pi, { surface: COCKPIT_SURFACES.vim });
+  galacticaContextHeader(pi, {
+    surface: COCKPIT_SURFACES.contextHeader,
+    deckSurface,
+  });
+  piVim(pi, { surface: COCKPIT_SURFACES.vim, deckSurface });
 }
