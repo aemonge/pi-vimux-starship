@@ -83,12 +83,23 @@ export interface ContextHeaderOptions {
   surface?: 'legacy' | 'deck';
 }
 
+export function installEmptyDeckFooter(ctx: ExtensionContext): () => void {
+  ctx.ui.setFooter(() => ({
+    render(): string[] {
+      return [];
+    },
+    invalidate() {},
+  }));
+  return () => ctx.ui.setFooter(undefined);
+}
+
 export default function galacticaContextHeader(
   pi: ExtensionAPI,
   options: ContextHeaderOptions = {},
 ): void {
   const deckMode = options.surface === 'deck';
   let clearWidget: (() => void) | undefined;
+  let clearFooter: (() => void) | undefined;
   let requestRender: (() => void) | undefined;
   let branch = '';
   let gitAvailable = false;
@@ -363,6 +374,8 @@ export default function galacticaContextHeader(
 
   pi.on('session_start', (_event, ctx) => {
     clearWidget?.();
+    clearFooter?.();
+    clearFooter = undefined;
     if (activityAgeTimer) clearInterval(activityAgeTimer);
     if (resourceTimer) clearInterval(resourceTimer);
     activityAgeTimer = undefined;
@@ -395,6 +408,7 @@ export default function galacticaContextHeader(
       activityAgeTimer = setInterval(refreshActivityAge, 50);
     }
     if (!ctx.hasUI) return;
+    if (deckMode) clearFooter = installEmptyDeckFooter(ctx);
     void refreshResources();
     resourceTimer = setInterval(() => void refreshResources(), RESOURCE_REFRESH_MS);
     activeCwd = ctx.cwd;
@@ -508,6 +522,8 @@ export default function galacticaContextHeader(
     gitRefreshQueued = false;
     clearWidget?.();
     clearWidget = undefined;
+    clearFooter?.();
+    clearFooter = undefined;
     removeFooterWidgets();
     stopHeader();
     stopReady();

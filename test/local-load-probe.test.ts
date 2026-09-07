@@ -16,16 +16,16 @@ const EXPECTED_COMMANDS = [
 ];
 const EXPECTED_TOOLS = ['openspec_focus', 'work_focus'];
 
-test('header deck composition selects one explicit mode per extension', () => {
+test('header deck composition preserves Vim rails while selecting Pi-owned surfaces', () => {
   assert.deepEqual(COCKPIT_COMPOSITION, [
     'fancy-footer:telemetry',
     'galactica-status:provider',
     'galactica-context-header:deck',
-    'pi-vim:editor-only',
+    'pi-vim:rails',
   ]);
 });
 
-test('one package composes each imported extension exactly once in startup order', async () => {
+test('one package activates the root cockpit composition entrypoint', async () => {
   const result = await inspectLocalPackage();
 
   assert.equal(result.packageName, 'pi-vimux-starship');
@@ -50,10 +50,10 @@ test('composed factories register unique commands and tools', async () => {
   }
 });
 
-test('Fancy Footer publishes readiness during package composition', async () => {
+test('Fancy Footer publishes readiness during root package composition', async () => {
   const result = await inspectLocalPackage();
-  const footer = result.registrations[0];
+  const composition = result.registrations[0];
 
-  assert.equal(footer?.entrypoint, EXPECTED_EXTENSION_ENTRYPOINTS[0]);
-  assert.ok(footer?.emittedChannels.includes('pi-fancy-footer:ready'));
+  assert.equal(composition?.entrypoint, EXPECTED_EXTENSION_ENTRYPOINTS[0]);
+  assert.ok(composition?.emittedChannels.includes('pi-fancy-footer:ready'));
 });

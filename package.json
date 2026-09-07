@@ -58,10 +58,7 @@
   },
   "pi": {
     "extensions": [
-      "./packages/pi-fancy-footer-full-palette/src/index.ts",
-      "./packages/galactica-status/index.ts",
-      "./packages/galactica-context-header/index.ts",
-      "./packages/pi-vim-top-border/index.ts"
+      "./src/index.ts"
     ]
   }
 }

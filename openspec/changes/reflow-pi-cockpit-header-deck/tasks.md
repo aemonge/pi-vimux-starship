@@ -18,12 +18,14 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Human-wait estimate:** Separate and unbounded after deterministic checks.
 - **Refinement trigger:** Stop at 90 minutes or for a cursor/external-editor regression, new dependency, unnamed runtime path, fabricated telemetry, or architecture outside the declared composition modes.
 - **Implementation confirmed at:** 2026-09-03T14:47:41Z
+- **Header-only scope addendum confirmed at:** 2026-09-07T08:16:56Z — Human explicitly excluded every Vim and Neovim code and behavior change. Context Header may activate the approved deck and suppress Pi's footer; existing Vim-owned prompt rails remain unchanged.
 - **Implementation started at:** 2026-09-03T14:47:41Z
-- **Work completed at:** Pending
-- **Assurance started at:** Pending
-- **Assurance completed at:** Pending
-- **Ready for validation at:** Pending
-- **Actual implementation:** Pending
+- **Header-only implementation resumed at:** 2026-09-07T08:16:56Z
+- **Work completed at:** 2026-09-07T08:22:20Z for the confirmed header-only scope.
+- **Assurance started at:** 2026-09-07T08:20:08Z for the confirmed header-only scope.
+- **Assurance completed at:** 2026-09-07T08:22:20Z
+- **Ready for validation at:** 2026-09-07T08:22:20Z, subject to independent Step-history verification.
+- **Actual implementation:** Approximately 18m11s across Steps 1.1–1.3, excluding Human wait; Step 1.3 took 5m24s including focused and Task-level checks.
 - **Observed Human wait:** Pending
 - **Estimate outcome:** Pending
 - **Final history target:** `feat(cockpit): reflow telemetry into the header deck`
@@ -42,12 +44,13 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: PASS — 3 deck fixtures prove the exact open-sided wide structure, no spacer rows, two opposing ladybugs, compact labels, honest unavailable telemetry, and width-safe collapse at 160/100/79/59/39/20 cells. Header 75/75, strict TypeScript, zero-finding lint, Prettier, and current 90-file/original 87-file integrity pass. Context Header deck mode now renders live bounded state while legacy mode retains its accepted one-line surface.
   - Paths: new Header `src/deck.ts` and `test/deck.test.ts`, Header `index.ts`, current source manifest, and this Task ledger.
   - History: Expected `step(cockpit): render the open-sided header deck`.
-- [ ] Step 1.3 Retire visible footer and prompt rails in composed mode, then prove reload, cursor, and external-editor parity.
-  - Estimate: 15–25 minutes; uncertainty is removing editor border rows without disturbing cursor-marker placement.
-  - Timing: Pending
-  - Check: Pending
-  - History: Pending
+- [x] Step 1.3 Activate the approved deck through the root package entrypoint and suppress only Pi's visible footer; preserve all Vim and Neovim code and behavior unchanged under the confirmed header-only scope addendum.
+  - Estimate: 15–25 minutes; uncertainty was package reload and empty-footer lifecycle behavior.
+  - Timing: 2026-09-07T08:16:56Z–2026-09-07T08:22:20Z (5m24s implementation and checks).
+  - Check: PASS — the root manifest now activates one composition entrypoint; focused Header 76/76 and root tooling 12/12 tests pass; the complete gate passes 368 tests, Prettier, zero-finding lint, strict TypeScript, OpenSpec validation, current 91-file integrity, and immutable 87-file import integrity. The isolated offline Pi load passes with 208 output rows. A focused surface contract proves deck mode replaces Pi's footer with an empty component and restores it on cleanup. Workspace inspection confirms no Vim or Neovim path changed, and root composition preserves Pi Vim's existing rails mode.
+  - Paths: `package.json`, `src/index.ts`, `src/local-load-probe.ts`, `test/local-load-probe.test.ts`, Header `index.ts` and new `test/surface.test.ts`, current source manifest, and this Task ledger.
+  - History: Expected `step(cockpit): activate the header-only deck`.
 
 ### Human validation
 
-- [ ] Human validates colors, wide/narrow resizing, lifecycle and mode transitions, no footer/duplicate rails, reload, and Ctrl-E; preserve original response, canonical outcome, and UTC.
+- [ ] Human validates header colors, wide/narrow resizing, lifecycle transitions, package reload, and no Pi footer while confirming the existing Vim-owned prompt rails remain unchanged; preserve original response, canonical outcome, and UTC.

@@ -2,12 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-export const EXPECTED_EXTENSION_ENTRYPOINTS = [
-  'packages/pi-fancy-footer-full-palette/src/index.ts',
-  'packages/galactica-status/index.ts',
-  'packages/galactica-context-header/index.ts',
-  'packages/pi-vim-top-border/index.ts',
-] as const;
+export const EXPECTED_EXTENSION_ENTRYPOINTS = ['src/index.ts'] as const;
 
 interface ExtensionRegistration {
   entrypoint: string;

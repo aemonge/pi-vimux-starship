@@ -9,12 +9,12 @@ export const COCKPIT_COMPOSITION = [
   'fancy-footer:telemetry',
   'galactica-status:provider',
   'galactica-context-header:deck',
-  'pi-vim:editor-only',
+  'pi-vim:rails',
 ] as const;
 
 export default function piVimuxStarship(pi: ExtensionAPI): void {
   fancyFooter(pi, { surface: 'telemetry' });
   galacticaStatus(pi);
   galacticaContextHeader(pi, { surface: 'deck' });
-  piVim(pi, { surface: 'editor-only' });
+  piVim(pi);
 }
