@@ -194,13 +194,9 @@ function progressLine(state: HeaderDeckState, theme: Theme): string {
   const steps = state.header?.counters.steps;
   const taskText = tasks ? `${tasks.completed}/${tasks.total}` : '—';
   const stepText = steps ? `${steps.completed}/${steps.total}` : '—';
-  const counterColor = (counter: typeof tasks): string =>
-    !counter
-      ? 'dim'
-      : counter.total > 0 && counter.completed >= counter.total
-        ? 'success'
-        : 'accent';
-  return `${color(theme, counterColor(tasks), ` task ${taskText}`, true)} ${minorSeparator(theme)} ${color(theme, counterColor(steps), ` stps ${stepText}`, true)}`;
+  const counterColor = (counter: typeof tasks): string => (counter ? 'success' : 'dim');
+  const separatorColor = tasks || steps ? 'success' : 'dim';
+  return `${color(theme, counterColor(tasks), ` task ${taskText}`, true)} ${minorSeparator(theme, separatorColor)} ${color(theme, counterColor(steps), ` stps ${stepText}`)}`;
 }
 
 function projectLeft(state: HeaderDeckState, theme: Theme): string {
@@ -369,7 +365,7 @@ export function renderHeaderDeck(
       : [color(theme, 'accent', planTitle || current.focus)]),
   ].join(' ');
   const focusLines = narrativeLines(state, boundedWidth, 2).map((line) =>
-    color(theme, 'accent', line, true),
+    color(theme, 'accent', line),
   );
 
   const rows = [

@@ -170,14 +170,14 @@ test('bolds only current control and status anchors', () => {
 
   assert.ok(bolded.includes('waiting'));
   assert.ok(bolded.includes(' task 0/1'));
-  assert.ok(bolded.includes(' stps 6/16'));
-  assert.ok(bolded.includes('before further OpenSpec validation and implementation'));
   assert.ok(bolded.includes('[󰆧]'));
   assert.ok(bolded.includes('⟩'));
   for (const regular of [
     "(00:07'00)",
     'next direction',
     'Read-only preflight for the interrupted one-line Review ledger fix',
+    'before further OpenSpec validation and implementation',
+    ' stps 6/16',
     ' ~/galactica',
     ' feature/review-ledger/preserve-openspec-validation',
     'GPT-5.6 Sol',
@@ -186,7 +186,7 @@ test('bolds only current control and status anchors', () => {
   }
 });
 
-test('keeps only lifecycle contextual and colors progress by completion', () => {
+test('keeps lifecycle contextual and renders available progress as one green group', () => {
   const state = fixture();
   state.header!.work!.color = 'warning';
   const colors: string[] = [];
@@ -212,8 +212,9 @@ test('keeps only lifecycle contextual and colors progress by completion', () => 
   assert.ok(
     colors.includes('accent:before further OpenSpec validation and implementation'),
   );
-  assert.ok(colors.includes('accent: task 0/1'));
-  assert.ok(colors.includes('accent: stps 6/16'));
+  assert.ok(colors.includes('success: task 0/1'));
+  assert.ok(colors.includes('success:›'));
+  assert.ok(colors.includes('success: stps 6/16'));
 
   state.header!.counters.tasks = { completed: 1, total: 1 };
   state.header!.counters.steps = { completed: 16, total: 16 };
@@ -227,7 +228,23 @@ test('keeps only lifecycle contextual and colors progress by completion', () => 
   colors.length = 0;
   renderHeaderDeck(state, 160, theme as never);
   assert.ok(colors.includes('dim: task —'));
+  assert.ok(colors.includes('dim:›'));
   assert.ok(colors.includes('dim: stps —'));
+
+  state.header!.counters.tasks = { completed: 0, total: 1 };
+  colors.length = 0;
+  renderHeaderDeck(state, 160, theme as never);
+  assert.ok(colors.includes('success: task 0/1'));
+  assert.ok(colors.includes('success:›'));
+  assert.ok(colors.includes('dim: stps —'));
+
+  state.header!.counters.tasks = undefined;
+  state.header!.counters.steps = { completed: 10, total: 10 };
+  colors.length = 0;
+  renderHeaderDeck(state, 160, theme as never);
+  assert.ok(colors.includes('dim: task —'));
+  assert.ok(colors.includes('success:›'));
+  assert.ok(colors.includes('success: stps 10/10'));
 });
 
 test('uses prompt-line color for rules and major separators with violet ladybugs', () => {

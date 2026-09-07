@@ -4,14 +4,14 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 
 ## Task 1 — Finish semantic header and prompt chrome
 
-- **Value:** Human sees stable title roles, honest semantic progress colors, and a borderless prompt beneath the accepted rich header without editor behavior changes.
+- **Value:** Human sees calm regular title roles, one consistent green progress group with deliberate Task-only emphasis, and a borderless prompt beneath the accepted rich header without editor behavior changes.
 - **Method source:** predefined
 - **Method name:** Fix
 - **Method contract:** Characterize the visible color-role and duplicate-editor-rule symptoms, repair only their diagnosed rendering seams, and prove each with discriminating render regressions.
 - **Execution source:** native-direct
 - **Execution name:** Sequential render-only chrome repair
 - **Execution reason:** Header color roles, runtime/emphasis, and editor composition are bounded render seams; direct sequential work keeps source/history boundaries independently verifiable while the typed bridge preserves package responsibilities.
-- **Execution outline:** Preserve completed colors/timer/emphasis, restore stable violet Plan/Task chroma, publish the pure deck through a typed in-memory surface instead of an above-editor widget, prepend it in the existing borderless editor, and run focused/full assurance.
+- **Execution outline:** Preserve the completed timer/spacing/editor composition, keep titles accent blue and regular, render available progress as one green group with only Task bold, and run focused/full assurance without changing dynamic telemetry.
 - **Estimate basis:** Prior rich-header render Steps completed in 3–20 minutes, while the public-API composition adds new cross-extension reload/invalidation behavior.
 - **Estimated implementation:** Prior delivery took 26m32s; confirmed public-API composition repair is 35–60 additional minutes; Human wait excluded.
 - **Estimate confidence:** Medium-low because public seams are known, but cross-extension lifecycle and short-terminal clipping are new composition behavior.
@@ -22,17 +22,17 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Work completed at:** Public-API composition repair completed 2026-09-07T14:05:12Z after prior delivery reopened at 2026-09-07T13:28:15Z
 - **Assurance started at:** Final assurance start was not separately timestamped; it followed focused checks and independent review within Step 1.7.
 - **Assurance completed at:** 2026-09-07T14:05:12Z
-- **Ready for validation at:** 2026-09-07T14:27:23Z after independent Step 1.9 history verification
+- **Ready for validation at:** Pending verified Step 1.11 history boundary
 - **Actual implementation:** Prior delivery 26m32s plus 15m39s for the public-API composition repair, including focused/full checks and independent-review provider latency; Human wait excluded because no reliable finer provider-latency split was captured.
 - **Observed Human wait:** 6m24s before timer/emphasis confirmation plus 21m18s between spacing failure evidence and public-API repair confirmation; current validation wait pending.
 - **Estimate outcome:** Public-API repair completed below its 35–60 minute range because the typed bridge and existing editor seam composed directly; prior repair history remains preserved.
 - **Symptom:** Contextual lifecycle color leaks into Plan/Task text, progress lacks completion color, and inherited editor rails duplicate the accepted header frame.
 - **Cause:** Rich-deck rendering reuses `work.color` broadly and hardcodes available progress as accent; editor-only disables telemetry but not inherited border rows.
-- **Bounded repair:** Preserve semantic progress and fixed-width activity age, use accent blue for `next direction › Plan` and current Task while keeping lifecycle bold/contextual, and compose the deck inside the existing borderless editor through a typed public-API surface without Pi core or private layout mutation.
-- **Regression check:** Timer/emphasis/color fixtures discriminate blue title roles from contextual lifecycle and semantic progress; surface tests prove render/invalidation/cleanup; editor tests prove deck → prompt → autocomplete ordering and unchanged editor state; root composition proves editor-deck wiring.
+- **Bounded repair:** Preserve fixed-width activity age and contextual bold lifecycle, keep `next direction › Plan` and current Task accent blue but regular, render every available Task/Step progress group in success green with only Task bold, and retain the existing typed public-API editor surface without touching dynamic telemetry.
+- **Regression check:** Timer/emphasis/color fixtures discriminate regular blue titles, contextual bold lifecycle, green available progress with Task-only bold, and dim unavailable progress; existing surface/editor/root tests preserve composition and dynamic telemetry behavior.
 - **Final history target:** `fix(cockpit): finish header and prompt chrome`
 - **Current non-Git boundary:** Not applicable; the repository uses Git.
-- **Human validation:** Prior `NOT VALID` at 2026-09-07T13:28:15Z is preserved; `CHANGE` at 2026-09-07T14:15:26Z requests accent blue for `next direction › Plan` and the current Task while keeping `waiting` bold.
+- **Human validation:** Prior `NOT VALID` and title-color `CHANGE` evidence are preserved; `CHANGE` at 2026-09-07T14:31:34Z requests a regular second-row title and an all-green available progress group with Task bold and Steps regular.
 
 - [x] Step 1.1 Separate contextual lifecycle, stable title, and completion-aware progress colors.
   - Estimate: 8–15 minutes; uncertainty was retaining existing separator and responsive ANSI contracts while distinguishing every role.
@@ -94,9 +94,16 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: PASS — independent verifier matched Step 1.9 commit `3e9d3325b498339cd3cff80d10c1248126423543`, parent, subject, exact five-path set, committed progress, owner-only receipt, clean workspace, exact color acceptance, and awaiting-Human state.
   - Paths: Plan/Task readiness evidence only.
   - History: Expected `step(cockpit): prepare blue-title validation`.
+- [x] Step 1.11 Calm the Task title and make available progress one green Task-led group.
+  - Estimate: 5–12 minutes; uncertainty was limited to mixed availability and preserving explicit unavailable dim behavior.
+  - Timing: Completed 2026-09-07T14:31:34Z–2026-09-07T14:36:49Z (5m15s implementation and assurance; no Human wait).
+  - Check: PASS — direct fixtures prove regular accent-blue Plan/Task titles, contextual bold lifecycle, dim timer, available success-green Task/Step/separator across incomplete, complete, and mixed-availability states, Task-only progress bold, and fully unavailable dim progress. Header 86/86 and full 385-test gate pass with formatting, lint, strict TypeScript, baseline integrity (92 current / 87 immutable files), composition, six OpenSpec changes, and offline Pi load (213 rows). Independent review found no Critical/High/Medium issue; its mixed-availability assertion suggestion was added before the final gate.
+  - Paths: `packages/galactica-context-header/src/deck.ts`, `packages/galactica-context-header/test/deck.test.ts`, `openspec/changes/finish-pi-cockpit-ui/plan.md`, `openspec/changes/finish-pi-cockpit-ui/tasks.md`, and `baseline/source.sha256`.
+  - History: Expected `fix(cockpit): calm task and progress emphasis`.
 
 ### Human validation
 
 - [ ] Human reloads Pi and validates lifecycle/title/progress colors plus borderless single- and multi-line prompts; preserve original response, canonical outcome, and UTC.
   - Evidence: `NOT VALID` at 2026-09-07T13:28:15Z. Original decisive feedback: “I think you put the title color less :( :( :(” and “Feel like extra space,” with one blank row annotated before the deck and three after it.
   - Evidence: `CHANGE` at 2026-09-07T14:15:26Z. Original decisive feedback: “just blue and keep waiting in bold” and “blue for all ‘next direction › finish pi cockpit ui’ and ‘Separate contextual lifecycle, stable title, and completion-aware progress colors’.”
+  - Evidence: `CHANGE` at 2026-09-07T14:31:34Z. Original decisive feedback: “Don't bold the second row title” and “All this on green ` task 0/1 ›  stps 10/10` task bold steps not bold”; Human confirmed the rest of the dynamic telemetry is perfect.
