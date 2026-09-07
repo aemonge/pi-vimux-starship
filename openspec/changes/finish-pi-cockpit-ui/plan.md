@@ -18,7 +18,7 @@
 - **Work completed at:** Public-API composition repair completed 2026-09-07T14:05:12Z after prior delivery reopened at 2026-09-07T13:28:15Z
 - **Assurance started at:** Final assurance start was not separately timestamped; it followed focused checks and independent review within Step 1.7.
 - **Assurance completed at:** 2026-09-07T14:05:12Z
-- **Ready for validation at:** Pending verified Step 1.11 history boundary
+- **Ready for validation at:** 2026-09-07T14:39:28Z after independent Step 1.11 history verification
 - **Human validation:** Prior `NOT VALID` and title-color `CHANGE` evidence are preserved; `CHANGE` at 2026-09-07T14:31:34Z requests a regular second-row title and green available progress with only Task bold.
 
 ## Symptom, cause, repair, and regression check

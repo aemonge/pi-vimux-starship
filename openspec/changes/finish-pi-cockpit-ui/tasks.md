@@ -22,7 +22,7 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Work completed at:** Public-API composition repair completed 2026-09-07T14:05:12Z after prior delivery reopened at 2026-09-07T13:28:15Z
 - **Assurance started at:** Final assurance start was not separately timestamped; it followed focused checks and independent review within Step 1.7.
 - **Assurance completed at:** 2026-09-07T14:05:12Z
-- **Ready for validation at:** Pending verified Step 1.11 history boundary
+- **Ready for validation at:** 2026-09-07T14:39:28Z after independent Step 1.11 history verification
 - **Actual implementation:** Prior delivery 26m32s plus 15m39s for the public-API composition repair, including focused/full checks and independent-review provider latency; Human wait excluded because no reliable finer provider-latency split was captured.
 - **Observed Human wait:** 6m24s before timer/emphasis confirmation plus 21m18s between spacing failure evidence and public-API repair confirmation; current validation wait pending.
 - **Estimate outcome:** Public-API repair completed below its 35–60 minute range because the typed bridge and existing editor seam composed directly; prior repair history remains preserved.
@@ -100,6 +100,12 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: PASS — direct fixtures prove regular accent-blue Plan/Task titles, contextual bold lifecycle, dim timer, available success-green Task/Step/separator across incomplete, complete, and mixed-availability states, Task-only progress bold, and fully unavailable dim progress. Header 86/86 and full 385-test gate pass with formatting, lint, strict TypeScript, baseline integrity (92 current / 87 immutable files), composition, six OpenSpec changes, and offline Pi load (213 rows). Independent review found no Critical/High/Medium issue; its mixed-availability assertion suggestion was added before the final gate.
   - Paths: `packages/galactica-context-header/src/deck.ts`, `packages/galactica-context-header/test/deck.test.ts`, `openspec/changes/finish-pi-cockpit-ui/plan.md`, `openspec/changes/finish-pi-cockpit-ui/tasks.md`, and `baseline/source.sha256`.
   - History: Expected `fix(cockpit): calm task and progress emphasis`.
+- [x] Step 1.12 Verify the calm-title/green-progress history boundary and prepare Human revalidation.
+  - Estimate: 1–3 minutes; uncertainty was limited to independent receipt/commit consistency.
+  - Timing: Completed 2026-09-07T14:39:28Z.
+  - Check: PASS — independent verifier matched Step 1.11 commit `d78c40d2eedfc3a98baaba390b04c77c4368910a`, parent, subject, exact five-path set, committed progress, owner-only receipt, clean workspace, exact title/progress acceptance, and awaiting-Human state.
+  - Paths: Plan/Task readiness evidence only.
+  - History: Expected `step(cockpit): prepare green-progress validation`.
 
 ### Human validation
 
