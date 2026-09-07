@@ -24,16 +24,18 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Rich-header repair confirmed at:** 2026-09-07T09:06:10Z
 - **Ornament/time correction confirmed at:** 2026-09-07T09:08:20Z — retain runtime and frame the header as top-left `󰠭 >` through bottom-right `< 󰠭`.
 - **Rich-header repair started at:** 2026-09-07T09:08:20Z
-- **Work completed at:** 2026-09-07T09:36:10Z for the rich-header repair and review corrections.
-- **Assurance started at:** Approximately 2026-09-07T09:15:00Z for the rich-header repair; exact command-start timestamp was not separately captured.
-- **Assurance completed at:** 2026-09-07T09:36:10Z
-- **Ready for validation at:** 2026-09-07T09:36:10Z, subject to independent Step-history verification.
-- **Actual implementation:** Step 1.4 took 27m50s including focused checks, complete assurance, independent review, and bounded review corrections; prior Steps remain recorded separately and Human wait is excluded.
+- **Chrome refinement confirmed at:** 2026-09-07T10:00:13Z
+- **Chrome refinement started at:** 2026-09-07T10:00:13Z
+- **Work completed at:** 2026-09-07T10:17:53Z for the chrome refinement.
+- **Assurance started at:** Approximately 2026-09-07T10:03:00Z for the chrome refinement; exact initial command-start timestamp was not separately captured.
+- **Assurance completed at:** 2026-09-07T10:17:53Z
+- **Ready for validation at:** 2026-09-07T10:17:53Z, subject to independent Step-history verification.
+- **Actual implementation:** Step 1.5 took 17m40s including focused checks, complete assurance, independent review, and bounded review corrections; prior Steps remain recorded separately and Human wait is excluded.
 - **Observed Human wait:** Pending
 - **Estimate outcome:** Pending
 - **Final history target:** `feat(cockpit): reflow telemetry into the header deck`
 - **Current non-Git boundary:** Not applicable; the repository uses Git.
-- **Human validation:** NOT VALID — original response `this is NOT ... What we agreed nor planned`, canonical outcome `NOT VALID`, recorded at 2026-09-07T08:33:36Z. Human subsequently approved a replacement rich-header visual contract; repair validation remains pending.
+- **Human validation:** CHANGE — prior `NOT VALID` recorded at 2026-09-07T08:33:36Z; latest original response begins `CHANGE: Ladybug has < and >...`, canonical outcome `CHANGE`, recorded at 2026-09-07T09:47:30Z. Chrome refinement validation remains pending.
 
 - [x] Step 1.1 Centralize explicit composition modes and bounded Footer, work-counter, LSP, MCP, and Vim-mode telemetry contracts.
   - Estimate: 20–30 minutes; uncertainty was extracting Footer refresh state without preserving visible footer ownership.
@@ -58,8 +60,14 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Timing: Planning record started 2026-09-07T09:06:10Z; production implementation ran 2026-09-07T09:08:20Z–2026-09-07T09:36:10Z (27m50s including checks and review corrections).
   - Check: PASS — focused Status 109/109 and Header 78/78 tests prove bounded Task/Step hierarchy, title-right progress, exact `󰠭 > … < 󰠭` ornaments, prompt-colored rules and major separators, compact nonzero Git, context tokens, retained runtime, balanced ANSI-safe rows, no side borders, no LSP, no footer, honest absence, live deck refresh paths, distinct activity/focus, and width retention at 160/100/79/59/39/20 cells. The complete root gate passes 371 tests plus Prettier, zero-finding lint, strict TypeScript, current 91-file and immutable 87-file integrity, composition, and OpenSpec validation. Isolated offline Pi loading passes with 208 output rows. Independent review findings about stale telemetry, fabricated absence, title duplication, decimal CPU refresh, and superseded acceptance were corrected within scope.
   - Paths: Header `index.ts`, `src/deck.ts`, `src/gauge.ts`, and `test/deck.test.ts`; Status `src/types.ts`, `src/openspec.ts`, `src/publisher.ts`, `test/openspec.test.ts`, and `test/publisher.test.ts`; this Plan/Task; and current source manifest. No Vim or Neovim path changed.
-  - History: Expected `fix(cockpit): render the agreed rich header`.
+  - History: `8316876` — `fix(cockpit): render the agreed rich header`.
+- [x] Step 1.5 Refine rich-header chrome with `󰠭 › … ‹ 󰠭`, pale solid internal rules, flowing two-line description, percentage-only context, corrected telemetry grouping, and existing editor-only composition that suppresses legacy prompt telemetry without modifying Vim or Neovim source.
+  - Estimate: 15–25 minutes; uncertainty was responsive narrative wrapping and the host prompt surface left by editor-only mode.
+  - Timing: 2026-09-07T10:00:13Z–2026-09-07T10:17:53Z (17m40s including checks and review corrections).
+  - Check: PASS — Header 80/80 proves Plan/Task-only one/two-line narrative flow, ANSI-safe widths at 160/100/79/59/39/20, fancy ornaments, pale internal rules, percentage-only context, corrected telemetry grouping, and retained runtime. Root tooling 12/12 binds the shared `editor-only` composition surface to the invocation. The complete root gate passes 373 tests plus formatting, zero-finding lint, strict TypeScript, current 91-file and immutable 87-file integrity, composition, and OpenSpec validation. Isolated offline Pi loading passes with 208 output rows; independent review passes; no Vim or Neovim source path changed. One earlier filtered root-test invocation passed its intended 12 tests but returned a non-product npm option-forwarding error; the normal focused and complete commands passed afterward.
+  - Paths: `src/index.ts`, `test/local-load-probe.test.ts`, Header `src/deck.ts` and `test/deck.test.ts`, this Plan/Task, and current source manifest. No Vim or Neovim source path changed.
+  - History: Expected `fix(cockpit): refine rich header chrome`.
 
 ### Human validation
 
-- [ ] Human validates header colors, wide/narrow resizing, lifecycle transitions, package reload, and no Pi footer while confirming the existing Vim-owned prompt rails remain unchanged; preserve original response, canonical outcome, and UTC.
+- [ ] Human validates the rich header colors, pale internal rules, narrative wrapping, telemetry grouping, wide/narrow resizing, lifecycle transitions, package reload, no footer, and no legacy prompt telemetry rails; preserve original response, canonical outcome, and UTC.

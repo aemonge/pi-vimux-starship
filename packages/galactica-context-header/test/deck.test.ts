@@ -61,30 +61,27 @@ function fixture(): HeaderDeckState {
 test('renders the approved rich wide header without side borders or spacer rows', () => {
   const lines = renderHeaderDeck(fixture(), 160, plainTheme as never);
 
-  assert.equal(lines.length, 10);
-  assert.match(lines[0] ?? '', /^─ 󰠭 > ─+$/u);
+  assert.equal(lines.length, 9);
+  assert.match(lines[0] ?? '', /^─ 󰠭 › ─+$/u);
   assert.match(
     lines[1] ?? '',
     /^waiting ⟩ next direction\s+ task 0\/1 ›  stps 6\/16$/u,
   );
   assert.equal(
     lines[2],
-    'Read-only preflight for the interrupted one-line Review ledger fix',
+    'Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation',
   );
-  assert.equal(lines[3], 'before further OpenSpec validation and implementation');
-  assert.match(lines[5] ?? '', /^\[󰆧\]  ~\/galactica\s+/u);
+  assert.match(lines[4] ?? '', /^\[󰆧\]  ~\/galactica\s+/u);
   assert.match(
-    lines[5] ?? '',
+    lines[4] ?? '',
     / feature\/review-ledger\/preserve-openspec-validation ⟩  2 ›  3 ›  1$/u,
   );
-  assert.match(lines[7] ?? '', /^󰚩 GPT-5\.6 Sol › high\s+/u);
-  assert.match(
-    lines[7] ?? '',
-    /󰾆 ctx 38% · 32K\/128K ⟩ 󰎞 zips 2 ›  qta 63% › 󰜦 \$5\.16$/u,
-  );
-  assert.match(lines[8] ?? '', /^󱎫 00:00:07 › agts 0\/0 › files 37\/53\s+/u);
-  assert.match(lines[8] ?? '', / 48\.2% · 268M ›  MCP 3\/3$/u);
-  assert.match(lines[9] ?? '', /^─+ < 󰠭 ─$/u);
+  assert.match(lines[6] ?? '', /^󰚩 GPT-5\.6 Sol › high\s+/u);
+  assert.match(lines[6] ?? '', /󰾆 ctx 38% › 󰎞 zips 2 ⟩  qta 63% › 󰜦 \$5\.16$/u);
+  assert.equal(lines.join('\n').includes('32K/128K'), false);
+  assert.match(lines[7] ?? '', /^󱎫 00:00:07 › agts 0\/0 › files 37\/53\s+/u);
+  assert.match(lines[7] ?? '', / 48\.2% · 268M ›  MCP 3\/3$/u);
+  assert.match(lines[8] ?? '', /^─+ ‹ 󰠭 ─$/u);
   assert.ok(lines.every((line) => line.length > 0));
   assert.ok(lines.every((line) => !line.startsWith('│') && !line.endsWith('│')));
   assert.equal(lines.join('').split('󰠭').length - 1, 2);
@@ -102,6 +99,22 @@ test('keeps activity and focus distinct on the title row', () => {
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
   assert.match(lines[1] ?? '', /^assuring › verify ⟩ Current task\s+/u);
+  assert.equal(lines[2], 'Plan title › Current task');
+  assert.equal(lines.join('\n').split('Running checks').length - 1, 0);
+});
+
+test('flows Plan and Task through one line or at most two wrapped lines', () => {
+  const expected =
+    'Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation';
+
+  const wide = renderHeaderDeck(fixture(), 160, plainTheme as never);
+  assert.equal(wide[2], expected);
+
+  const narrow = renderHeaderDeck(fixture(), 79, plainTheme as never);
+  const dividerIndex = narrow.indexOf('─'.repeat(79));
+  const narrative = narrow.slice(2, dividerIndex);
+  assert.equal(narrative.length, 2);
+  assert.equal(narrative.join(' '), expected);
 });
 
 test('uses prompt-line color for rules and major separators with violet ladybugs', () => {
@@ -118,11 +131,27 @@ test('uses prompt-line color for rules and major separators with violet ladybugs
 
   assert.ok(colors.some((entry) => entry.startsWith('thinkingHigh:─')));
   assert.ok(colors.includes('thinkingHigh:⟩'));
+  assert.equal(colors.filter((entry) => entry.startsWith('borderMuted:─')).length, 1);
   assert.equal(colors.filter((entry) => entry === 'customMessageLabel:󰠭').length, 2);
   assert.equal(
     colors.some((entry) => entry.startsWith('thinkingMax:')),
     false,
   );
+});
+
+test('preserves ANSI-safe width with a coloring theme', () => {
+  const ansiTheme = {
+    fg: (_semanticColor: string, text: string) => `\u001b[35m${text}\u001b[0m`,
+    bold: (text: string) => `\u001b[1m${text}\u001b[22m`,
+  };
+
+  for (const width of [160, 100, 79, 59, 39, 20]) {
+    const lines = renderHeaderDeck(fixture(), width, ansiTheme as never);
+    assert.ok(
+      lines.every((line) => visibleWidth(line) <= width),
+      String(width),
+    );
+  }
 });
 
 test('preserves width and essential deck structure through responsive collapse', () => {

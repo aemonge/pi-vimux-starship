@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { COCKPIT_COMPOSITION } from '../src/index.ts';
+import { COCKPIT_COMPOSITION, COCKPIT_SURFACES } from '../src/index.ts';
 import {
   EXPECTED_EXTENSION_ENTRYPOINTS,
   inspectLocalPackage,
@@ -16,12 +16,13 @@ const EXPECTED_COMMANDS = [
 ];
 const EXPECTED_TOOLS = ['openspec_focus', 'work_focus'];
 
-test('header deck composition preserves Vim rails while selecting Pi-owned surfaces', () => {
+test('header deck composition suppresses legacy prompt telemetry without changing Vim source', () => {
+  assert.equal(COCKPIT_SURFACES.vim, 'editor-only');
   assert.deepEqual(COCKPIT_COMPOSITION, [
     'fancy-footer:telemetry',
     'galactica-status:provider',
     'galactica-context-header:deck',
-    'pi-vim:rails',
+    'pi-vim:editor-only',
   ]);
 });
 

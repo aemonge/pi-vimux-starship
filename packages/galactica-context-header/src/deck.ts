@@ -157,15 +157,7 @@ function narrativeLines(
 ): string[] {
   const work = state.header?.work;
   const titles = (work?.titles ?? []).map((value) => safeText(value)).filter(Boolean);
-  if (titles.length > 1) {
-    return titles
-      .slice(0, maximumLines)
-      .map((line) => truncateToWidth(line, width, '…'));
-  }
-  const path = (work?.activityPath ?? [])
-    .map((segment) => safeText(segment.label))
-    .filter(Boolean);
-  return wrapFocus([...titles, ...path].join(' › '), width, maximumLines);
+  return wrapFocus(titles.join(' › '), width, maximumLines);
 }
 
 function semanticSeparator(theme: Theme): string {
@@ -232,10 +224,6 @@ function globalRight(state: HeaderDeckState, theme: Theme): string {
       : state.contextPercent === undefined
         ? 'dim'
         : 'accent';
-  const tokenText =
-    state.contextTokens === undefined
-      ? ''
-      : ` · ${formatDeckBytes(state.contextTokens)}${state.contextWindow === undefined ? '' : `/${formatDeckBytes(state.contextWindow)}`}`;
   const quota = state.footerTelemetry?.quotaPercent;
   const quotaColor =
     quota !== undefined && quota >= 80
@@ -247,15 +235,15 @@ function globalRight(state: HeaderDeckState, theme: Theme): string {
     color(
       theme,
       ctxColor,
-      `󰾆 ctx ${state.contextPercent === undefined ? '—' : formatDeckPercent(state.contextPercent)}${tokenText}`,
+      `󰾆 ctx ${state.contextPercent === undefined ? '—' : formatDeckPercent(state.contextPercent)}`,
     ),
-    semanticSeparator(theme),
+    minorSeparator(theme, ctxColor),
     color(
       theme,
       state.compactionCount > 0 ? ctxColor : 'dim',
       `󰎞 zips ${state.compactionCount}`,
     ),
-    minorSeparator(theme),
+    semanticSeparator(theme),
     color(
       theme,
       quotaColor,
@@ -315,19 +303,19 @@ export function renderHeaderDeck(
   if (boundedWidth === 0) return [];
 
   const lineColor = 'thinkingHigh';
-  const topPrefix = `${color(theme, lineColor, '─ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' > ')}`;
+  const topPrefix = `${color(theme, lineColor, '─ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' › ')}`;
   const top = `${topPrefix}${color(
     theme,
     lineColor,
     '─'.repeat(Math.max(0, boundedWidth - visibleWidth(topPrefix))),
   )}`;
-  const bottomSuffix = `${color(theme, lineColor, ' < ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' ─')}`;
+  const bottomSuffix = `${color(theme, lineColor, ' ‹ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' ─')}`;
   const bottom = `${color(
     theme,
     lineColor,
     '─'.repeat(Math.max(0, boundedWidth - visibleWidth(bottomSuffix))),
   )}${bottomSuffix}`;
-  const divider = color(theme, lineColor, '─'.repeat(boundedWidth));
+  const divider = color(theme, 'borderMuted', '─'.repeat(boundedWidth));
   const current = lifecycle(state);
   const activity = state.header?.work?.activityPath?.at(-1);
   const activityText = safeText(activity?.compact || activity?.label || '');
@@ -339,11 +327,9 @@ export function renderHeaderDeck(
     semanticSeparator(theme),
     color(theme, state.header?.work?.color ?? 'accent', current.focus),
   ].join(' ');
-  const focusLines = narrativeLines(
-    state,
-    boundedWidth,
-    boundedWidth >= 80 ? 2 : 1,
-  ).map((line) => color(theme, state.header?.work?.color ?? 'accent', line));
+  const focusLines = narrativeLines(state, boundedWidth, 2).map((line) =>
+    color(theme, state.header?.work?.color ?? 'accent', line),
+  );
 
   const rows = [
     top,
