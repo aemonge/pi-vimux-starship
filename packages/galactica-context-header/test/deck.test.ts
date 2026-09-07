@@ -201,16 +201,16 @@ test('keeps only lifecycle contextual and colors progress by completion', () => 
   renderHeaderDeck(state, 160, theme as never);
 
   assert.ok(colors.includes('warning:waiting'));
-  assert.ok(colors.includes('text:next direction'));
+  assert.ok(colors.includes("dim:(00:07'00)"));
+  assert.ok(colors.includes('accent:next direction'));
+  assert.ok(colors.includes('accent:›'));
   assert.ok(
     colors.includes(
-      'customMessageLabel:Read-only preflight for the interrupted one-line Review ledger fix',
+      'accent:Read-only preflight for the interrupted one-line Review ledger fix',
     ),
   );
   assert.ok(
-    colors.includes(
-      'customMessageLabel:before further OpenSpec validation and implementation',
-    ),
+    colors.includes('accent:before further OpenSpec validation and implementation'),
   );
   assert.ok(colors.includes('accent: task 0/1'));
   assert.ok(colors.includes('accent: stps 6/16'));
@@ -221,6 +221,13 @@ test('keeps only lifecycle contextual and colors progress by completion', () => 
   renderHeaderDeck(state, 160, theme as never);
   assert.ok(colors.includes('success: task 1/1'));
   assert.ok(colors.includes('success: stps 16/16'));
+
+  state.header!.counters.tasks = undefined;
+  state.header!.counters.steps = undefined;
+  colors.length = 0;
+  renderHeaderDeck(state, 160, theme as never);
+  assert.ok(colors.includes('dim: task —'));
+  assert.ok(colors.includes('dim: stps —'));
 });
 
 test('uses prompt-line color for rules and major separators with violet ladybugs', () => {

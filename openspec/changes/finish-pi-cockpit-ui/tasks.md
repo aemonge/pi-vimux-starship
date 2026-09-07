@@ -22,17 +22,17 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Work completed at:** Public-API composition repair completed 2026-09-07T14:05:12Z after prior delivery reopened at 2026-09-07T13:28:15Z
 - **Assurance started at:** Final assurance start was not separately timestamped; it followed focused checks and independent review within Step 1.7.
 - **Assurance completed at:** 2026-09-07T14:05:12Z
-- **Ready for validation at:** 2026-09-07T14:08:52Z after independent Step 1.7 history verification
+- **Ready for validation at:** Pending verified Step 1.9 history boundary
 - **Actual implementation:** Prior delivery 26m32s plus 15m39s for the public-API composition repair, including focused/full checks and independent-review provider latency; Human wait excluded because no reliable finer provider-latency split was captured.
 - **Observed Human wait:** 6m24s before timer/emphasis confirmation plus 21m18s between spacing failure evidence and public-API repair confirmation; current validation wait pending.
 - **Estimate outcome:** Public-API repair completed below its 35–60 minute range because the typed bridge and existing editor seam composed directly; prior repair history remains preserved.
 - **Symptom:** Contextual lifecycle color leaks into Plan/Task text, progress lacks completion color, and inherited editor rails duplicate the accepted header frame.
 - **Cause:** Rich-deck rendering reuses `work.color` broadly and hardcodes available progress as accent; editor-only disables telemetry but not inherited border rows.
-- **Bounded repair:** Preserve semantic colors and fixed-width activity age, restore stable violet Plan/Task chroma, and compose the deck inside the existing borderless editor through a typed public-API surface without Pi core or private layout mutation.
-- **Regression check:** Timer/emphasis/color fixtures discriminate roles; surface tests prove render/invalidation/cleanup; editor tests prove deck → prompt → autocomplete ordering and unchanged editor state; root composition proves editor-deck wiring.
+- **Bounded repair:** Preserve semantic progress and fixed-width activity age, use accent blue for `next direction › Plan` and current Task while keeping lifecycle bold/contextual, and compose the deck inside the existing borderless editor through a typed public-API surface without Pi core or private layout mutation.
+- **Regression check:** Timer/emphasis/color fixtures discriminate blue title roles from contextual lifecycle and semantic progress; surface tests prove render/invalidation/cleanup; editor tests prove deck → prompt → autocomplete ordering and unchanged editor state; root composition proves editor-deck wiring.
 - **Final history target:** `fix(cockpit): finish header and prompt chrome`
 - **Current non-Git boundary:** Not applicable; the repository uses Git.
-- **Human validation:** Prior `NOT VALID` at 2026-09-07T13:28:15Z is preserved; public-API minimum repair awaits revalidation.
+- **Human validation:** Prior `NOT VALID` at 2026-09-07T13:28:15Z is preserved; `CHANGE` at 2026-09-07T14:15:26Z requests accent blue for `next direction › Plan` and the current Task while keeping `waiting` bold.
 
 - [x] Step 1.1 Separate contextual lifecycle, stable title, and completion-aware progress colors.
   - Estimate: 8–15 minutes; uncertainty was retaining existing separator and responsive ANSI contracts while distinguishing every role.
@@ -82,8 +82,15 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: PASS — independent verifier matched Step 1.7 commit `04af3caa3ae0ac1ef5431be0b2ba1a72701922c4`, parent, subject, exact 13-path set, committed progress, owner-only receipt, clean workspace, and awaiting-Human state.
   - Paths: Plan/Task readiness evidence only.
   - History: Expected `step(cockpit): prepare editor deck validation`.
+- [x] Step 1.9 Replace loud violet title chroma with the confirmed accent-blue hierarchy.
+  - Estimate: 5–12 minutes; uncertainty was limited to preserving bold and separator boundaries while changing only title-role colors.
+  - Timing: Completed 2026-09-07T14:15:26Z–2026-09-07T14:24:45Z (9m19s implementation and assurance; no Human wait).
+  - Check: PASS — direct fixtures prove contextual bold lifecycle, dim timer, accent-blue `next direction › Plan`, accent-blue bold Task, prompt-colored major separator, and independent complete/incomplete/unavailable progress; Header 86/86 and full 385-test gate pass with formatting, lint, strict TypeScript, baseline integrity (92 current / 87 immutable files), composition, six OpenSpec changes, and offline Pi load (213 rows). Independent review found no Critical/High/Medium issue; its dim-branch assertion suggestion was added before the final gate.
+  - Paths: `packages/galactica-context-header/src/deck.ts`, `packages/galactica-context-header/test/deck.test.ts`, `openspec/changes/finish-pi-cockpit-ui/plan.md`, `openspec/changes/finish-pi-cockpit-ui/tasks.md`, and `baseline/source.sha256`.
+  - History: Expected `fix(cockpit): soften title chroma`.
 
 ### Human validation
 
 - [ ] Human reloads Pi and validates lifecycle/title/progress colors plus borderless single- and multi-line prompts; preserve original response, canonical outcome, and UTC.
   - Evidence: `NOT VALID` at 2026-09-07T13:28:15Z. Original decisive feedback: “I think you put the title color less :( :( :(” and “Feel like extra space,” with one blank row annotated before the deck and three after it.
+  - Evidence: `CHANGE` at 2026-09-07T14:15:26Z. Original decisive feedback: “just blue and keep waiting in bold” and “blue for all ‘next direction › finish pi cockpit ui’ and ‘Separate contextual lifecycle, stable title, and completion-aware progress colors’.”

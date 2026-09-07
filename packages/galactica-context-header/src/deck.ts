@@ -361,18 +361,15 @@ export function renderHeaderDeck(
     semanticSeparator(theme),
     ...(waiting
       ? [
-          color(theme, 'text', 'next direction'),
+          color(theme, 'accent', 'next direction'),
           ...(planTitle
-            ? [
-                minorSeparator(theme, 'customMessageLabel'),
-                color(theme, 'customMessageLabel', planTitle),
-              ]
+            ? [minorSeparator(theme), color(theme, 'accent', planTitle)]
             : []),
         ]
-      : [color(theme, 'customMessageLabel', planTitle || current.focus)]),
+      : [color(theme, 'accent', planTitle || current.focus)]),
   ].join(' ');
   const focusLines = narrativeLines(state, boundedWidth, 2).map((line) =>
-    color(theme, 'customMessageLabel', line, true),
+    color(theme, 'accent', line, true),
   );
 
   const rows = [

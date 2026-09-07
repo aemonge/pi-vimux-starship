@@ -7,7 +7,7 @@
 - **Execution source:** native-direct
 - **Execution name:** Sequential render-only chrome repair
 - **Execution reason:** Header color roles, runtime/emphasis hierarchy, and Pi Vim editor-only borders are separate small render seams; direct sequential work keeps each source/history boundary independently verifiable.
-- **Execution outline:** Preserve the completed color/timer/emphasis fixes, restore stable violet Plan/Task chroma, replace the above-editor widget with a typed in-memory deck surface, prepend that surface in the existing borderless editor render, and prove lifecycle, cursor, autocomplete, reload, responsive, and package behavior.
+- **Execution outline:** Preserve the completed timer/emphasis/spacing fixes, use accent blue for `next direction › Plan` and the current Task while retaining contextual bold lifecycle, keep the typed in-memory deck surface inside the existing borderless editor, and prove lifecycle, cursor, autocomplete, reload, responsive, and package behavior.
 - **Estimate basis:** The accepted rich-header Steps completed comparable render fixes in 7–20 minutes, and the current causes are isolated in pure render branches with existing tests.
 - **Estimated implementation:** Prior delivery took 26m32s; confirmed public-API composition repair is 35–60 additional minutes; Human wait excluded.
 - **Estimate confidence:** Medium-low because the public seams are known, but cross-extension reload/invalidation and short-terminal clipping are new composition behavior.
@@ -18,23 +18,23 @@
 - **Work completed at:** Public-API composition repair completed 2026-09-07T14:05:12Z after prior delivery reopened at 2026-09-07T13:28:15Z
 - **Assurance started at:** Final assurance start was not separately timestamped; it followed focused checks and independent review within Step 1.7.
 - **Assurance completed at:** 2026-09-07T14:05:12Z
-- **Ready for validation at:** 2026-09-07T14:08:52Z after independent Step 1.7 history verification
-- **Human validation:** Prior `NOT VALID` at 2026-09-07T13:28:15Z is preserved; public-API minimum repair awaits revalidation.
+- **Ready for validation at:** Pending verified Step 1.9 history boundary
+- **Human validation:** Prior `NOT VALID` at 2026-09-07T13:28:15Z is preserved; `CHANGE` at 2026-09-07T14:15:26Z requests accent-blue title hierarchy while keeping `waiting` bold.
 
 ## Symptom, cause, repair, and regression check
 
 - **Symptom:** Plan/Task colors change with lifecycle, progress is not visually independent, and Pi's inherited editor rails create extra solid rules around the prompt beneath the accepted header.
 - **Cause:** The rich deck applies `work.color` to every title role and hardcodes available progress as `accent`; Pi Vim's `editor-only` path disables telemetry but returns the inherited bordered `CustomEditor` rendering unchanged.
-- **Bounded repair:** Keep contextual color only on lifecycle, use stable violet for Plan/Task, derive progress color from completion, retain fixed-width `MM:SS'cc` and agreed emphasis, and compose the pure deck renderer inside the existing borderless editor through a typed public-API surface instead of an above-editor widget.
+- **Bounded repair:** Keep contextual color and bold on lifecycle, use accent blue for `next direction › Plan` and the current Task, derive progress color from completion, retain fixed-width `MM:SS'cc` and agreed emphasis, and keep the pure deck renderer inside the existing borderless editor through a typed public-API surface.
 - **Regression check:** Pure fixtures prove timer/emphasis/colors; surface tests prove renderer/invalidation/cleanup; editor tests prove deck → prompt → autocomplete ordering with unchanged cursor-bearing content, mode, app behavior, and bridge wiring; composition tests prove no above-editor deck registration.
 
 ## Value
 
-Human sees one visually stable violet-titled cockpit composed contiguously with its unframed prompt at Pi's safe public-API spacing minimum: lifecycle remains contextual, progress is independent, and fullscreen editor filler no longer expands the gap below the deck.
+Human sees one calm blue-titled cockpit composed contiguously with its unframed prompt at Pi's safe public-API spacing minimum: lifecycle remains contextual and bold, progress is independent, and fullscreen editor filler no longer expands the gap below the deck.
 
 ## Acceptance criteria
 
-- [x] Lifecycle alone uses `work.color`; timer remains dim; activity remains accent; Plan and Task use stable violet `customMessageLabel` distinct from progress; Plan is regular and current Task remains bold; major separators retain prompt-separator color.
+- [x] Lifecycle uses `work.color` and remains bold; timer remains dim; activity remains accent; `next direction › Plan` is entirely accent blue and regular; current Task is accent blue and bold; major separators retain prompt-separator color.
 - [x] Runtime age uses fixed-width `MM:SS'cc` at the existing 50 ms refresh cadence so active work has visible subsecond motion.
 - [x] Bold is limited to lifecycle, current Task narrative, Task/Step progress cells, the Devbox marker, and major separators; timer, activity, next direction, Plan, folder/PWD, Git, telemetry, minor separators, and rules remain regular.
 - [x] Task and Step counters use `success` only when complete, `accent` while available but incomplete, and `dim` when unavailable.
@@ -61,7 +61,7 @@ Mutation requires the current Git root and named targets writable. No protected 
 
 ## Verification
 
-Run focused Context Header tests for stable violet Plan/Task color and existing timer/emphasis/progress behavior; typed surface tests for render/invalidation/disposal; editor fixtures for deck → prompt → autocomplete order, cursor-bearing multiline preservation, and rails compatibility; root composition tests proving editor-deck wiring without an above-editor widget. Format and lint every edited file, type-check TypeScript, run relevant Header/Vim/root tests, baseline integrity, composition, OpenSpec validation, offline Pi load, and independent semantic review. Human runs `/reload`, verifies violet hierarchy and reduced public-API-minimum spacing with single-line, multiline, and autocomplete prompts.
+Run focused Context Header tests for the accent-blue title hierarchy and existing timer/emphasis/progress behavior; typed surface tests for render/invalidation/disposal; editor fixtures for deck → prompt → autocomplete order, cursor-bearing multiline preservation, and rails compatibility; root composition tests proving editor-deck wiring without an above-editor widget. Format and lint every edited file, type-check TypeScript, run relevant Header/Vim/root tests, baseline integrity, composition, OpenSpec validation, offline Pi load, and independent semantic review. Human runs `/reload`, verifies the blue title hierarchy and reduced public-API-minimum spacing with single-line, multiline, and autocomplete prompts.
 
 **Final history target:** `fix(cockpit): finish header and prompt chrome`
 
