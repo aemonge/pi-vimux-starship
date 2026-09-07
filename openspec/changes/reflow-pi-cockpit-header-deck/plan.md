@@ -65,6 +65,10 @@ Human rejected the activated 11-line open-sided deck as `NOT VALID`. This replac
 
 Human returned `CHANGE` after live review and confirmed the bounded refinement at 2026-09-07T10:00:13Z. Use fancy `󰠭 ›` and `‹ 󰠭` ornaments, strong prompt-colored outer rules, pale solid `borderMuted` internal rules, and a combined Plan/Task narrative that occupies one line when it fits and at most two when wrapped. Show context percentage without token counts; group context and compactions with minor `›`, then quota and cost behind major `⟩`; keep CPU and RAM joined by `·`. Retain only focused Task/Step progress. Root composition selects Pi Vim's existing `editor-only` surface to suppress legacy prompt telemetry while preserving editor mechanics and leaving every Vim and Neovim source path unchanged. Full prompt-border removal and the future Neovim-first Normal/Insert/Visual interaction model remain separate work.
 
+## Human-corrected hierarchy refinement
+
+Human returned `CHANGE` on the pale solid rules and combined Plan/Task narrative, then confirmed the bounded repair at 2026-09-07T10:26:24Z. Render both internal dividers as dotted `┈` in the paler `dim` semantic color while preserving solid prompt-colored outer ornaments. Place the Plan title after the status focus on the first content row (`lifecycle ⟩ focus › Plan`) and reserve the narrative below for only the current Task, wrapping to a second line only when required. Preserve focused progress, existing telemetry grouping, editor-only composition, and the no-Vim/Neovim-source boundary.
+
 ## Verification
 
 Use pure render fixtures at wide, medium, narrow, and tiny widths; assert ANSI/Unicode width bounds, icon/order contracts, semantic colors, unavailable telemetry, pressure transitions, and exactly two ladybugs. Verify composition options, Footer snapshots, Status counters, LSP/MCP parsing, mode publication and borderless editor rendering. Run all root checks, current/original integrity, offline isolated Pi loading, and a credential-free package dry run. Human then validates the live deck at multiple widths and exercises Ctrl-E.

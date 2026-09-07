@@ -26,16 +26,18 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Rich-header repair started at:** 2026-09-07T09:08:20Z
 - **Chrome refinement confirmed at:** 2026-09-07T10:00:13Z
 - **Chrome refinement started at:** 2026-09-07T10:00:13Z
-- **Work completed at:** 2026-09-07T10:17:53Z for the chrome refinement.
-- **Assurance started at:** Approximately 2026-09-07T10:03:00Z for the chrome refinement; exact initial command-start timestamp was not separately captured.
-- **Assurance completed at:** 2026-09-07T10:17:53Z
-- **Ready for validation at:** 2026-09-07T10:17:53Z, subject to independent Step-history verification.
-- **Actual implementation:** Step 1.5 took 17m40s including focused checks, complete assurance, independent review, and bounded review corrections; prior Steps remain recorded separately and Human wait is excluded.
+- **Hierarchy refinement confirmed at:** 2026-09-07T10:26:24Z
+- **Hierarchy refinement started at:** 2026-09-07T10:26:24Z
+- **Work completed at:** 2026-09-07T10:33:15Z for the hierarchy refinement.
+- **Assurance started at:** Approximately 2026-09-07T10:28:00Z for the hierarchy refinement; exact initial command-start timestamp was not separately captured.
+- **Assurance completed at:** 2026-09-07T10:33:15Z
+- **Ready for validation at:** 2026-09-07T10:33:15Z, subject to independent Step-history verification.
+- **Actual implementation:** Step 1.6 took 6m51s including focused checks, complete assurance, and independent review; prior Steps remain recorded separately and Human wait is excluded.
 - **Observed Human wait:** Pending
 - **Estimate outcome:** Pending
 - **Final history target:** `feat(cockpit): reflow telemetry into the header deck`
 - **Current non-Git boundary:** Not applicable; the repository uses Git.
-- **Human validation:** CHANGE — prior `NOT VALID` recorded at 2026-09-07T08:33:36Z; latest original response begins `CHANGE: Ladybug has < and >...`, canonical outcome `CHANGE`, recorded at 2026-09-07T09:47:30Z. Chrome refinement validation remains pending.
+- **Human validation:** CHANGE — prior visual changes remain preserved; latest original response begins `Let's not use solid line...`, canonical outcome `CHANGE`, recorded at 2026-09-07T10:23:58Z. Hierarchy refinement validation remains pending.
 
 - [x] Step 1.1 Centralize explicit composition modes and bounded Footer, work-counter, LSP, MCP, and Vim-mode telemetry contracts.
   - Estimate: 20–30 minutes; uncertainty was extracting Footer refresh state without preserving visible footer ownership.
@@ -66,7 +68,13 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Timing: 2026-09-07T10:00:13Z–2026-09-07T10:17:53Z (17m40s including checks and review corrections).
   - Check: PASS — Header 80/80 proves Plan/Task-only one/two-line narrative flow, ANSI-safe widths at 160/100/79/59/39/20, fancy ornaments, pale internal rules, percentage-only context, corrected telemetry grouping, and retained runtime. Root tooling 12/12 binds the shared `editor-only` composition surface to the invocation. The complete root gate passes 373 tests plus formatting, zero-finding lint, strict TypeScript, current 91-file and immutable 87-file integrity, composition, and OpenSpec validation. Isolated offline Pi loading passes with 208 output rows; independent review passes; no Vim or Neovim source path changed. One earlier filtered root-test invocation passed its intended 12 tests but returned a non-product npm option-forwarding error; the normal focused and complete commands passed afterward.
   - Paths: `src/index.ts`, `test/local-load-probe.test.ts`, Header `src/deck.ts` and `test/deck.test.ts`, this Plan/Task, and current source manifest. No Vim or Neovim source path changed.
-  - History: Expected `fix(cockpit): refine rich header chrome`.
+  - History: `1712279` — `fix(cockpit): refine rich header chrome`.
+- [x] Step 1.6 Replace internal rules with pale dotted dividers and move the Plan title onto the status row while retaining only the current Task in the wrapping narrative.
+  - Estimate: 10–20 minutes; uncertainty was fitting status/focus/Plan beside focused progress at responsive widths.
+  - Timing: 2026-09-07T10:26:24Z–2026-09-07T10:33:15Z (6m51s including checks and review).
+  - Check: PASS — Header 80/80 proves exact dotted `dim` dividers, solid prompt-colored outer ornaments, status/focus/Plan hierarchy, current-Task-only one/two-line narrative flow, and ANSI-safe widths at 160/100/79/59/39/20. The complete root gate passes 373 tests plus formatting, zero-finding lint, strict TypeScript, current 91-file and immutable 87-file integrity, composition, and OpenSpec validation. Isolated offline Pi loading passes with 208 output rows; independent review passes; no Vim or Neovim source path changed.
+  - Paths: Header `src/deck.ts` and `test/deck.test.ts`, this Plan/Task, and current source manifest. No Vim or Neovim source path changed.
+  - History: Expected `fix(cockpit): clarify header hierarchy`.
 
 ### Human validation
 

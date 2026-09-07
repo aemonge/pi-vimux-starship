@@ -65,12 +65,11 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.match(lines[0] ?? '', /^─ 󰠭 › ─+$/u);
   assert.match(
     lines[1] ?? '',
-    /^waiting ⟩ next direction\s+ task 0\/1 ›  stps 6\/16$/u,
+    /^waiting ⟩ next direction › Read-only preflight for the interrupted one-line Review ledger fix\s+ task 0\/1 ›  stps 6\/16$/u,
   );
-  assert.equal(
-    lines[2],
-    'Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation',
-  );
+  assert.equal(lines[2], 'before further OpenSpec validation and implementation');
+  assert.equal(lines[3], '┈'.repeat(160));
+  assert.equal(lines[5], '┈'.repeat(160));
   assert.match(lines[4] ?? '', /^\[󰆧\]  ~\/galactica\s+/u);
   assert.match(
     lines[4] ?? '',
@@ -98,23 +97,27 @@ test('keeps activity and focus distinct on the title row', () => {
   };
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.match(lines[1] ?? '', /^assuring › verify ⟩ Current task\s+/u);
-  assert.equal(lines[2], 'Plan title › Current task');
+  assert.match(lines[1] ?? '', /^assuring › verify ⟩ Current task › Plan title\s+/u);
+  assert.equal(lines[2], 'Current task');
   assert.equal(lines.join('\n').split('Running checks').length - 1, 0);
 });
 
-test('flows Plan and Task through one line or at most two wrapped lines', () => {
+test('moves Plan to the status row and wraps only the current Task', () => {
+  const state = fixture();
   const expected =
-    'Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation';
+    'Deliver one deliberately long current Task description that needs a second responsive line without repeating its parent Plan title';
+  state.header!.work!.titles = ['Parent Plan title', expected];
 
-  const wide = renderHeaderDeck(fixture(), 160, plainTheme as never);
+  const wide = renderHeaderDeck(state, 160, plainTheme as never);
+  assert.match(wide[1] ?? '', /next direction › Parent Plan title\s+/u);
   assert.equal(wide[2], expected);
 
-  const narrow = renderHeaderDeck(fixture(), 79, plainTheme as never);
-  const dividerIndex = narrow.indexOf('─'.repeat(79));
+  const narrow = renderHeaderDeck(state, 79, plainTheme as never);
+  const dividerIndex = narrow.indexOf('┈'.repeat(79));
   const narrative = narrow.slice(2, dividerIndex);
   assert.equal(narrative.length, 2);
   assert.equal(narrative.join(' '), expected);
+  assert.equal(narrative.join(' ').includes('Parent Plan title'), false);
 });
 
 test('uses prompt-line color for rules and major separators with violet ladybugs', () => {
@@ -131,7 +134,7 @@ test('uses prompt-line color for rules and major separators with violet ladybugs
 
   assert.ok(colors.some((entry) => entry.startsWith('thinkingHigh:─')));
   assert.ok(colors.includes('thinkingHigh:⟩'));
-  assert.equal(colors.filter((entry) => entry.startsWith('borderMuted:─')).length, 1);
+  assert.equal(colors.filter((entry) => entry.startsWith('dim:┈')).length, 1);
   assert.equal(colors.filter((entry) => entry === 'customMessageLabel:󰠭').length, 2);
   assert.equal(
     colors.some((entry) => entry.startsWith('thinkingMax:')),

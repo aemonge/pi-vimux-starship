@@ -157,7 +157,8 @@ function narrativeLines(
 ): string[] {
   const work = state.header?.work;
   const titles = (work?.titles ?? []).map((value) => safeText(value)).filter(Boolean);
-  return wrapFocus(titles.join(' › '), width, maximumLines);
+  const narrativeTitles = titles.length > 1 ? titles.slice(1) : titles;
+  return wrapFocus(narrativeTitles.join(' › '), width, maximumLines);
 }
 
 function semanticSeparator(theme: Theme): string {
@@ -315,10 +316,14 @@ export function renderHeaderDeck(
     lineColor,
     '─'.repeat(Math.max(0, boundedWidth - visibleWidth(bottomSuffix))),
   )}${bottomSuffix}`;
-  const divider = color(theme, 'borderMuted', '─'.repeat(boundedWidth));
+  const divider = color(theme, 'dim', '┈'.repeat(boundedWidth));
   const current = lifecycle(state);
   const activity = state.header?.work?.activityPath?.at(-1);
   const activityText = safeText(activity?.compact || activity?.label || '');
+  const titles = (state.header?.work?.titles ?? [])
+    .map((value) => safeText(value))
+    .filter(Boolean);
+  const planTitle = titles.length > 1 ? titles[0] : '';
   const statusLeft = [
     color(theme, state.header?.work?.color ?? 'accent', current.label, true),
     ...(activityText
@@ -326,6 +331,12 @@ export function renderHeaderDeck(
       : []),
     semanticSeparator(theme),
     color(theme, state.header?.work?.color ?? 'accent', current.focus),
+    ...(planTitle
+      ? [
+          minorSeparator(theme, state.header?.work?.color ?? 'accent'),
+          color(theme, state.header?.work?.color ?? 'accent', planTitle),
+        ]
+      : []),
   ].join(' ');
   const focusLines = narrativeLines(state, boundedWidth, 2).map((line) =>
     color(theme, state.header?.work?.color ?? 'accent', line),
