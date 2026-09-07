@@ -15,11 +15,11 @@
 - **Refinement trigger:** Stop and split or redesign if border removal changes prompt text/cursor geometry, application keybindings, mode transitions, bridge behavior, or requires Pi core/settings changes.
 - **Implementation confirmed at:** 2026-09-07T12:29:09Z; revised timer/emphasis scope confirmed at 2026-09-07T12:39:00Z
 - **Implementation started at:** 2026-09-07T12:29:09Z
-- **Work completed at:** 2026-09-07T13:07:08Z
-- **Assurance started at:** 2026-09-07T13:09:20Z
-- **Assurance completed at:** 2026-09-07T13:10:13Z
-- **Ready for validation at:** 2026-09-07T13:10:13Z
-- **Human validation:** Pending
+- **Work completed at:** Prior delivery completed 2026-09-07T13:07:08Z; reopened after Human validation failure at 2026-09-07T13:28:15Z
+- **Assurance started at:** Prior assurance started 2026-09-07T13:09:20Z
+- **Assurance completed at:** Prior assurance completed 2026-09-07T13:10:13Z; repair assurance pending
+- **Ready for validation at:** Prior delivery was ready 2026-09-07T13:10:13Z; no longer ready
+- **Human validation:** `NOT VALID` at 2026-09-07T13:28:15Z — title lost too much color and blank layout rows remain above/below the deck.
 
 ## Symptom, cause, repair, and regression check
 
@@ -34,11 +34,11 @@ Human sees one visually stable cockpit and an unframed prompt: lifecycle remains
 
 ## Acceptance criteria
 
-- [x] Lifecycle alone uses `work.color`; timer remains dim; activity remains accent; Plan and Task narrative use stable `text`; major separators retain prompt-separator color.
+- [ ] Lifecycle alone uses `work.color`; timer remains dim; activity remains accent; Plan and Task retain a stable visible color distinct from progress; major separators retain prompt-separator color.
 - [x] Runtime age uses fixed-width `MM:SS'cc` at the existing 50 ms refresh cadence so active work has visible subsecond motion.
 - [x] Bold is limited to lifecycle, current Task narrative, Task/Step progress cells, the Devbox marker, and major separators; timer, activity, next direction, Plan, folder/PWD, Git, telemetry, minor separators, and rules remain regular.
 - [x] Task and Step counters use `success` only when complete, `accent` while available but incomplete, and `dim` when unavailable.
-- [x] `editor-only` removes both inherited editor border rows while preserving every prompt content row, multiline input, cursor-bearing rendering, autocomplete rows, application controls, mode transitions, and existing external-editor bridge behavior.
+- [ ] The rich deck and borderless editor compose with the smallest safe outer spacing available through Pi's public API while preserving every prompt content row, multiline input, cursor-bearing rendering, autocomplete rows, application controls, mode transitions, and existing external-editor bridge behavior.
 - [x] Rails mode remains behaviorally compatible and retains inherited/editor telemetry rails.
 - [x] The accepted header structure, telemetry, responsive widths, footer suppression, and package composition remain unchanged.
 - [ ] Human validates colors and the borderless prompt after `/reload`.

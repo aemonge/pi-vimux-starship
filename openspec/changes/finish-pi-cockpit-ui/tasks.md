@@ -19,10 +19,10 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Refinement trigger:** Stop and split or redesign if border removal changes prompt text/cursor geometry, application keybindings, mode transitions, bridge behavior, or requires Pi core/settings changes.
 - **Implementation confirmed at:** 2026-09-07T12:29:09Z; revised timer/emphasis scope confirmed at 2026-09-07T12:39:00Z
 - **Implementation started at:** 2026-09-07T12:29:09Z
-- **Work completed at:** 2026-09-07T13:07:08Z
-- **Assurance started at:** 2026-09-07T13:09:20Z
-- **Assurance completed at:** 2026-09-07T13:10:13Z
-- **Ready for validation at:** 2026-09-07T13:10:13Z
+- **Work completed at:** Prior delivery completed 2026-09-07T13:07:08Z; reopened after Human validation failure at 2026-09-07T13:28:15Z
+- **Assurance started at:** Prior assurance started 2026-09-07T13:09:20Z
+- **Assurance completed at:** Prior assurance completed 2026-09-07T13:10:13Z; repair assurance pending
+- **Ready for validation at:** Prior delivery was ready 2026-09-07T13:10:13Z; no longer ready
 - **Actual implementation:** 26m32s elapsed across five Steps, including focused/full checks and independent-review provider latency; Human wait excluded because no reliable finer provider-latency split was captured.
 - **Observed Human wait:** 6m24s between initial Step evidence and revised timer/emphasis confirmation; final validation wait pending.
 - **Estimate outcome:** Within the revised 25–45 minute range; known render seams kept implementation small, while autocomplete ordering required one assurance-driven repair.
@@ -32,7 +32,7 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Regression check:** Timer/emphasis/color-call fixtures discriminate each role and editor-only fixtures compare bordered rails mode against borderless content-preserving output.
 - **Final history target:** `fix(cockpit): finish header and prompt chrome`
 - **Current non-Git boundary:** Not applicable; the repository uses Git.
-- **Human validation:** Pending
+- **Human validation:** `NOT VALID` at 2026-09-07T13:28:15Z — original decisive feedback: “I think you put the title color less :( :( :(” and “Feel like extra space,” with evidence marking one blank row before the deck and three blank rows after it.
 
 - [x] Step 1.1 Separate contextual lifecycle, stable title, and completion-aware progress colors.
   - Estimate: 8–15 minutes; uncertainty was retaining existing separator and responsive ANSI contracts while distinguishing every role.
@@ -64,7 +64,19 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: PASS — full gate reports formatting, lint, strict TypeScript, 381 tests, current 92-file and immutable 87-file integrity, root composition with one extension/six commands/two tools, six valid OpenSpec changes, and credential-free offline Pi load with 213 rows. Independent semantic re-review PASS with no Critical/High/Medium findings.
   - Paths: Matching Task/Plan completion evidence only; source and current baseline were already committed and clean.
   - History: Expected `step(cockpit): verify finished cockpit UI`.
+- [x] Step 1.6 Diagnose the Human-reported title-color and outer-spacing validation failure without source mutation.
+  - Estimate: 3–8 minutes; uncertainty was whether blank rows came from deck/editor output or Pi's host layout.
+  - Timing: Completed 2026-09-07T13:28:15Z after bounded local source inspection and an independent read-only architecture check.
+  - Check: PASS — Plan/Task were deliberately changed from contextual color to plain `text`; Pi unconditionally inserts one row before above-editor widgets, fullscreen allocates at least three editor rows, and its footer reserves one row. The borderless empty prompt emits one content row, exposing two editor filler rows. Public widget/editor options provide no gap or minimum-height control.
+  - Paths: Read-only evidence from Context Header, Pi Vim, root composition, Pi 0.84.4 TUI documentation, and installed Pi/TUI layout source.
+  - History: Read-only diagnosis; no source checkpoint.
+- [ ] Step 1.7 Implement only a newly confirmed title-color and spacing repair.
+  - Estimate: Pending exact architecture selection.
+  - Timing: Pending
+  - Check: Pending
+  - History: Pending exact conventional subject.
 
 ### Human validation
 
 - [ ] Human reloads Pi and validates lifecycle/title/progress colors plus borderless single- and multi-line prompts; preserve original response, canonical outcome, and UTC.
+  - Evidence: `NOT VALID` at 2026-09-07T13:28:15Z. Original decisive feedback: “I think you put the title color less :( :( :(” and “Feel like extra space,” with one blank row annotated before the deck and three after it.
