@@ -19,13 +19,13 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Refinement trigger:** Stop and split or redesign if border removal changes prompt text/cursor geometry, application keybindings, mode transitions, bridge behavior, or requires Pi core/settings changes.
 - **Implementation confirmed at:** 2026-09-07T12:29:09Z; revised timer/emphasis scope confirmed at 2026-09-07T12:39:00Z
 - **Implementation started at:** 2026-09-07T12:29:09Z
-- **Work completed at:** Pending
-- **Assurance started at:** Pending
-- **Assurance completed at:** Pending
-- **Ready for validation at:** Pending
-- **Actual implementation:** Pending
-- **Observed Human wait:** Pending
-- **Estimate outcome:** Pending
+- **Work completed at:** 2026-09-07T13:07:08Z
+- **Assurance started at:** 2026-09-07T13:09:20Z
+- **Assurance completed at:** 2026-09-07T13:10:13Z
+- **Ready for validation at:** 2026-09-07T13:10:13Z
+- **Actual implementation:** 26m32s elapsed across five Steps, including focused/full checks and independent-review provider latency; Human wait excluded because no reliable finer provider-latency split was captured.
+- **Observed Human wait:** 6m24s between initial Step evidence and revised timer/emphasis confirmation; final validation wait pending.
+- **Estimate outcome:** Within the revised 25–45 minute range; known render seams kept implementation small, while autocomplete ordering required one assurance-driven repair.
 - **Symptom:** Contextual lifecycle color leaks into Plan/Task text, progress lacks completion color, and inherited editor rails duplicate the accepted header frame.
 - **Cause:** Rich-deck rendering reuses `work.color` broadly and hardcodes available progress as accent; editor-only disables telemetry but not inherited border rows.
 - **Bounded repair:** Separate semantic color roles, use a fixed-width `MM:SS'cc` activity age, apply bold only to current control/status anchors, and strip only first/last inherited editor rows in editor-only mode.
@@ -58,10 +58,11 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: PASS — Header 85/85 proves finite, NaN, and infinite fixed-width timer bounds; Vim 16/16 proves frame removal preserves multiline cursor-bearing prompt and every autocomplete row while retaining rails framing. Lint, strict TypeScript, current 92-file and immutable 87-file integrity, and OpenSpec validation pass. Independent re-review found no Critical/High/Medium defects and returned PASS; residual low risk is coupling to Pi's current autocomplete render ordering.
   - Paths: Header and Pi Vim source/tests, matching Task progress, and current baseline manifest.
   - History: Expected `fix(cockpit): preserve autocomplete and timer bounds`.
-- [ ] Step 1.5 Rerun complete package assurance and verify the exact accepted UI scope.
-  - Estimate: 3–8 minutes; uncertainty is no broader than deterministic package/tool latency.
-  - Timing: Pending
-  - Check: Pending
+- [x] Step 1.5 Rerun complete package assurance and verify the exact accepted UI scope.
+  - Estimate: 3–8 minutes; uncertainty was no broader than deterministic package/tool latency.
+  - Timing: 2026-09-07T13:09:20Z–2026-09-07T13:10:13Z (53s).
+  - Check: PASS — full gate reports formatting, lint, strict TypeScript, 381 tests, current 92-file and immutable 87-file integrity, root composition with one extension/six commands/two tools, six valid OpenSpec changes, and credential-free offline Pi load with 213 rows. Independent semantic re-review PASS with no Critical/High/Medium findings.
+  - Paths: Matching Task/Plan completion evidence only; source and current baseline were already committed and clean.
   - History: Expected `step(cockpit): verify finished cockpit UI`.
 
 ### Human validation
