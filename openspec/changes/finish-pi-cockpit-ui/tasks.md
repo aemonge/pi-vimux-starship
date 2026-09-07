@@ -22,7 +22,7 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Work completed at:** Public-API composition repair completed 2026-09-07T14:05:12Z after prior delivery reopened at 2026-09-07T13:28:15Z
 - **Assurance started at:** Final assurance start was not separately timestamped; it followed focused checks and independent review within Step 1.7.
 - **Assurance completed at:** 2026-09-07T14:05:12Z
-- **Ready for validation at:** Pending verified Step 1.7 history boundary
+- **Ready for validation at:** 2026-09-07T14:08:52Z after independent Step 1.7 history verification
 - **Actual implementation:** Prior delivery 26m32s plus 15m39s for the public-API composition repair, including focused/full checks and independent-review provider latency; Human wait excluded because no reliable finer provider-latency split was captured.
 - **Observed Human wait:** 6m24s before timer/emphasis confirmation plus 21m18s between spacing failure evidence and public-API repair confirmation; current validation wait pending.
 - **Estimate outcome:** Public-API repair completed below its 35–60 minute range because the typed bridge and existing editor seam composed directly; prior repair history remains preserved.
@@ -76,6 +76,12 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: PASS — tooling 14/14 proves renderer/invalidation/reconnect/fail-soft behavior and editor-deck root composition; Header 86/86 proves editor-deck renderer lifecycle without above-editor widget registration plus violet Plan/Task chroma; Vim 17/17 proves contiguous deck → borderless prompt → autocomplete ordering with unchanged text/mode. Full gate PASS with formatting, lint, strict TypeScript, 385 tests, current 92-file and immutable 87-file integrity, one-extension/six-command/two-tool composition, six valid OpenSpec changes, and credential-free offline Pi load with 213 rows. Independent review PASS with no Critical/High/Medium findings; its low ledger-drift finding was corrected before the full gate.
   - Paths: New typed root surface and tests, root composition/probe, Context Header renderer/surface/tests, Pi Vim editor composition/test, Plan/Task evidence, and current baseline manifest.
   - History: Expected `fix(cockpit): compose deck with editor surface`.
+- [x] Step 1.8 Verify the public-API repair history boundary and prepare Human revalidation.
+  - Estimate: 1–3 minutes; uncertainty was limited to independent receipt/commit consistency.
+  - Timing: Completed 2026-09-07T14:08:52Z.
+  - Check: PASS — independent verifier matched Step 1.7 commit `04af3caa3ae0ac1ef5431be0b2ba1a72701922c4`, parent, subject, exact 13-path set, committed progress, owner-only receipt, clean workspace, and awaiting-Human state.
+  - Paths: Plan/Task readiness evidence only.
+  - History: Expected `step(cockpit): prepare editor deck validation`.
 
 ### Human validation
 
