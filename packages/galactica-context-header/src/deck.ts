@@ -187,7 +187,13 @@ function progressLine(state: HeaderDeckState, theme: Theme): string {
   const steps = state.header?.counters.steps;
   const taskText = tasks ? `${tasks.completed}/${tasks.total}` : '—';
   const stepText = steps ? `${steps.completed}/${steps.total}` : '—';
-  return `${color(theme, tasks ? 'accent' : 'dim', ` task ${taskText}`)} ${minorSeparator(theme)} ${color(theme, steps ? 'accent' : 'dim', ` stps ${stepText}`)}`;
+  const counterColor = (counter: typeof tasks): string =>
+    !counter
+      ? 'dim'
+      : counter.total > 0 && counter.completed >= counter.total
+        ? 'success'
+        : 'accent';
+  return `${color(theme, counterColor(tasks), ` task ${taskText}`)} ${minorSeparator(theme)} ${color(theme, counterColor(steps), ` stps ${stepText}`)}`;
 }
 
 function projectLeft(state: HeaderDeckState, theme: Theme): string {
@@ -348,24 +354,15 @@ export function renderHeaderDeck(
     semanticSeparator(theme),
     ...(waiting
       ? [
-          color(theme, state.header?.work?.color ?? 'accent', 'next direction'),
+          color(theme, 'text', 'next direction'),
           ...(planTitle
-            ? [
-                minorSeparator(theme, state.header?.work?.color ?? 'accent'),
-                color(theme, state.header?.work?.color ?? 'accent', planTitle),
-              ]
+            ? [minorSeparator(theme, 'text'), color(theme, 'text', planTitle)]
             : []),
         ]
-      : [
-          color(
-            theme,
-            state.header?.work?.color ?? 'accent',
-            planTitle || current.focus,
-          ),
-        ]),
+      : [color(theme, 'text', planTitle || current.focus)]),
   ].join(' ');
   const focusLines = narrativeLines(state, boundedWidth, 2).map((line) =>
-    color(theme, state.header?.work?.color ?? 'accent', line),
+    color(theme, 'text', line),
   );
 
   const rows = [

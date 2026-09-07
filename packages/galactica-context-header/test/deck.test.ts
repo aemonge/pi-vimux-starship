@@ -140,6 +140,41 @@ test('keeps a single work title on the one-line status row only', () => {
   assert.match(plain(narrow[1] ?? ''), /next direction › One focused wor.* task/u);
 });
 
+test('keeps only lifecycle contextual and colors progress by completion', () => {
+  const state = fixture();
+  state.header!.work!.color = 'warning';
+  const colors: string[] = [];
+  const theme = {
+    fg: (semanticColor: string, text: string) => {
+      colors.push(`${semanticColor}:${plain(text)}`);
+      return text;
+    },
+    bold: (text: string) => text,
+  };
+
+  renderHeaderDeck(state, 160, theme as never);
+
+  assert.ok(colors.includes('warning:waiting'));
+  assert.ok(colors.includes('text:next direction'));
+  assert.ok(
+    colors.includes(
+      'text:Read-only preflight for the interrupted one-line Review ledger fix',
+    ),
+  );
+  assert.ok(
+    colors.includes('text:before further OpenSpec validation and implementation'),
+  );
+  assert.ok(colors.includes('accent: task 0/1'));
+  assert.ok(colors.includes('accent: stps 6/16'));
+
+  state.header!.counters.tasks = { completed: 1, total: 1 };
+  state.header!.counters.steps = { completed: 16, total: 16 };
+  colors.length = 0;
+  renderHeaderDeck(state, 160, theme as never);
+  assert.ok(colors.includes('success: task 1/1'));
+  assert.ok(colors.includes('success: stps 16/16'));
+});
+
 test('uses prompt-line color for rules and major separators with violet ladybugs', () => {
   const colors: string[] = [];
   const theme = {
