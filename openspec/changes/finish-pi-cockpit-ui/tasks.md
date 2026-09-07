@@ -52,7 +52,13 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: PASS — Vim 15/15 proves editor-only output equals the inherited rendering without its first/last frame rows, preserves both multiline prompt rows, text, mode, and cursor-bearing content, and leaves rails mode framed. Root lint and strict TypeScript, current 92-file and immutable 87-file integrity, and OpenSpec validation pass. The initial fixture lacked `tui.terminal.rows`; adding the public render dependency made the regression representative without production changes.
   - Paths: Pi Vim `index.ts`, new `test/editor-only-surface.test.ts`, matching Task progress, and current baseline manifest.
   - History: Expected `step(cockpit): remove editor-only prompt rails`.
-- [ ] Step 1.4 Run complete package assurance and verify the exact accepted UI scope.
+- [x] Step 1.4 Repair assurance-found autocomplete framing and malformed timer bounds.
+  - Estimate: 5–12 minutes; uncertainty was identifying the inherited bottom frame without dropping autocomplete rows or prompt content.
+  - Timing: 2026-09-07T12:51:28Z–2026-09-07T13:07:08Z (15m40s including the initial full gate, independent failure review, repair, focused checks, and passing re-review).
+  - Check: PASS — Header 85/85 proves finite, NaN, and infinite fixed-width timer bounds; Vim 16/16 proves frame removal preserves multiline cursor-bearing prompt and every autocomplete row while retaining rails framing. Lint, strict TypeScript, current 92-file and immutable 87-file integrity, and OpenSpec validation pass. Independent re-review found no Critical/High/Medium defects and returned PASS; residual low risk is coupling to Pi's current autocomplete render ordering.
+  - Paths: Header and Pi Vim source/tests, matching Task progress, and current baseline manifest.
+  - History: Expected `fix(cockpit): preserve autocomplete and timer bounds`.
+- [ ] Step 1.5 Rerun complete package assurance and verify the exact accepted UI scope.
   - Estimate: 3–8 minutes; uncertainty is no broader than deterministic package/tool latency.
   - Timing: Pending
   - Check: Pending

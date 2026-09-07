@@ -3975,10 +3975,35 @@ export class ModalEditor extends CustomEditor {
     return { plain, styled: modeColorize ? modeColorize(plain) : plain };
   }
 
+  private withoutInheritedEditorFrame(lines: string[], width: number): string[] {
+    const editor = this as unknown as {
+      autocompleteState?: unknown;
+      autocompleteList?: { render: (contentWidth: number) => string[] };
+      getPaddingX?: () => number;
+    };
+    let autocompleteRows = 0;
+    if (editor.autocompleteState && editor.autocompleteList) {
+      const maxPadding = Math.max(0, Math.floor((width - 1) / 2));
+      const padding = Math.min(editor.getPaddingX?.() ?? 0, maxPadding);
+      const contentWidth = Math.max(1, width - padding * 2);
+      try {
+        autocompleteRows = editor.autocompleteList.render(contentWidth).length;
+      } catch {
+        // Fail soft: never drop an unknown trailing row as presumed frame chrome.
+        return lines.slice(1);
+      }
+    }
+    const bottomFrameIndex = lines.length - autocompleteRows - 1;
+    if (bottomFrameIndex <= 0) return lines.slice(1);
+    return lines.filter((_, index) => index !== 0 && index !== bottomFrameIndex);
+  }
+
   render(width: number): string[] {
     const lines = super.render(width);
     this.syncCursorShapeForRender(lines);
-    if (!this.editorFrameEnabled) return lines.slice(1, -1);
+    if (!this.editorFrameEnabled) {
+      return this.withoutInheritedEditorFrame(lines, width);
+    }
     if (!this.promptRailsEnabled) return lines;
     return renderPromptRails({
       lines,

@@ -74,6 +74,8 @@ test('formats fixed-width minute activity age with visible hundredths', () => {
   assert.equal(formatDeckElapsed(62_345), "01:02'34");
   assert.equal(formatDeckElapsed(3_600_000), "60:00'00");
   assert.equal(formatDeckElapsed(Number.POSITIVE_INFINITY), "99:59'99");
+  assert.equal(formatDeckElapsed(Number.NaN), "00:00'00");
+  assert.equal(formatDeckElapsed(Number.NEGATIVE_INFINITY), "00:00'00");
 });
 
 test('renders the approved rich wide header without side borders or spacer rows', () => {

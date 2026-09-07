@@ -61,7 +61,13 @@ function fit(line: string, width: number): string {
 
 export function formatDeckElapsed(elapsedMs: number | null): string {
   const maximum = (99 * 60 + 59) * 1_000 + 999;
-  const normalized = Math.min(maximum, Math.max(0, Math.floor(elapsedMs ?? 0)));
+  const observed = elapsedMs ?? 0;
+  const finite = Number.isFinite(observed)
+    ? observed
+    : observed === Number.POSITIVE_INFINITY
+      ? maximum
+      : 0;
+  const normalized = Math.min(maximum, Math.max(0, Math.floor(finite)));
   const minutes = Math.floor(normalized / 60_000);
   const seconds = Math.floor((normalized % 60_000) / 1_000);
   const centiseconds = Math.floor((normalized % 1_000) / 10);

@@ -40,6 +40,36 @@ test('editor-only removes inherited frame rows and preserves prompt content', ()
   assert.equal(editorOnly.getMode(), framed.getMode());
 });
 
+test('editor-only keeps every autocomplete row after removing the inner bottom frame', () => {
+  const framed = makeEditor(true);
+  const editorOnly = makeEditor(false);
+  const completions = ['first completion', 'second completion'];
+  for (const editor of [framed, editorOnly]) {
+    editor.setText('/command');
+    const internals = editor as unknown as {
+      autocompleteState: string;
+      autocompleteList: { render: () => string[] };
+    };
+    internals.autocompleteState = 'regular';
+    internals.autocompleteList = { render: () => completions };
+  }
+
+  const framedLines = framed.render(48);
+  const editorOnlyLines = editorOnly.render(48);
+  const bottomFrameIndex = framedLines.length - completions.length - 1;
+  const expected = framedLines.filter(
+    (_, index) => index !== 0 && index !== bottomFrameIndex,
+  );
+
+  assert.deepEqual(editorOnlyLines, expected);
+  assert.equal(editorOnlyLines.at(-2)?.includes('first completion'), true);
+  assert.equal(editorOnlyLines.at(-1)?.includes('second completion'), true);
+  assert.equal(
+    editorOnlyLines.some((line) => /^─+$/u.test(line)),
+    false,
+  );
+});
+
 test('rails surface retains the inherited editor frame', () => {
   const framed = makeEditor(true);
   framed.setText('prompt');
