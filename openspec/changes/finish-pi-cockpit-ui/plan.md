@@ -6,14 +6,14 @@
 - **Method contract:** Characterize the visible color-role and duplicate-editor-rule symptoms, repair only their diagnosed rendering seams, and prove each with discriminating render regressions.
 - **Execution source:** native-direct
 - **Execution name:** Sequential render-only chrome repair
-- **Execution reason:** Header color roles and Pi Vim editor-only borders are separate small render seams; direct sequential work keeps each source/history boundary independently verifiable.
-- **Execution outline:** First separate lifecycle, title, and progress colors; then make only editor-only rendering borderless while preserving editor behavior; run focused and complete assurance.
-- **Estimate basis:** The accepted rich-header Steps completed comparable render fixes in 7–20 minutes, and both current causes are isolated in pure render branches with existing tests.
-- **Estimated implementation:** 20–35 minutes; Human wait excluded.
+- **Execution reason:** Header color roles, runtime/emphasis hierarchy, and Pi Vim editor-only borders are separate small render seams; direct sequential work keeps each source/history boundary independently verifiable.
+- **Execution outline:** Separate lifecycle, title, and progress colors; sharpen the timer and bold hierarchy; then make only editor-only rendering borderless while preserving editor behavior; run focused and complete assurance.
+- **Estimate basis:** The accepted rich-header Steps completed comparable render fixes in 7–20 minutes, and the current causes are isolated in pure render branches with existing tests.
+- **Estimated implementation:** 25–45 minutes total from initial confirmation; Human wait excluded.
 - **Estimate confidence:** Medium because render seams are known, but removing inherited editor rails must preserve multiline cursor geometry and indicators.
 - **Human-wait estimate:** Separate and unbounded after deterministic checks.
 - **Refinement trigger:** Stop and split or redesign if border removal changes prompt text/cursor geometry, application keybindings, mode transitions, bridge behavior, or requires Pi core/settings changes.
-- **Implementation confirmed at:** 2026-09-07T12:29:09Z
+- **Implementation confirmed at:** 2026-09-07T12:29:09Z; revised timer/emphasis scope confirmed at 2026-09-07T12:39:00Z
 - **Implementation started at:** 2026-09-07T12:29:09Z
 - **Work completed at:** Pending
 - **Assurance started at:** Pending
@@ -25,8 +25,8 @@
 
 - **Symptom:** Plan/Task colors change with lifecycle, progress is not visually independent, and Pi's inherited editor rails create extra solid rules around the prompt beneath the accepted header.
 - **Cause:** The rich deck applies `work.color` to every title role and hardcodes available progress as `accent`; Pi Vim's `editor-only` path disables telemetry but returns the inherited bordered `CustomEditor` rendering unchanged.
-- **Bounded repair:** Keep contextual color only on lifecycle, use stable text for Plan/Task, derive progress color from completion, and remove only the inherited first/last editor border rows in `editor-only` mode.
-- **Regression check:** Pure fixtures prove independent semantic colors and editor-only tests prove border rows disappear while prompt content, multiline shape, cursor-bearing content, app behavior, modes, and bridge wiring remain unchanged.
+- **Bounded repair:** Keep contextual color only on lifecycle, use stable text for Plan/Task, derive progress color from completion, render fixed-width `MM:SS'cc` activity age, apply the agreed bold hierarchy, and remove only the inherited first/last editor border rows in `editor-only` mode.
+- **Regression check:** Pure fixtures prove timer precision, emphasis, and independent semantic colors; editor-only tests prove border rows disappear while prompt content, multiline shape, cursor-bearing content, app behavior, modes, and bridge wiring remain unchanged.
 
 ## Value
 
@@ -35,6 +35,8 @@ Human sees one visually stable cockpit and an unframed prompt: lifecycle remains
 ## Acceptance criteria
 
 - [ ] Lifecycle alone uses `work.color`; timer remains dim; activity remains accent; Plan and Task narrative use stable `text`; major separators retain prompt-separator color.
+- [ ] Runtime age uses fixed-width `MM:SS'cc` at the existing 50 ms refresh cadence so active work has visible subsecond motion.
+- [ ] Bold is limited to lifecycle, current Task narrative, Task/Step progress cells, the Devbox marker, and major separators; timer, activity, next direction, Plan, folder/PWD, Git, telemetry, minor separators, and rules remain regular.
 - [ ] Task and Step counters use `success` only when complete, `accent` while available but incomplete, and `dim` when unavailable.
 - [ ] `editor-only` removes both inherited editor border rows while preserving every prompt content row, multiline input, cursor-bearing rendering, application controls, mode transitions, and existing external-editor bridge behavior.
 - [ ] Rails mode remains byte-compatible in behavior and rendering.
@@ -57,7 +59,7 @@ Mutation requires the current Git root and named targets writable. No protected 
 
 ## Verification
 
-Run focused Context Header tests for color-role separation and completion semantics. Add an editor-only fixture proving top/bottom rail removal with unchanged content/cursor rows and unchanged rails mode. Format and lint every edited file, type-check TypeScript, run relevant Header/Vim/root tests, baseline integrity, composition, OpenSpec validation, and offline Pi load. Inspect staged paths and obtain independent review/history verification. Human runs `/reload`, compares complete/incomplete progress colors, lifecycle/title stability, and verifies no editor rules surround single- or multi-line prompts.
+Run focused Context Header tests for `MM:SS'cc` precision, the exact bold hierarchy, color-role separation, and completion semantics. Add an editor-only fixture proving top/bottom rail removal with unchanged content/cursor rows and unchanged rails mode. Format and lint every edited file, type-check TypeScript, run relevant Header/Vim/root tests, baseline integrity, composition, OpenSpec validation, and offline Pi load. Inspect staged paths and obtain independent review/history verification. Human runs `/reload`, observes subsecond timer motion, compares emphasis and complete/incomplete progress colors, and verifies no editor rules surround single- or multi-line prompts.
 
 **Final history target:** `fix(cockpit): finish header and prompt chrome`
 

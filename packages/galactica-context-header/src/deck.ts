@@ -60,11 +60,12 @@ function fit(line: string, width: number): string {
 }
 
 export function formatDeckElapsed(elapsedMs: number | null): string {
-  const totalSeconds = Math.max(0, Math.floor((elapsedMs ?? 0) / 1_000));
-  const hours = Math.floor(totalSeconds / 3_600);
-  const minutes = Math.floor((totalSeconds % 3_600) / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}'${String(seconds).padStart(2, '0')}`;
+  const maximum = (99 * 60 + 59) * 1_000 + 999;
+  const normalized = Math.min(maximum, Math.max(0, Math.floor(elapsedMs ?? 0)));
+  const minutes = Math.floor(normalized / 60_000);
+  const seconds = Math.floor((normalized % 60_000) / 1_000);
+  const centiseconds = Math.floor((normalized % 1_000) / 10);
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}'${String(centiseconds).padStart(2, '0')}`;
 }
 
 export function formatDeckPercent(value: number): string {
@@ -193,12 +194,12 @@ function progressLine(state: HeaderDeckState, theme: Theme): string {
       : counter.total > 0 && counter.completed >= counter.total
         ? 'success'
         : 'accent';
-  return `${color(theme, counterColor(tasks), ` task ${taskText}`)} ${minorSeparator(theme)} ${color(theme, counterColor(steps), ` stps ${stepText}`)}`;
+  return `${color(theme, counterColor(tasks), ` task ${taskText}`, true)} ${minorSeparator(theme)} ${color(theme, counterColor(steps), ` stps ${stepText}`, true)}`;
 }
 
 function projectLeft(state: HeaderDeckState, theme: Theme): string {
-  const pathIcon = state.devbox ? '[󰆧] ' : '';
-  return color(theme, 'success', `${pathIcon} ${safeText(state.cwd)}`, true);
+  const devbox = state.devbox ? `${color(theme, 'success', '[󰆧]', true)} ` : '';
+  return `${devbox}${color(theme, 'success', ` ${safeText(state.cwd)}`)}`;
 }
 
 function gitRight(state: HeaderDeckState, theme: Theme): string {
@@ -362,7 +363,7 @@ export function renderHeaderDeck(
       : [color(theme, 'text', planTitle || current.focus)]),
   ].join(' ');
   const focusLines = narrativeLines(state, boundedWidth, 2).map((line) =>
-    color(theme, 'text', line),
+    color(theme, 'text', line, true),
   );
 
   const rows = [

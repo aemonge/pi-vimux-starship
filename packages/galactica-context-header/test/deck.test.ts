@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { visibleWidth } from '@earendil-works/pi-tui';
 
-import { renderHeaderDeck, type HeaderDeckState } from '../src/deck.ts';
+import {
+  formatDeckElapsed,
+  renderHeaderDeck,
+  type HeaderDeckState,
+} from '../src/deck.ts';
 
 const plainTheme = {
   fg: (_color: string, text: string) => text,
@@ -62,6 +66,16 @@ function fixture(): HeaderDeckState {
   };
 }
 
+test('formats fixed-width minute activity age with visible hundredths', () => {
+  assert.equal(formatDeckElapsed(null), "00:00'00");
+  assert.equal(formatDeckElapsed(54), "00:00'05");
+  assert.equal(formatDeckElapsed(999), "00:00'99");
+  assert.equal(formatDeckElapsed(1_000), "00:01'00");
+  assert.equal(formatDeckElapsed(62_345), "01:02'34");
+  assert.equal(formatDeckElapsed(3_600_000), "60:00'00");
+  assert.equal(formatDeckElapsed(Number.POSITIVE_INFINITY), "99:59'99");
+});
+
 test('renders the approved rich wide header without side borders or spacer rows', () => {
   const lines = renderHeaderDeck(fixture(), 160, plainTheme as never);
 
@@ -69,7 +83,7 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.match(lines[0] ?? '', /^─ 󰠭 › ─+$/u);
   assert.match(
     lines[1] ?? '',
-    /^waiting \(00:00'07\) ⟩ next direction › Read-only preflight for the interrupted one-line Review ledger fix\s+ task 0\/1 ›  stps 6\/16$/u,
+    /^waiting \(00:07'00\) ⟩ next direction › Read-only preflight for the interrupted one-line Review ledger fix\s+ task 0\/1 ›  stps 6\/16$/u,
   );
   assert.equal(lines[2], 'before further OpenSpec validation and implementation');
   assert.equal(plain(lines[3] ?? ''), '┈'.repeat(160));
@@ -103,7 +117,7 @@ test('keeps activity and focus distinct on the title row', () => {
   };
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.match(lines[1] ?? '', /^assuring \(00:00'07\) › verify ⟩ Plan title\s+/u);
+  assert.match(lines[1] ?? '', /^assuring \(00:07'00\) › verify ⟩ Plan title\s+/u);
   assert.equal(lines[2], 'Current task');
   assert.equal(lines.join('\n').split('Running checks').length - 1, 0);
 });
@@ -120,7 +134,7 @@ test('moves Plan to the status row and wraps only the current Task', () => {
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
   assert.match(narrow[0] ?? '', /󰠭/u);
-  assert.match(narrow[1] ?? '', /^waiting \(00:00'07\).+ task 0\/1 ›  stps 6\/16$/u);
+  assert.match(narrow[1] ?? '', /^waiting \(00:07'00\).+ task 0\/1 ›  stps 6\/16$/u);
   const dividerIndex = narrow.findIndex((line) => plain(line) === '┈'.repeat(79));
   const narrative = narrow.slice(dividerIndex - 2, dividerIndex);
   assert.equal(narrative.length, 2);
@@ -138,6 +152,36 @@ test('keeps a single work title on the one-line status row only', () => {
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
   assert.match(plain(narrow[1] ?? ''), /next direction › One focused wor.* task/u);
+});
+
+test('bolds only current control and status anchors', () => {
+  const bolded: string[] = [];
+  const theme = {
+    fg: (_semanticColor: string, text: string) => text,
+    bold: (text: string) => {
+      bolded.push(text);
+      return text;
+    },
+  };
+
+  renderHeaderDeck(fixture(), 160, theme as never);
+
+  assert.ok(bolded.includes('waiting'));
+  assert.ok(bolded.includes(' task 0/1'));
+  assert.ok(bolded.includes(' stps 6/16'));
+  assert.ok(bolded.includes('before further OpenSpec validation and implementation'));
+  assert.ok(bolded.includes('[󰆧]'));
+  assert.ok(bolded.includes('⟩'));
+  for (const regular of [
+    "(00:07'00)",
+    'next direction',
+    'Read-only preflight for the interrupted one-line Review ledger fix',
+    ' ~/galactica',
+    ' feature/review-ledger/preserve-openspec-validation',
+    'GPT-5.6 Sol',
+  ]) {
+    assert.equal(bolded.includes(regular), false, regular);
+  }
 });
 
 test('keeps only lifecycle contextual and colors progress by completion', () => {
@@ -233,7 +277,7 @@ test('preserves width and essential deck structure through responsive collapse',
     assert.match(lines.at(-1) ?? '', /󰠭/u, String(width));
     assert.equal(lines.join('').split('󰠭').length - 1, 2, String(width));
     if (width >= 79) {
-      assert.match(lines.join('\n'), /00:00'07/u, String(width));
+      assert.match(lines.join('\n'), /00:07'00/u, String(width));
       assert.match(lines.join('\n'), /󰾆 38%/u, String(width));
     }
   }
