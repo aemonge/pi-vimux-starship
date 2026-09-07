@@ -258,6 +258,7 @@ type ModalEditorOptions = {
   getPromptRail?: () => PromptRailSnapshot;
   promptRailColorize?: PromptRailColorize;
   promptRailsEnabled?: boolean;
+  editorFrameEnabled?: boolean;
 };
 
 export class ModalEditor extends CustomEditor {
@@ -316,6 +317,7 @@ export class ModalEditor extends CustomEditor {
   private readonly getPromptRail: () => PromptRailSnapshot;
   private readonly promptRailColorize: PromptRailColorize;
   private readonly promptRailsEnabled: boolean;
+  private readonly editorFrameEnabled: boolean;
 
   private unnamedRegister: string = '';
   private preferRegisterForPut = false;
@@ -365,6 +367,7 @@ export class ModalEditor extends CustomEditor {
       opts?.getPromptRail ?? (() => ({ widgets: new Map(), totalCost: 0 }));
     this.promptRailColorize = opts?.promptRailColorize ?? ((_color, text) => text);
     this.promptRailsEnabled = opts?.promptRailsEnabled ?? true;
+    this.editorFrameEnabled = opts?.editorFrameEnabled ?? true;
     this.installModeBorderColorizer();
   }
 
@@ -3975,6 +3978,7 @@ export class ModalEditor extends CustomEditor {
   render(width: number): string[] {
     const lines = super.render(width);
     this.syncCursorShapeForRender(lines);
+    if (!this.editorFrameEnabled) return lines.slice(1, -1);
     if (!this.promptRailsEnabled) return lines;
     return renderPromptRails({
       lines,
@@ -4066,6 +4070,7 @@ export default function (pi: ExtensionAPI, options: PiVimOptions = {}) {
         getPromptRail: () => promptRail.snapshot(),
         promptRailColorize: (color, text) => (t ? t.fg(color, text) : text),
         promptRailsEnabled: !editorOnly,
+        editorFrameEnabled: !editorOnly,
       });
       editor.setClipboardMirrorPolicy(clipboardMirrorPolicy.policy);
       editor.setQuitFn(() => ctx.shutdown());

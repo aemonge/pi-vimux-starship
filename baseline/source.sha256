@@ -69,7 +69,7 @@ d820df210695e26f85c7107d7c96cc34f5021472f6d27e5b9144f6946a593f68  packages/pi-vi
 92aa088cf6dc9f182f5a6ec9e77f9752c47a10ae2c05380931a51ab84bcca474  packages/pi-vim-top-border/clipboard-mirror.ts
 ebf672111d6a77520a48435e03a07142d4302b206c10a3adbb21548e2c70d0bd  packages/pi-vim-top-border/clipboard-policy.ts
 da0d8d2e83cc0ae6065f93b19685e09e774da9a3d634d67cec27574160972ed8  packages/pi-vim-top-border/cursor-shape.ts
-8fb8fd5101a167a96cf5d67369bfe162414372f00b138de856c23f7908a5130d  packages/pi-vim-top-border/index.ts
+0edb9076a549ba06218f0abcf8a5a923b1c53d5a7a46773cc376e2aeea802fc8  packages/pi-vim-top-border/index.ts
 b0252319f047d735f1b7cb7449046ad1997c98acb190f8e1abde3404e1b38a23  packages/pi-vim-top-border/input-keys.ts
 23202d4144fa9749c2eb128e04d65f162e9bde1d6302a7ad024b3ac9adf6e314  packages/pi-vim-top-border/mode-change-command.ts
 69029f055a2df31fc71a4679a82aff2061c31caebc89cb72fe839c93e352bc84  packages/pi-vim-top-border/mode-colors.ts
@@ -80,6 +80,7 @@ fe8b3ac6e700aabd75e33b217863af77a7fbe3bc5593ff7f362d9293109a5d31  packages/pi-vi
 b8bd3d433aea619b01ef27ca842078647888a896ee54130b2d067494b290a97e  packages/pi-vim-top-border/prompt-rail.ts
 206e4d21b424539b841bf9e1e04ccad986e8d1f38e745727129218c6c7d3d002  packages/pi-vim-top-border/prompt-status.ts
 2c18d39f2e6c75848a485815a97433a797bcb3079115a672e1d6c5cbfeeab36c  packages/pi-vim-top-border/settings.ts
+7e6b7b8fb68a3bb50f187a5e80ea3935b645c1f73d534f0e3c606c0dccdb689e  packages/pi-vim-top-border/test/editor-only-surface.test.ts
 28a4040fe0b8fa905e8129e0fcac3d848af2ab45037222da8fe2ca953ac1a6e1  packages/pi-vim-top-border/test/external-editor-intercept.test.ts
 31b955602cd090c63b6d5de199c925a9a22fa223f65852c45994c507325d11ec  packages/pi-vim-top-border/test/prompt-external-editor.test.ts
 f810e4a301377e71d0c6fa8c093199a90f829f788cd7d7e539a16ff494297d72  packages/pi-vim-top-border/test/prompt-rail.test.ts

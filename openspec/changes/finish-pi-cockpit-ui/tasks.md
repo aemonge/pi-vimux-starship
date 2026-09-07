@@ -46,10 +46,11 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Check: PASS — Header 85/85 proves fixed-width `MM:SS'cc`, subsecond precision, 99:59'99 saturation, lifecycle/Task/progress/Devbox/major-separator emphasis, regular Plan/timer/PWD/Git/telemetry, semantic colors, and responsive ANSI bounds. Strict TypeScript, current 91-file and immutable 87-file integrity, and OpenSpec validation pass.
   - Paths: Header `src/deck.ts` and `test/deck.test.ts`, revised Plan/Task artifacts, and current baseline manifest.
   - History: Expected `step(cockpit): sharpen runtime and emphasis`.
-- [ ] Step 1.3 Remove inherited editor border rows only from editor-only rendering and prove prompt parity.
-  - Estimate: 10–18 minutes; uncertainty is preserving multiline cursor-bearing geometry after removing the first and last inherited rows.
-  - Timing: Pending
-  - Check: Pending
+- [x] Step 1.3 Remove inherited editor border rows only from editor-only rendering and prove prompt parity.
+  - Estimate: 10–18 minutes; uncertainty was preserving multiline cursor-bearing geometry after removing the first and last inherited rows.
+  - Timing: 2026-09-07T12:46:29Z–2026-09-07T12:49:45Z (3m16s including focused checks and fixture correction).
+  - Check: PASS — Vim 15/15 proves editor-only output equals the inherited rendering without its first/last frame rows, preserves both multiline prompt rows, text, mode, and cursor-bearing content, and leaves rails mode framed. Root lint and strict TypeScript, current 92-file and immutable 87-file integrity, and OpenSpec validation pass. The initial fixture lacked `tui.terminal.rows`; adding the public render dependency made the regression representative without production changes.
+  - Paths: Pi Vim `index.ts`, new `test/editor-only-surface.test.ts`, matching Task progress, and current baseline manifest.
   - History: Expected `step(cockpit): remove editor-only prompt rails`.
 - [ ] Step 1.4 Run complete package assurance and verify the exact accepted UI scope.
   - Estimate: 3–8 minutes; uncertainty is no broader than deterministic package/tool latency.
