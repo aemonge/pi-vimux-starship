@@ -72,6 +72,11 @@ export interface OpenSpecOverview {
 
 export type OpenSpecFeedback = 'clear' | 'no-focus' | 'unavailable';
 
+export interface OpenSpecHierarchyProgress {
+  tasks: { completed: number; total: number };
+  stepsByTask: Record<string, { completed: number; total: number }>;
+}
+
 export interface OpenSpecState {
   projectRoot: string;
   changeId: string;
@@ -83,6 +88,7 @@ export interface OpenSpecState {
   pendingTasks: OpenSpecTask[];
   allTasks?: OpenSpecTask[];
   tasksPath?: string;
+  hierarchy?: OpenSpecHierarchyProgress;
   meta: SourceMeta;
 }
 

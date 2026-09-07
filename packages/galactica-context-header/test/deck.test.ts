@@ -28,6 +28,7 @@ function fixture(): HeaderDeckState {
       blocked: false,
       counters: {
         agents: { active: 0, total: 0 },
+        tasks: { completed: 0, total: 1 },
         steps: { completed: 6, total: 16 },
         files: { completed: 37, total: 53 },
       },
@@ -41,6 +42,8 @@ function fixture(): HeaderDeckState {
     model: 'GPT-5.6 Sol',
     thinking: 'high',
     contextPercent: 38,
+    contextTokens: 32 * 1024,
+    contextWindow: 128 * 1024,
     compactionCount: 2,
     resources: {
       cpuPercent: 48.2,
@@ -55,32 +58,71 @@ function fixture(): HeaderDeckState {
   };
 }
 
-test('renders the approved open-sided wide deck without spacer rows', () => {
+test('renders the approved rich wide header without side borders or spacer rows', () => {
   const lines = renderHeaderDeck(fixture(), 160, plainTheme as never);
 
-  assert.equal(lines.length, 11);
+  assert.equal(lines.length, 10);
   assert.match(lines[0] ?? '', /^─ 󰠭 > ─+$/u);
-  assert.equal(lines[1], '00:00:07 ⟩ waiting › next direction');
-  assert.equal(
-    lines[5],
-    '[󰆧]  ~/galactica  ·   feature/review-ledger/preserve-openspec-validation',
+  assert.match(
+    lines[1] ?? '',
+    /^waiting ⟩ next direction\s+ task 0\/1 ›  stps 6\/16$/u,
   );
   assert.equal(
-    lines[6],
-    ' 2 staged  ·   3 modified  ·   1 untracked  ·   0 conflicts',
+    lines[2],
+    'Read-only preflight for the interrupted one-line Review ledger fix',
   );
-  assert.equal(
-    lines[8],
-    '󰚩 agts 0/0  ⟩  󰦕 stps 6/16  󰈔 files 37/53  ⟩  󰒋 LSP 2/2   MCP 3/3',
+  assert.equal(lines[3], 'before further OpenSpec validation and implementation');
+  assert.match(lines[5] ?? '', /^\[󰆧\]  ~\/galactica\s+/u);
+  assert.match(
+    lines[5] ?? '',
+    / feature\/review-ledger\/preserve-openspec-validation ⟩  2 ›  3 ›  1$/u,
   );
-  assert.equal(
-    lines[9],
-    '󰚩 GPT-5.6 Sol  󰧑 high  ⟩  󰾆 ctx 38%  󰎞 zips 2   qta 63%  ⟩   48.2% (268M)  ⟩  󰜦 $5.16',
+  assert.match(lines[7] ?? '', /^󰚩 GPT-5\.6 Sol › high\s+/u);
+  assert.match(
+    lines[7] ?? '',
+    /󰾆 ctx 38% · 32K\/128K ⟩ 󰎞 zips 2 ›  qta 63% › 󰜦 \$5\.16$/u,
   );
-  assert.match(lines[10] ?? '', /^󰆾 ═+ < 󰠭 ══$/u);
+  assert.match(lines[8] ?? '', /^󱎫 00:00:07 › agts 0\/0 › files 37\/53\s+/u);
+  assert.match(lines[8] ?? '', / 48\.2% · 268M ›  MCP 3\/3$/u);
+  assert.match(lines[9] ?? '', /^─+ < 󰠭 ─$/u);
   assert.ok(lines.every((line) => line.length > 0));
   assert.ok(lines.every((line) => !line.startsWith('│') && !line.endsWith('│')));
   assert.equal(lines.join('').split('󰠭').length - 1, 2);
+  assert.equal(lines.join('').includes('󰒋 LSP'), false);
+});
+
+test('keeps activity and focus distinct on the title row', () => {
+  const state = fixture();
+  state.header!.work = {
+    lifecycle: 'assuring',
+    titles: ['Plan title', 'Current task'],
+    color: 'accent',
+    activityPath: [{ id: 'verification', label: 'Running checks', compact: 'verify' }],
+  };
+
+  const lines = renderHeaderDeck(state, 160, plainTheme as never);
+  assert.match(lines[1] ?? '', /^assuring › verify ⟩ Current task\s+/u);
+});
+
+test('uses prompt-line color for rules and major separators with violet ladybugs', () => {
+  const colors: string[] = [];
+  const theme = {
+    fg: (semanticColor: string, text: string) => {
+      colors.push(`${semanticColor}:${text}`);
+      return text;
+    },
+    bold: (text: string) => text,
+  };
+
+  renderHeaderDeck(fixture(), 160, theme as never);
+
+  assert.ok(colors.some((entry) => entry.startsWith('thinkingHigh:─')));
+  assert.ok(colors.includes('thinkingHigh:⟩'));
+  assert.equal(colors.filter((entry) => entry === 'customMessageLabel:󰠭').length, 2);
+  assert.equal(
+    colors.some((entry) => entry.startsWith('thinkingMax:')),
+    false,
+  );
 });
 
 test('preserves width and essential deck structure through responsive collapse', () => {
@@ -94,6 +136,10 @@ test('preserves width and essential deck structure through responsive collapse',
     assert.match(lines[0] ?? '', /󰠭/u, String(width));
     assert.match(lines.at(-1) ?? '', /󰠭/u, String(width));
     assert.equal(lines.join('').split('󰠭').length - 1, 2, String(width));
+    if (width >= 79) {
+      assert.match(lines.join('\n'), /󱎫 00:00:07/u, String(width));
+      assert.match(lines.join('\n'), /󰾆 ctx 38%/u, String(width));
+    }
   }
 });
 
@@ -102,6 +148,9 @@ test('renders unavailable optional telemetry honestly', () => {
   state.header = null;
   state.elapsedMs = null;
   state.footerTelemetry = undefined;
+  state.contextPercent = undefined;
+  state.contextTokens = undefined;
+  state.contextWindow = undefined;
   state.resources = undefined;
   state.lsp = null;
   state.mcp = null;
@@ -109,11 +158,16 @@ test('renders unavailable optional telemetry honestly', () => {
   state.gitAvailable = false;
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.match(lines[1] ?? '', /waiting › next direction/u);
-  assert.match(lines.find((line) => line.includes('')) ?? '', / \(no Git\)/u);
+  assert.match(lines[1] ?? '', /waiting ⟩ next direction/u);
+  assert.match(lines.find((line) => line.includes('')) ?? '', / \(no Git\) ⟩ —/u);
+  assert.doesNotMatch(lines.join('\n'), /clean/u);
+  assert.match(lines.find((line) => line.includes('')) ?? '', / task — ›  stps —/u);
   assert.match(
-    lines.find((line) => line.includes('󰦕')) ?? '',
-    /󰦕 stps —.*󰈔 files —.*󰒋 LSP —.* MCP —/u,
+    lines.find((line) => line.includes('󱎫')) ?? '',
+    /files —.* — ›  MCP —/u,
   );
-  assert.match(lines.find((line) => line.includes('')) ?? '', / qta —.* —.*󰜦 \$0/u);
+  assert.match(
+    lines.find((line) => line.includes('')) ?? '',
+    /󰾆 ctx —.* qta — › 󰜦 —/u,
+  );
 });

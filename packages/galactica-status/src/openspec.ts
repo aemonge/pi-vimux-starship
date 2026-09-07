@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs';
 import { resolve, sep } from 'node:path';
 import type {
   CommandRunner,
+  OpenSpecHierarchyProgress,
   OpenSpecOverview,
   OpenSpecState,
   OpenSpecTask,
@@ -114,6 +115,70 @@ export function parseTaskMarkdown(content: string): OpenSpecTask[] {
     );
   }
   return tasks;
+}
+
+export function parseTaskHierarchy(
+  content: string,
+): OpenSpecHierarchyProgress | undefined {
+  const tasks: Array<{
+    id: string;
+    completedSteps: number;
+    totalSteps: number;
+    validated: boolean;
+  }> = [];
+  let current: (typeof tasks)[number] | undefined;
+  let inHumanValidation = false;
+
+  for (const line of content.split(/\r?\n/u)) {
+    const task = line.match(/^##\s+Task\s+([\w.-]+)\b/iu);
+    if (task?.[1]) {
+      current = {
+        id: task[1],
+        completedSteps: 0,
+        totalSteps: 0,
+        validated: false,
+      };
+      tasks.push(current);
+      inHumanValidation = false;
+      continue;
+    }
+    if (/^###\s+Human validation\b/iu.test(line)) {
+      inHumanValidation = true;
+      continue;
+    }
+    if (/^#{2,3}\s+/u.test(line)) inHumanValidation = false;
+    if (!current) continue;
+
+    const step = line.match(/^\s*-\s*\[([ xX-])\]\s+Step\s+/iu);
+    if (step) {
+      current.totalSteps += 1;
+      if ((step[1] ?? '').toLowerCase() === 'x') current.completedSteps += 1;
+      continue;
+    }
+    const validation = line.match(/^\s*-\s*\[([ xX-])\]\s+Human validates\b/iu);
+    if (inHumanValidation && validation) {
+      current.validated = (validation[1] ?? '').toLowerCase() === 'x';
+    }
+  }
+
+  if (tasks.length === 0) return undefined;
+  return {
+    tasks: {
+      completed: tasks.filter(
+        (task) =>
+          task.validated &&
+          task.totalSteps > 0 &&
+          task.completedSteps === task.totalSteps,
+      ).length,
+      total: tasks.length,
+    },
+    stepsByTask: Object.fromEntries(
+      tasks.map((task) => [
+        task.id,
+        { completed: task.completedSteps, total: task.totalSteps },
+      ]),
+    ),
+  };
 }
 
 export function parseApplyInstructions(value: unknown): ApplyInstructionsResult {
@@ -264,6 +329,7 @@ export async function collectOpenSpec(options: {
   let tasks: OpenSpecTask[] = [];
   let tasksPath: string | undefined;
   let instructionProgress: ApplyInstructionsResult['progress'];
+  let hierarchy: OpenSpecHierarchyProgress | undefined;
   try {
     const instructions = parseApplyInstructions(
       await runJson(
@@ -279,8 +345,10 @@ export async function collectOpenSpec(options: {
 
     if (tasksPath) {
       try {
-        const markdownTasks = parseTaskMarkdown(await fs.readFile(tasksPath, 'utf8'));
+        const markdown = await fs.readFile(tasksPath, 'utf8');
+        const markdownTasks = parseTaskMarkdown(markdown);
         if (markdownTasks.length > 0) tasks = markdownTasks;
+        hierarchy = parseTaskHierarchy(markdown);
       } catch {
         // Instructions still provide a safe task fallback when the file moves.
       }
@@ -314,6 +382,7 @@ export async function collectOpenSpec(options: {
     pendingTasks: tasks.filter((task) => !task.done),
     allTasks: tasks,
     ...(tasksPath ? { tasksPath } : {}),
+    ...(hierarchy ? { hierarchy } : {}),
     meta: {
       source: 'openspec-cli',
       refreshedAt: now,

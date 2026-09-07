@@ -33,6 +33,10 @@ const openSpec: OpenSpecState = {
     },
   ],
   tasksPath: '/project/openspec/changes/closed-loop/tasks.md',
+  hierarchy: {
+    tasks: { completed: 2, total: 3 },
+    stepsByTask: { '3.8': { completed: 6, total: 8 } },
+  },
   meta: {
     source: 'openspec-cli',
     refreshedAt: 10,
@@ -460,7 +464,8 @@ test('header event keeps lifecycle and every available narrative title off telem
   ]);
   assert.deepEqual(event.counters, {
     agents: { active: 0, total: 0 },
-    steps: { completed: 20, total: 22 },
+    tasks: { completed: 2, total: 3 },
+    steps: { completed: 6, total: 8 },
   });
 });
 

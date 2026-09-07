@@ -20,7 +20,9 @@ export interface HeaderDeckState {
   git: GitStatusSummary;
   model: string;
   thinking?: string;
-  contextPercent: number;
+  contextPercent?: number;
+  contextTokens?: number;
+  contextWindow?: number;
   compactionCount: number;
   resources?: ResourceTelemetry;
   footerTelemetry?: FooterTelemetrySnapshot;
@@ -28,14 +30,6 @@ export interface HeaderDeckState {
   mcp: McpCapability | null;
   mode: VimMode;
 }
-
-const MODE_ICONS: Record<VimMode, string> = {
-  insert: '󰏫',
-  normal: '󰆾',
-  visual: '󰒅',
-  'visual-line': '󰒅',
-  ex: '󰆍',
-};
 
 const ANSI_ESCAPE = new RegExp(
   '\\u001b(?:\\][\\s\\S]*?(?:\\u0007|\\u001b\\\\)|\\[[0-?]*[ -/]*[@-~]|[@-_])',
@@ -63,11 +57,6 @@ function color(theme: Theme, name: string, text: string, bold = false): string {
 
 function fit(line: string, width: number): string {
   return truncateToWidth(line, Math.max(0, width), '');
-}
-
-function ornament(width: number, prefix: string, fill: string, suffix: string): string {
-  const fillWidth = Math.max(0, width - visibleWidth(prefix) - visibleWidth(suffix));
-  return fit(`${prefix}${fill.repeat(fillWidth)}${suffix}`, width);
 }
 
 export function formatDeckElapsed(elapsedMs: number | null): string {
@@ -132,7 +121,7 @@ function lifecycle(state: HeaderDeckState): { label: string; focus: string } {
     focus:
       label === 'waiting'
         ? 'next direction'
-        : activeFocus || titleFocus || 'next direction',
+        : titleFocus || activeFocus || 'next direction',
   };
 }
 
@@ -183,82 +172,70 @@ function semanticSeparator(theme: Theme): string {
   return color(theme, 'thinkingHigh', '⟩', true);
 }
 
-function projectLine(state: HeaderDeckState, theme: Theme): string {
-  const pathIcon = state.devbox ? '[󰆧] ' : '';
-  const path = color(theme, 'success', `${pathIcon} ${safeText(state.cwd)}`, true);
+function minorSeparator(theme: Theme, semanticColor = 'accent'): string {
+  return color(theme, semanticColor, '›');
+}
+
+function alignedRows(left: string, right: string, width: number): string[] {
+  const gap = width - visibleWidth(left) - visibleWidth(right);
+  if (gap >= 2) return [`${left}${' '.repeat(gap)}${right}`];
+  return [fit(left, width), fit(right, width)].filter(Boolean);
+}
+
+function progressLine(state: HeaderDeckState, theme: Theme): string {
+  const tasks = state.header?.counters.tasks;
+  const steps = state.header?.counters.steps;
+  const taskText = tasks ? `${tasks.completed}/${tasks.total}` : '—';
+  const stepText = steps ? `${steps.completed}/${steps.total}` : '—';
+  return `${color(theme, tasks ? 'accent' : 'dim', ` task ${taskText}`)} ${minorSeparator(theme)} ${color(theme, steps ? 'accent' : 'dim', ` stps ${stepText}`)}`;
+}
+
+function projectLeft(state: HeaderDeckState, theme: Theme): string {
+  const pathIcon = state.devbox ? '[󰆧] ' : '';
+  return color(theme, 'success', `${pathIcon} ${safeText(state.cwd)}`, true);
+}
+
+function gitRight(state: HeaderDeckState, theme: Theme): string {
   const branchText = state.branch || (state.gitAvailable ? '(detached)' : '(no Git)');
   const branch = color(
     theme,
     state.branch ? 'success' : 'dim',
     ` ${safeText(branchText, 80)}`,
   );
-  return `${path}  ${color(theme, 'dim', '·')}  ${branch}`;
+  const entries = [
+    [state.git.staged, 'success', ''],
+    [state.git.modified, 'warning', ''],
+    [state.git.untracked, 'accent', ''],
+    [state.git.conflicts, 'error', ''],
+  ] as const;
+  const dirty = entries
+    .filter(([count]) => count > 0)
+    .map(([count, semanticColor, icon]) =>
+      color(theme, semanticColor, `${icon} ${count}`),
+    );
+  const status = !state.gitAvailable
+    ? color(theme, 'dim', '—')
+    : dirty.length > 0
+      ? dirty.join(` ${minorSeparator(theme)} `)
+      : color(theme, 'success', ' clean');
+  return `${branch} ${semanticSeparator(theme)} ${status}`;
 }
 
-function gitLine(state: HeaderDeckState, theme: Theme): string {
-  return [
-    color(
-      theme,
-      state.git.staged > 0 ? 'success' : 'dim',
-      ` ${state.git.staged} staged`,
-    ),
-    color(
-      theme,
-      state.git.modified > 0 ? 'warning' : 'dim',
-      ` ${state.git.modified} modified`,
-    ),
-    color(
-      theme,
-      state.git.untracked > 0 ? 'accent' : 'dim',
-      ` ${state.git.untracked} untracked`,
-    ),
-    color(
-      theme,
-      state.git.conflicts > 0 ? 'error' : 'dim',
-      ` ${state.git.conflicts} conflicts`,
-    ),
-  ].join(`  ${color(theme, 'dim', '·')}  `);
+function globalLeft(state: HeaderDeckState, theme: Theme): string {
+  return `${color(theme, 'accent', `󰚩 ${safeText(state.model, 80)}`)} ${minorSeparator(theme)} ${color(theme, state.thinking ? 'thinkingHigh' : 'dim', safeText(state.thinking || 'off', 16))}`;
 }
 
-function operationsLine(state: HeaderDeckState, theme: Theme): string {
-  const counters = state.header?.counters;
-  const agents = counters?.agents ?? { active: 0, total: 0 };
-  const steps = counters?.steps;
-  const files = counters?.files;
-  const work = [
-    color(
-      theme,
-      agents.active > 0 ? 'accent' : 'dim',
-      `󰚩 agts ${agents.active}/${agents.total}`,
-    ),
-    semanticSeparator(theme),
-    color(
-      theme,
-      steps ? 'accent' : 'dim',
-      `󰦕 stps ${steps ? `${steps.completed}/${steps.total}` : '—'}`,
-    ),
-    color(
-      theme,
-      files ? 'accent' : 'dim',
-      `󰈔 files ${files ? `${files.completed}/${files.total}` : '—'}`,
-    ),
-    semanticSeparator(theme),
-    color(
-      theme,
-      state.lsp ? 'accent' : 'dim',
-      `󰒋 LSP ${state.lsp ? `${state.lsp.healthy}/${state.lsp.total}` : '—'}`,
-    ),
-    color(
-      theme,
-      state.mcp ? 'accent' : 'dim',
-      ` MCP ${state.mcp ? `${state.mcp.healthy}/${state.mcp.total}` : '—'}`,
-    ),
-  ];
-  return work.join('  ');
-}
-
-function modelLine(state: HeaderDeckState, theme: Theme): string {
-  const ctxColor = state.contextPercent >= 85 ? 'warning' : 'accent';
+function globalRight(state: HeaderDeckState, theme: Theme): string {
+  const ctxColor =
+    state.contextPercent !== undefined && state.contextPercent >= 85
+      ? 'warning'
+      : state.contextPercent === undefined
+        ? 'dim'
+        : 'accent';
+  const tokenText =
+    state.contextTokens === undefined
+      ? ''
+      : ` · ${formatDeckBytes(state.contextTokens)}${state.contextWindow === undefined ? '' : `/${formatDeckBytes(state.contextWindow)}`}`;
   const quota = state.footerTelemetry?.quotaPercent;
   const quotaColor =
     quota !== undefined && quota >= 80
@@ -266,6 +243,55 @@ function modelLine(state: HeaderDeckState, theme: Theme): string {
       : quota === undefined
         ? 'dim'
         : 'accent';
+  return [
+    color(
+      theme,
+      ctxColor,
+      `󰾆 ctx ${state.contextPercent === undefined ? '—' : formatDeckPercent(state.contextPercent)}${tokenText}`,
+    ),
+    semanticSeparator(theme),
+    color(
+      theme,
+      state.compactionCount > 0 ? ctxColor : 'dim',
+      `󰎞 zips ${state.compactionCount}`,
+    ),
+    minorSeparator(theme),
+    color(
+      theme,
+      quotaColor,
+      ` qta ${quota === undefined ? '—' : formatDeckPercent(quota)}`,
+    ),
+    minorSeparator(theme),
+    color(
+      theme,
+      state.footerTelemetry ? 'accent' : 'dim',
+      `󰜦 ${state.footerTelemetry ? formatCost(state.footerTelemetry.totalCost) : '—'}`,
+    ),
+  ].join(' ');
+}
+
+function localLeft(state: HeaderDeckState, theme: Theme): string {
+  const counters = state.header?.counters;
+  const agents = counters?.agents ?? { active: 0, total: 0 };
+  const files = counters?.files;
+  return [
+    color(theme, 'accent', `󱎫 ${formatDeckElapsed(state.elapsedMs)}`),
+    minorSeparator(theme),
+    color(
+      theme,
+      agents.active > 0 ? 'accent' : 'dim',
+      `agts ${agents.active}/${agents.total}`,
+    ),
+    minorSeparator(theme),
+    color(
+      theme,
+      files ? 'accent' : 'dim',
+      `files ${files ? `${files.completed}/${files.total}` : '—'}`,
+    ),
+  ].join(' ');
+}
+
+function localRight(state: HeaderDeckState, theme: Theme): string {
   const resources = state.resources;
   const resourceColor =
     resources?.cpuWarning || resources?.memoryWarning
@@ -274,33 +300,10 @@ function modelLine(state: HeaderDeckState, theme: Theme): string {
         ? 'accent'
         : 'dim';
   const resourceText = resources
-    ? `${formatDeckCpu(resources.cpuPercent)} (${formatDeckBytes(resources.memoryBytes)})`
+    ? `${formatDeckCpu(resources.cpuPercent)} · ${formatDeckBytes(resources.memoryBytes)}`
     : '—';
-  const cost = state.footerTelemetry?.totalCost ?? 0;
-  return [
-    color(theme, 'accent', `󰚩 ${safeText(state.model, 80)}`),
-    color(
-      theme,
-      state.thinking ? 'thinkingHigh' : 'dim',
-      `󰧑 ${safeText(state.thinking || 'off', 16)}`,
-    ),
-    semanticSeparator(theme),
-    color(theme, ctxColor, `󰾆 ctx ${formatDeckPercent(state.contextPercent)}`),
-    color(
-      theme,
-      state.compactionCount > 0 ? ctxColor : 'dim',
-      `󰎞 zips ${state.compactionCount}`,
-    ),
-    color(
-      theme,
-      quotaColor,
-      ` qta ${quota === undefined ? '—' : formatDeckPercent(quota)}`,
-    ),
-    semanticSeparator(theme),
-    color(theme, resourceColor, ` ${resourceText}`),
-    semanticSeparator(theme),
-    color(theme, 'accent', `󰜦 ${formatCost(cost)}`),
-  ].join('  ');
+  const mcp = state.mcp ? `${state.mcp.healthy}/${state.mcp.total}` : '—';
+  return `${color(theme, resourceColor, ` ${resourceText}`)} ${minorSeparator(theme)} ${color(theme, state.mcp ? 'accent' : 'dim', ` MCP ${mcp}`)}`;
 }
 
 export function renderHeaderDeck(
@@ -311,71 +314,47 @@ export function renderHeaderDeck(
   const boundedWidth = Math.max(0, Math.floor(width));
   if (boundedWidth === 0) return [];
 
-  const narrative = lifecycle(state);
-  const top = color(
+  const lineColor = 'thinkingHigh';
+  const topPrefix = `${color(theme, lineColor, '─ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' > ')}`;
+  const top = `${topPrefix}${color(
     theme,
-    'thinkingMax',
-    ornament(boundedWidth, '─ 󰠭 > ', '─', ''),
-    true,
-  );
-  const status = fit(
-    `${color(theme, 'accent', formatDeckElapsed(state.elapsedMs), true)} ${semanticSeparator(theme)} ${color(theme, state.header?.work?.color ?? 'accent', narrative.label, true)} › ${color(theme, state.header?.work?.color ?? 'accent', narrative.focus)}`,
-    boundedWidth,
-  );
+    lineColor,
+    '─'.repeat(Math.max(0, boundedWidth - visibleWidth(topPrefix))),
+  )}`;
+  const bottomSuffix = `${color(theme, lineColor, ' < ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' ─')}`;
+  const bottom = `${color(
+    theme,
+    lineColor,
+    '─'.repeat(Math.max(0, boundedWidth - visibleWidth(bottomSuffix))),
+  )}${bottomSuffix}`;
+  const divider = color(theme, lineColor, '─'.repeat(boundedWidth));
+  const current = lifecycle(state);
+  const activity = state.header?.work?.activityPath?.at(-1);
+  const activityText = safeText(activity?.compact || activity?.label || '');
+  const statusLeft = [
+    color(theme, state.header?.work?.color ?? 'accent', current.label, true),
+    ...(activityText
+      ? [minorSeparator(theme), color(theme, 'accent', activityText)]
+      : []),
+    semanticSeparator(theme),
+    color(theme, state.header?.work?.color ?? 'accent', current.focus),
+  ].join(' ');
   const focusLines = narrativeLines(
     state,
     boundedWidth,
     boundedWidth >= 80 ? 2 : 1,
   ).map((line) => color(theme, state.header?.work?.color ?? 'accent', line));
-  const divider = color(theme, 'borderMuted', '─'.repeat(boundedWidth));
-  const mode = MODE_ICONS[state.mode];
-  const bottom = color(
-    theme,
-    'thinkingMax',
-    ornament(boundedWidth, `${mode} `, '═', ' < 󰠭 ══'),
-    true,
-  );
 
-  if (boundedWidth < 40) {
-    return [top, status, fit(modelLine(state, theme), boundedWidth), bottom].map(
-      (line) => fit(line, boundedWidth),
-    );
-  }
-  if (boundedWidth < 60) {
-    return [
-      top,
-      status,
-      ...focusLines,
-      divider,
-      projectLine(state, theme),
-      divider,
-      modelLine(state, theme),
-      bottom,
-    ].map((line) => fit(line, boundedWidth));
-  }
-  if (boundedWidth < 80) {
-    return [
-      top,
-      status,
-      ...focusLines,
-      divider,
-      projectLine(state, theme),
-      divider,
-      operationsLine(state, theme),
-      modelLine(state, theme),
-      bottom,
-    ].map((line) => fit(line, boundedWidth));
-  }
-  return [
+  const rows = [
     top,
-    status,
+    ...alignedRows(statusLeft, progressLine(state, theme), boundedWidth),
     ...focusLines,
     divider,
-    projectLine(state, theme),
-    gitLine(state, theme),
+    ...alignedRows(projectLeft(state, theme), gitRight(state, theme), boundedWidth),
     divider,
-    operationsLine(state, theme),
-    modelLine(state, theme),
+    ...alignedRows(globalLeft(state, theme), globalRight(state, theme), boundedWidth),
+    ...alignedRows(localLeft(state, theme), localRight(state, theme), boundedWidth),
     bottom,
-  ].map((line) => fit(line, boundedWidth));
+  ];
+  return rows.map((line) => fit(line, boundedWidth));
 }

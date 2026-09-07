@@ -57,6 +57,10 @@ Use Pi's documented multi-line `setWidget` component contract, theme callbacks, 
 
 Each Step gets nearest focused tests, exact formatting/lint/typecheck, a scoped Git commit, an owner-only receipt, and independent history/path verification before the next Step.
 
+## Human-corrected rich-header contract
+
+Human rejected the activated 11-line open-sided deck as `NOT VALID`. This replacement supersedes the conflicting visual acceptance above while preserving its security, sanitization, responsive-width, package-composition, and Human-validation boundaries. The replacement confirmed at 2026-09-07T09:08:20Z keeps two ornamental violet ladybugs as `─ 󰠭 > ─…` and `…─ < 󰠭 ─`, removes side borders and the footer, and uses prompt-colored horizontal rules. The title row balances lifecycle, optional activity, major focus boundary, and focus on the left with honest focused OpenSpec Task/Step progress on the right. Two bounded narrative lines follow. Project/path balances shortened branch and nonzero Git counters; model/thinking balances context/tokens, compactions, quota, and cost; runtime/agents/files balances CPU/RAM and MCP. Major `⟩` separators use the rule color, minor `›` separators follow their semantic text, and tightly related values use `·`. Vim and Neovim code and behavior remain excluded.
+
 ## Verification
 
 Use pure render fixtures at wide, medium, narrow, and tiny widths; assert ANSI/Unicode width bounds, icon/order contracts, semantic colors, unavailable telemetry, pressure transitions, and exactly two ladybugs. Verify composition options, Footer snapshots, Status counters, LSP/MCP parsing, mode publication and borderless editor rendering. Run all root checks, current/original integrity, offline isolated Pi loading, and a credential-free package dry run. Human then validates the live deck at multiple widths and exercises Ctrl-E.

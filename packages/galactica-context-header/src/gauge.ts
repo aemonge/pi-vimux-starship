@@ -92,6 +92,7 @@ export type HeaderSnapshot = {
   blocked: boolean;
   counters: {
     agents: { active: number; total: number };
+    tasks?: { completed: number; total: number };
     steps?: { completed: number; total: number };
     files?: { completed: number; total: number };
   };
@@ -809,6 +810,7 @@ export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
       ? (message.counters as Record<string, unknown>)
       : {};
   const agents = boundedCounterPair(rawCounters.agents, 'active');
+  const tasks = boundedCounterPair(rawCounters.tasks, 'completed');
   const steps = boundedCounterPair(rawCounters.steps, 'completed');
   const files = boundedCounterPair(rawCounters.files, 'completed');
 
@@ -852,6 +854,7 @@ export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
       agents: agents
         ? { active: agents.completed, total: agents.total }
         : { active: 0, total: 0 },
+      ...(tasks ? { tasks } : {}),
       ...(steps ? { steps } : {}),
       ...(files ? { files } : {}),
     },

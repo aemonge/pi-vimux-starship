@@ -520,6 +520,7 @@ export type HeaderStatusEvent = {
   blocked: boolean;
   counters: {
     agents: { active: number; total: number };
+    tasks?: { completed: number; total: number };
     steps?: { completed: number; total: number };
     files?: { completed: number; total: number };
   };
@@ -1058,12 +1059,14 @@ export function buildHeaderStatusEvent(
           ? Math.max(orchestration.activeWorkers, orchestration.totalWorkers ?? 0)
           : 0,
       },
-      ...(options.openSpec
+      ...(options.openSpec?.hierarchy
+        ? { tasks: options.openSpec.hierarchy.tasks }
+        : {}),
+      ...(options.openSpec?.hierarchy &&
+      options.focusedTaskId &&
+      options.openSpec.hierarchy.stepsByTask[options.focusedTaskId]
         ? {
-            steps: {
-              completed: options.openSpec.completedTasks,
-              total: options.openSpec.totalTasks,
-            },
+            steps: options.openSpec.hierarchy.stepsByTask[options.focusedTaskId],
           }
         : {}),
       ...(orchestration?.completedFiles === undefined ||

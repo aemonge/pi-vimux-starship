@@ -7,6 +7,7 @@ import {
   collectOpenSpec,
   collectOpenSpecOverview,
   parseOpenSpecList,
+  parseTaskHierarchy,
   parseTaskMarkdown,
 } from '../src/openspec.ts';
 import type { CommandRunner } from '../src/types.ts';
@@ -26,6 +27,29 @@ test('extracts OpenSpec task counts and pending story titles', () => {
     title: 'Build publisher',
     kind: 'Story',
     done: false,
+  });
+});
+
+test('extracts bounded Ramona Task and focused Step progress', () => {
+  const hierarchy = parseTaskHierarchy(`
+## Task 1 — First value
+- [x] Step 1.1 Build it
+- [-] Step 1.2 Check it
+### Human validation
+- [ ] Human validates first value
+
+## Task 2 — Accepted value
+- [x] Step 2.1 Build it
+### Human validation
+- [x] Human validates second value
+`);
+
+  assert.deepEqual(hierarchy, {
+    tasks: { completed: 1, total: 2 },
+    stepsByTask: {
+      '1': { completed: 1, total: 2 },
+      '2': { completed: 1, total: 1 },
+    },
   });
 });
 

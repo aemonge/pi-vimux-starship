@@ -21,16 +21,19 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Header-only scope addendum confirmed at:** 2026-09-07T08:16:56Z — Human explicitly excluded every Vim and Neovim code and behavior change. Context Header may activate the approved deck and suppress Pi's footer; existing Vim-owned prompt rails remain unchanged.
 - **Implementation started at:** 2026-09-03T14:47:41Z
 - **Header-only implementation resumed at:** 2026-09-07T08:16:56Z
-- **Work completed at:** 2026-09-07T08:22:20Z for the confirmed header-only scope.
-- **Assurance started at:** 2026-09-07T08:20:08Z for the confirmed header-only scope.
-- **Assurance completed at:** 2026-09-07T08:22:20Z
-- **Ready for validation at:** 2026-09-07T08:22:20Z, subject to independent Step-history verification.
-- **Actual implementation:** Approximately 18m11s across Steps 1.1–1.3, excluding Human wait; Step 1.3 took 5m24s including focused and Task-level checks.
+- **Rich-header repair confirmed at:** 2026-09-07T09:06:10Z
+- **Ornament/time correction confirmed at:** 2026-09-07T09:08:20Z — retain runtime and frame the header as top-left `󰠭 >` through bottom-right `< 󰠭`.
+- **Rich-header repair started at:** 2026-09-07T09:08:20Z
+- **Work completed at:** 2026-09-07T09:36:10Z for the rich-header repair and review corrections.
+- **Assurance started at:** Approximately 2026-09-07T09:15:00Z for the rich-header repair; exact command-start timestamp was not separately captured.
+- **Assurance completed at:** 2026-09-07T09:36:10Z
+- **Ready for validation at:** 2026-09-07T09:36:10Z, subject to independent Step-history verification.
+- **Actual implementation:** Step 1.4 took 27m50s including focused checks, complete assurance, independent review, and bounded review corrections; prior Steps remain recorded separately and Human wait is excluded.
 - **Observed Human wait:** Pending
 - **Estimate outcome:** Pending
 - **Final history target:** `feat(cockpit): reflow telemetry into the header deck`
 - **Current non-Git boundary:** Not applicable; the repository uses Git.
-- **Human validation:** Pending
+- **Human validation:** NOT VALID — original response `this is NOT ... What we agreed nor planned`, canonical outcome `NOT VALID`, recorded at 2026-09-07T08:33:36Z. Human subsequently approved a replacement rich-header visual contract; repair validation remains pending.
 
 - [x] Step 1.1 Centralize explicit composition modes and bounded Footer, work-counter, LSP, MCP, and Vim-mode telemetry contracts.
   - Estimate: 20–30 minutes; uncertainty was extracting Footer refresh state without preserving visible footer ownership.
@@ -47,9 +50,15 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - [x] Step 1.3 Activate the approved deck through the root package entrypoint and suppress only Pi's visible footer; preserve all Vim and Neovim code and behavior unchanged under the confirmed header-only scope addendum.
   - Estimate: 15–25 minutes; uncertainty was package reload and empty-footer lifecycle behavior.
   - Timing: 2026-09-07T08:16:56Z–2026-09-07T08:22:20Z (5m24s implementation and checks).
-  - Check: PASS — the root manifest now activates one composition entrypoint; focused Header 76/76 and root tooling 12/12 tests pass; the complete gate passes 368 tests, Prettier, zero-finding lint, strict TypeScript, OpenSpec validation, current 91-file integrity, and immutable 87-file import integrity. The isolated offline Pi load passes with 208 output rows. A focused surface contract proves deck mode replaces Pi's footer with an empty component and restores it on cleanup. Workspace inspection confirms no Vim or Neovim path changed, and root composition preserves Pi Vim's existing rails mode.
+  - Check: PASS automation, NOT VALID visually — the root manifest activated one composition entrypoint and all automated checks passed, but Human rejected the resulting 11-line open-sided deck as inconsistent with the intended visual contract.
   - Paths: `package.json`, `src/index.ts`, `src/local-load-probe.ts`, `test/local-load-probe.test.ts`, Header `index.ts` and new `test/surface.test.ts`, current source manifest, and this Task ledger.
-  - History: Expected `step(cockpit): activate the header-only deck`.
+  - History: `56b4fe9` — `step(cockpit): activate the header-only deck`.
+- [x] Step 1.4 Replace the rejected open-sided deck with the Human-approved rich header: ornamental ladybugs, no side borders or footer, title-row Task/Step progress, compact project/Git state, balanced global/local telemetry, and prompt-colored rules; leave Vim and Neovim untouched.
+  - Estimate: 35–55 minutes; uncertainty was bounded Task/Step hierarchy parsing and ANSI-safe responsive alignment.
+  - Timing: Planning record started 2026-09-07T09:06:10Z; production implementation ran 2026-09-07T09:08:20Z–2026-09-07T09:36:10Z (27m50s including checks and review corrections).
+  - Check: PASS — focused Status 109/109 and Header 78/78 tests prove bounded Task/Step hierarchy, title-right progress, exact `󰠭 > … < 󰠭` ornaments, prompt-colored rules and major separators, compact nonzero Git, context tokens, retained runtime, balanced ANSI-safe rows, no side borders, no LSP, no footer, honest absence, live deck refresh paths, distinct activity/focus, and width retention at 160/100/79/59/39/20 cells. The complete root gate passes 371 tests plus Prettier, zero-finding lint, strict TypeScript, current 91-file and immutable 87-file integrity, composition, and OpenSpec validation. Isolated offline Pi loading passes with 208 output rows. Independent review findings about stale telemetry, fabricated absence, title duplication, decimal CPU refresh, and superseded acceptance were corrected within scope.
+  - Paths: Header `index.ts`, `src/deck.ts`, `src/gauge.ts`, and `test/deck.test.ts`; Status `src/types.ts`, `src/openspec.ts`, `src/publisher.ts`, `test/openspec.test.ts`, and `test/publisher.test.ts`; this Plan/Task; and current source manifest. No Vim or Neovim path changed.
+  - History: Expected `fix(cockpit): render the agreed rich header`.
 
 ### Human validation
 

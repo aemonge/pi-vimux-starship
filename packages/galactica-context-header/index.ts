@@ -194,7 +194,7 @@ export default function galacticaContextHeader(
       cpuSmoothing = updateCpuSmoothing(cpuSmoothing, rawCpuPercent);
       const telemetry = buildResourceTelemetry(cpuSmoothing, sample.memoryBytes);
       const signature = [
-        Math.round(telemetry.cpuPercent),
+        Math.round(telemetry.cpuPercent * 10),
         telemetry.memoryBytes,
         telemetry.cpuWarning,
         telemetry.memoryWarning,
@@ -202,7 +202,8 @@ export default function galacticaContextHeader(
       latestResourceTelemetry = telemetry;
       if (signature === lastResourceSignature) return;
       lastResourceSignature = signature;
-      publishLatestResourceFooter();
+      if (deckMode) requestRender?.();
+      else publishLatestResourceFooter();
     } finally {
       resourceRefreshInFlight = false;
     }
@@ -364,8 +365,11 @@ export default function galacticaContextHeader(
         gitStatus = gitAvailable
           ? parseGitStatus(String(statusResult?.stdout ?? ''))
           : { ...EMPTY_GIT };
-        publishPromptStatus();
-        publishFooter();
+        if (deckMode) requestRender?.();
+        else {
+          publishPromptStatus();
+          publishFooter();
+        }
       } while (gitRefreshQueued && activeCwd);
     } finally {
       gitRefreshInFlight = false;
@@ -423,6 +427,9 @@ export default function galacticaContextHeader(
             if (width <= 0) return [];
             if (deckMode) {
               const usage = ctx.getContextUsage();
+              const contextWindow = usage?.contextWindow ?? ctx.model?.contextWindow;
+              const hasContext =
+                typeof usage?.percent === 'number' || typeof usage?.tokens === 'number';
               return renderHeaderDeck(
                 {
                   elapsedMs: currentActivityAge(),
@@ -434,11 +441,19 @@ export default function galacticaContextHeader(
                   git: gitStatus,
                   model: ctx.model?.name || ctx.model?.id || 'no model',
                   thinking: pi.getThinkingLevel(),
-                  contextPercent: normalizeContextPercent(
-                    usage?.percent,
-                    usage?.tokens,
-                    usage?.contextWindow ?? ctx.model?.contextWindow,
-                  ),
+                  ...(hasContext
+                    ? {
+                        contextPercent: normalizeContextPercent(
+                          usage?.percent,
+                          usage?.tokens,
+                          contextWindow,
+                        ),
+                      }
+                    : {}),
+                  ...(typeof usage?.tokens === 'number'
+                    ? { contextTokens: usage.tokens }
+                    : {}),
+                  ...(typeof contextWindow === 'number' ? { contextWindow } : {}),
                   compactionCount: countCompactions(ctx.sessionManager.getBranch()),
                   ...(latestResourceTelemetry
                     ? { resources: latestResourceTelemetry }
@@ -479,12 +494,18 @@ export default function galacticaContextHeader(
     requestRender?.();
   });
 
-  pi.on('thinking_level_select', publishFooter);
+  pi.on('thinking_level_select', () => {
+    if (deckMode) requestRender?.();
+    else publishFooter();
+  });
   pi.on('message_end', (event) => {
     if (event.message.role === 'assistant') markObservedActivity();
     publishFooter();
   });
-  pi.on('session_compact', publishFooter);
+  pi.on('session_compact', () => {
+    if (deckMode) requestRender?.();
+    else publishFooter();
+  });
 
   pi.on('tool_execution_end', (event) => {
     markObservedActivity();
