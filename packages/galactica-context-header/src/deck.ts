@@ -64,9 +64,7 @@ export function formatDeckElapsed(elapsedMs: number | null): string {
   const hours = Math.floor(totalSeconds / 3_600);
   const minutes = Math.floor((totalSeconds % 3_600) / 60);
   const seconds = totalSeconds % 60;
-  return [hours, minutes, seconds]
-    .map((value) => String(value).padStart(2, '0'))
-    .join(':');
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}'${String(seconds).padStart(2, '0')}`;
 }
 
 export function formatDeckPercent(value: number): string {
@@ -157,7 +155,7 @@ function narrativeLines(
 ): string[] {
   const work = state.header?.work;
   const titles = (work?.titles ?? []).map((value) => safeText(value)).filter(Boolean);
-  const narrativeTitles = titles.length > 1 ? titles.slice(1) : titles;
+  const narrativeTitles = titles.length > 1 ? titles.slice(1) : [];
   return wrapFocus(narrativeTitles.join(' › '), width, maximumLines);
 }
 
@@ -171,8 +169,17 @@ function minorSeparator(theme: Theme, semanticColor = 'accent'): string {
 
 function alignedRows(left: string, right: string, width: number): string[] {
   const gap = width - visibleWidth(left) - visibleWidth(right);
-  if (gap >= 2) return [`${left}${' '.repeat(gap)}${right}`];
+  if (gap >= 1) return [`${left}${' '.repeat(gap)}${right}`];
   return [fit(left, width), fit(right, width)].filter(Boolean);
+}
+
+function alignedSingleRow(left: string, right: string, width: number): string {
+  if (!right) return fit(left, width);
+  const rightWidth = visibleWidth(right);
+  if (rightWidth >= width) return fit(right, width);
+  const fittedLeft = truncateToWidth(left, width - rightWidth - 1, '…');
+  const gap = Math.max(1, width - visibleWidth(fittedLeft) - rightWidth);
+  return `${fittedLeft}${' '.repeat(gap)}${right}`;
 }
 
 function progressLine(state: HeaderDeckState, theme: Theme): string {
@@ -218,13 +225,34 @@ function globalLeft(state: HeaderDeckState, theme: Theme): string {
   return `${color(theme, 'accent', `󰚩 ${safeText(state.model, 80)}`)} ${minorSeparator(theme)} ${color(theme, state.thinking ? 'thinkingHigh' : 'dim', safeText(state.thinking || 'off', 16))}`;
 }
 
-function globalRight(state: HeaderDeckState, theme: Theme): string {
+function compactTelemetryLeft(state: HeaderDeckState, theme: Theme): string {
   const ctxColor =
     state.contextPercent !== undefined && state.contextPercent >= 85
       ? 'warning'
       : state.contextPercent === undefined
         ? 'dim'
         : 'accent';
+  return [
+    globalLeft(state, theme),
+    semanticSeparator(theme),
+    color(
+      theme,
+      ctxColor,
+      `󰾆 ${state.contextPercent === undefined ? '—' : formatDeckPercent(state.contextPercent)}`,
+    ),
+    minorSeparator(theme, ctxColor),
+    color(
+      theme,
+      state.compactionCount > 0 ? ctxColor : 'dim',
+      `󰎞 ${state.compactionCount}`,
+    ),
+  ].join(' ');
+}
+
+function compactTelemetryRight(state: HeaderDeckState, theme: Theme): string {
+  const counters = state.header?.counters;
+  const agents = counters?.agents ?? { active: 0, total: 0 };
+  const files = counters?.files;
   const quota = state.footerTelemetry?.quotaPercent;
   const quotaColor =
     quota !== undefined && quota >= 80
@@ -232,55 +260,6 @@ function globalRight(state: HeaderDeckState, theme: Theme): string {
       : quota === undefined
         ? 'dim'
         : 'accent';
-  return [
-    color(
-      theme,
-      ctxColor,
-      `󰾆 ctx ${state.contextPercent === undefined ? '—' : formatDeckPercent(state.contextPercent)}`,
-    ),
-    minorSeparator(theme, ctxColor),
-    color(
-      theme,
-      state.compactionCount > 0 ? ctxColor : 'dim',
-      `󰎞 zips ${state.compactionCount}`,
-    ),
-    semanticSeparator(theme),
-    color(
-      theme,
-      quotaColor,
-      ` qta ${quota === undefined ? '—' : formatDeckPercent(quota)}`,
-    ),
-    minorSeparator(theme),
-    color(
-      theme,
-      state.footerTelemetry ? 'accent' : 'dim',
-      `󰜦 ${state.footerTelemetry ? formatCost(state.footerTelemetry.totalCost) : '—'}`,
-    ),
-  ].join(' ');
-}
-
-function localLeft(state: HeaderDeckState, theme: Theme): string {
-  const counters = state.header?.counters;
-  const agents = counters?.agents ?? { active: 0, total: 0 };
-  const files = counters?.files;
-  return [
-    color(theme, 'accent', `󱎫 ${formatDeckElapsed(state.elapsedMs)}`),
-    minorSeparator(theme),
-    color(
-      theme,
-      agents.active > 0 ? 'accent' : 'dim',
-      `agts ${agents.active}/${agents.total}`,
-    ),
-    minorSeparator(theme),
-    color(
-      theme,
-      files ? 'accent' : 'dim',
-      `files ${files ? `${files.completed}/${files.total}` : '—'}`,
-    ),
-  ].join(' ');
-}
-
-function localRight(state: HeaderDeckState, theme: Theme): string {
   const resources = state.resources;
   const resourceColor =
     resources?.cpuWarning || resources?.memoryWarning
@@ -288,11 +267,46 @@ function localRight(state: HeaderDeckState, theme: Theme): string {
       : resources
         ? 'accent'
         : 'dim';
-  const resourceText = resources
-    ? `${formatDeckCpu(resources.cpuPercent)} · ${formatDeckBytes(resources.memoryBytes)}`
-    : '—';
   const mcp = state.mcp ? `${state.mcp.healthy}/${state.mcp.total}` : '—';
-  return `${color(theme, resourceColor, ` ${resourceText}`)} ${minorSeparator(theme)} ${color(theme, state.mcp ? 'accent' : 'dim', ` MCP ${mcp}`)}`;
+  return [
+    color(
+      theme,
+      quotaColor,
+      ` ${quota === undefined ? '—' : formatDeckPercent(quota)}`,
+    ),
+    minorSeparator(theme),
+    color(
+      theme,
+      state.footerTelemetry ? 'accent' : 'dim',
+      `󰜦 ${state.footerTelemetry ? formatCost(state.footerTelemetry.totalCost) : '—'}`,
+    ),
+    semanticSeparator(theme),
+    color(
+      theme,
+      agents.active > 0 ? 'accent' : 'dim',
+      ` ${agents.active}/${agents.total}`,
+    ),
+    minorSeparator(theme),
+    color(
+      theme,
+      files ? 'accent' : 'dim',
+      `󰈙 ${files ? `${files.completed}/${files.total}` : '—'}`,
+    ),
+    semanticSeparator(theme),
+    color(
+      theme,
+      resourceColor,
+      ` ${resources ? formatDeckCpu(resources.cpuPercent) : '—'}`,
+    ),
+    minorSeparator(theme, resourceColor),
+    color(
+      theme,
+      resourceColor,
+      ` ${resources ? formatDeckBytes(resources.memoryBytes) : '—'}`,
+    ),
+    minorSeparator(theme),
+    color(theme, state.mcp ? 'accent' : 'dim', ` ${mcp}`),
+  ].join(' ');
 }
 
 export function renderHeaderDeck(
@@ -316,27 +330,39 @@ export function renderHeaderDeck(
     lineColor,
     '─'.repeat(Math.max(0, boundedWidth - visibleWidth(bottomSuffix))),
   )}${bottomSuffix}`;
-  const divider = color(theme, 'dim', '┈'.repeat(boundedWidth));
+  const divider = `\u001b[2m${color(theme, 'text', '┈'.repeat(boundedWidth))}\u001b[22m`;
   const current = lifecycle(state);
   const activity = state.header?.work?.activityPath?.at(-1);
   const activityText = safeText(activity?.compact || activity?.label || '');
   const titles = (state.header?.work?.titles ?? [])
     .map((value) => safeText(value))
     .filter(Boolean);
-  const planTitle = titles.length > 1 ? titles[0] : '';
+  const planTitle = titles[0] ?? '';
+  const waiting = current.label === 'waiting';
   const statusLeft = [
     color(theme, state.header?.work?.color ?? 'accent', current.label, true),
-    ...(activityText
+    color(theme, 'dim', `(${formatDeckElapsed(state.elapsedMs)})`),
+    ...(!waiting && activityText
       ? [minorSeparator(theme), color(theme, 'accent', activityText)]
       : []),
     semanticSeparator(theme),
-    color(theme, state.header?.work?.color ?? 'accent', current.focus),
-    ...(planTitle
+    ...(waiting
       ? [
-          minorSeparator(theme, state.header?.work?.color ?? 'accent'),
-          color(theme, state.header?.work?.color ?? 'accent', planTitle),
+          color(theme, state.header?.work?.color ?? 'accent', 'next direction'),
+          ...(planTitle
+            ? [
+                minorSeparator(theme, state.header?.work?.color ?? 'accent'),
+                color(theme, state.header?.work?.color ?? 'accent', planTitle),
+              ]
+            : []),
         ]
-      : []),
+      : [
+          color(
+            theme,
+            state.header?.work?.color ?? 'accent',
+            planTitle || current.focus,
+          ),
+        ]),
   ].join(' ');
   const focusLines = narrativeLines(state, boundedWidth, 2).map((line) =>
     color(theme, state.header?.work?.color ?? 'accent', line),
@@ -344,13 +370,16 @@ export function renderHeaderDeck(
 
   const rows = [
     top,
-    ...alignedRows(statusLeft, progressLine(state, theme), boundedWidth),
+    alignedSingleRow(statusLeft, progressLine(state, theme), boundedWidth),
     ...focusLines,
     divider,
     ...alignedRows(projectLeft(state, theme), gitRight(state, theme), boundedWidth),
     divider,
-    ...alignedRows(globalLeft(state, theme), globalRight(state, theme), boundedWidth),
-    ...alignedRows(localLeft(state, theme), localRight(state, theme), boundedWidth),
+    ...alignedRows(
+      compactTelemetryLeft(state, theme),
+      compactTelemetryRight(state, theme),
+      boundedWidth,
+    ),
     bottom,
   ];
   return rows.map((line) => fit(line, boundedWidth));

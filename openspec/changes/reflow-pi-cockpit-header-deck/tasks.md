@@ -28,16 +28,19 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Chrome refinement started at:** 2026-09-07T10:00:13Z
 - **Hierarchy refinement confirmed at:** 2026-09-07T10:26:24Z
 - **Hierarchy refinement started at:** 2026-09-07T10:26:24Z
-- **Work completed at:** 2026-09-07T10:33:15Z for the hierarchy refinement.
-- **Assurance started at:** Approximately 2026-09-07T10:28:00Z for the hierarchy refinement; exact initial command-start timestamp was not separately captured.
-- **Assurance completed at:** 2026-09-07T10:33:15Z
-- **Ready for validation at:** 2026-09-07T10:33:15Z, subject to independent Step-history verification.
-- **Actual implementation:** Step 1.6 took 6m51s including focused checks, complete assurance, and independent review; prior Steps remain recorded separately and Human wait is excluded.
+- **Compact telemetry refinement confirmed at:** 2026-09-07T10:45:51Z
+- **Compact telemetry refinement started at:** 2026-09-07T10:45:51Z
+- **Single-row hierarchy correction confirmed at:** 2026-09-07T10:57:13Z
+- **Work completed at:** 2026-09-07T11:05:38Z for the compact telemetry refinement and single-row correction.
+- **Assurance started at:** Approximately 2026-09-07T10:47:00Z for the compact telemetry refinement; exact initial command-start timestamp was not separately captured.
+- **Assurance completed at:** 2026-09-07T11:05:38Z
+- **Ready for validation at:** 2026-09-07T11:05:38Z, subject to independent Step-history verification.
+- **Actual implementation:** Step 1.7 took 19m47s including focused checks, Human-caught hierarchy correction, complete assurance, and independent review; prior Steps remain recorded separately and Human wait is excluded.
 - **Observed Human wait:** Pending
 - **Estimate outcome:** Pending
 - **Final history target:** `feat(cockpit): reflow telemetry into the header deck`
 - **Current non-Git boundary:** Not applicable; the repository uses Git.
-- **Human validation:** CHANGE — prior visual changes remain preserved; latest original response begins `Let's not use solid line...`, canonical outcome `CHANGE`, recorded at 2026-09-07T10:23:58Z. Hierarchy refinement validation remains pending.
+- **Human validation:** CHANGE — prior visual changes remain preserved; latest original response begins `CHANGE: 0.2% · 292M...`, canonical outcome `CHANGE`, recorded before the compact telemetry confirmation at 2026-09-07T10:45:51Z. Compact telemetry refinement validation remains pending.
 
 - [x] Step 1.1 Centralize explicit composition modes and bounded Footer, work-counter, LSP, MCP, and Vim-mode telemetry contracts.
   - Estimate: 20–30 minutes; uncertainty was extracting Footer refresh state without preserving visible footer ownership.
@@ -74,7 +77,13 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Timing: 2026-09-07T10:26:24Z–2026-09-07T10:33:15Z (6m51s including checks and review).
   - Check: PASS — Header 80/80 proves exact dotted `dim` dividers, solid prompt-colored outer ornaments, status/focus/Plan hierarchy, current-Task-only one/two-line narrative flow, and ANSI-safe widths at 160/100/79/59/39/20. The complete root gate passes 373 tests plus formatting, zero-finding lint, strict TypeScript, current 91-file and immutable 87-file integrity, composition, and OpenSpec validation. Isolated offline Pi loading passes with 208 output rows; independent review passes; no Vim or Neovim source path changed.
   - Paths: Header `src/deck.ts` and `test/deck.test.ts`, this Plan/Task, and current source manifest. No Vim or Neovim source path changed.
-  - History: Expected `fix(cockpit): clarify header hierarchy`.
+  - History: `ea57172` — `fix(cockpit): clarify header hierarchy`.
+- [x] Step 1.7 Move the iconless activity timer onto the status row and collapse compact icon-led telemetry into left/right islands with neutral dim dotted dividers.
+  - Estimate: 15–25 minutes; uncertainty was one-row retention across responsive widths, ANSI-safe neutral dim styling, and removing active Task duplication.
+  - Timing: 2026-09-07T10:45:51Z–2026-09-07T11:05:38Z (19m47s including checks, correction, and review).
+  - Check: PASS — Header 82/82 proves `(HH:MM'SS)` activity age, one-line status/progress with left-side truncation, waiting/active Plan hierarchy without Task duplication, Task-only two-line narrative, single-title behavior, neutral terminal-dim dotted rules, compact icon-led left/right telemetry islands, one-cell fit retention, honest absence, and ANSI-safe widths at 160/100/79/59/39/20. The complete root gate passes 375 tests plus formatting, zero-finding lint, strict TypeScript, current 91-file and immutable 87-file integrity, composition, and OpenSpec validation. Isolated offline Pi loading passes with 208 output rows; final independent review passes; no Vim or Neovim source path changed.
+  - Paths: Header `src/deck.ts` and `test/deck.test.ts`, this Plan/Task, and current source manifest. No Vim or Neovim source path changed.
+  - History: Expected `fix(cockpit): compact header telemetry`.
 
 ### Human validation
 

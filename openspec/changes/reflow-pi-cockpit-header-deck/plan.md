@@ -69,6 +69,14 @@ Human returned `CHANGE` after live review and confirmed the bounded refinement a
 
 Human returned `CHANGE` on the pale solid rules and combined Plan/Task narrative, then confirmed the bounded repair at 2026-09-07T10:26:24Z. Render both internal dividers as dotted `┈` in the paler `dim` semantic color while preserving solid prompt-colored outer ornaments. Place the Plan title after the status focus on the first content row (`lifecycle ⟩ focus › Plan`) and reserve the narrative below for only the current Task, wrapping to a second line only when required. Preserve focused progress, existing telemetry grouping, editor-only composition, and the no-Vim/Neovim-source boundary.
 
+## Human-corrected compact telemetry refinement
+
+Human confirmed the aggressively compact left/right layout at 2026-09-07T10:45:51Z. Move foreground activity age iconlessly beside lifecycle as `(HH:MM'SS)`. Collapse the former global and local telemetry rows into one responsive row: left island `model › thinking ⟩ context-percent › compactions`; right island `quota › cost ⟩ agents › files ⟩ CPU › RAM › MCP`, using ``, `󰈙`, ``, ``, and `` without redundant labels. Keep a flexible alignment gap and split into two physical rows only when the islands cannot fit. Render dotted dividers in neutral text with terminal dim intensity instead of the theme's potentially green semantic dim color. Preserve all other accepted behavior and the no-Vim/Neovim-source boundary.
+
+## Human-corrected single-row hierarchy
+
+Human identified active-state Task duplication before the compact telemetry Step was committed and confirmed the correction at 2026-09-07T10:57:13Z. The first content row is always one physical line: waiting renders `lifecycle (timer) ⟩ next direction › Plan`; active work renders `lifecycle (timer) [› activity] ⟩ Plan`; focused progress stays right-aligned. Reserve progress space by truncating the left Plan-bearing side rather than splitting the row. Only additional titles, representing the current Task, appear in the narrative and may wrap to two lines; a single-title work state remains solely on the status row. Accept one available gap cell before splitting the compact telemetry islands.
+
 ## Verification
 
 Use pure render fixtures at wide, medium, narrow, and tiny widths; assert ANSI/Unicode width bounds, icon/order contracts, semantic colors, unavailable telemetry, pressure transitions, and exactly two ladybugs. Verify composition options, Footer snapshots, Status counters, LSP/MCP parsing, mode publication and borderless editor rendering. Run all root checks, current/original integrity, offline isolated Pi loading, and a credential-free package dry run. Human then validates the live deck at multiple widths and exercises Ctrl-E.
