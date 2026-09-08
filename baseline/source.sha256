@@ -65,7 +65,7 @@ b7f67b6360fbf05d87b400603e11afddc2481ba7bb9f8ec76f9af8bf85e0c79b  packages/pi-fa
 33d089f7e63fcb08998c38180e74eca12988ef3dbaf739a707728fd79be9c3dc  packages/pi-fancy-footer-full-palette/tsconfig.json
 76fc20c368a2e29a7be8ca461f8addfaa7427b3453ef10398a22153fbcb5bc02  packages/pi-vim-top-border/LICENSE
 d820df210695e26f85c7107d7c96cc34f5021472f6d27e5b9144f6946a593f68  packages/pi-vim-top-border/LOCAL-CHANGES.md
-0271883d7d51d4cdc503d1cefbe1976dcd26c776aa46c51ecbcae0860699f5c5  packages/pi-vim-top-border/README.md
+444e3c277280e8cf8d1a7dd4adf38392b6aa11174d93b8a430cfc0a4ded6688b  packages/pi-vim-top-border/README.md
 92aa088cf6dc9f182f5a6ec9e77f9752c47a10ae2c05380931a51ab84bcca474  packages/pi-vim-top-border/clipboard-mirror.ts
 ebf672111d6a77520a48435e03a07142d4302b206c10a3adbb21548e2c70d0bd  packages/pi-vim-top-border/clipboard-policy.ts
 da0d8d2e83cc0ae6065f93b19685e09e774da9a3d634d67cec27574160972ed8  packages/pi-vim-top-border/cursor-shape.ts

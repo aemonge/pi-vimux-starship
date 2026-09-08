@@ -8,6 +8,19 @@ pi install npm:pi-vim
 
 Restart Pi after install; requires `@earendil-works/pi-tui >= 0.74.0`.
 
+When this module is composed by `pi-vimux-starship`, the root package selects its
+`external-editor-only` surface. In regular Pi mode that surface starts in Normal, renders
+only the shared Header Deck, and redirects every currently supported Insert-producing
+command through the same existing external-editor adapter as Ctrl-E after the command's
+cursor/text mutation completes. Saving returns a hidden draft; Enter submits it, while
+Ctrl-E or another Insert-producing command reopens it. The live Normal/Visual/EX icon is
+shown once at the left edge of the Header Deck's bottom separator. Pi fullscreen still
+reserves its core three-row editor slot.
+
+The standalone/default pi-vim surface documented below remains a visible modal prompt
+editor; the external-only behavior is explicit rather than a silent change to existing
+consumers.
+
 [quickstart](#30-second-quickstart) · [key reference](#full-reference) · [settings](#settings-reference) · [limits](#limits-and-vim-differences)
 
 <!-- gif slot (recording pending): hero — Esc into NORMAL, a few motions and edits, footer label and border tracking the mode -->
@@ -72,6 +85,10 @@ Common quick wins:
 
 
 ### mode switching
+
+The table describes the standalone/default surface. On the consolidated
+`external-editor-only` surface, each action ending in Insert instead stays in Normal and
+opens the external editor after completing its listed cursor or deletion mutation.
 
 | key | action |
 |---|---|

@@ -6,10 +6,10 @@ The baseline is one Pi package identity with four existing extension factories:
 
 ```text
 root package manifest
-├── Fancy Footer renderer
+├── Fancy Footer telemetry provider
 ├── status and focus producer
-├── lifecycle header and telemetry producer
-└── Vim prompt editor and prompt-rail consumer
+├── Header Deck and telemetry producer
+└── focused zero-row Vim command surface and external-editor consumer
 ```
 
 The manifest lists exact entrypoints rather than flattening approximately 36,000 lines
@@ -20,8 +20,9 @@ Startup order is intentional:
 
 1. Fancy Footer subscribes to widget snapshots.
 2. Status registers focus tools and publishes lifecycle/work snapshots.
-3. Context Header consumes status and publishes prompt/footer telemetry.
-4. Pi Vim installs the modal editor and consumes prompt-rail snapshots.
+3. Context Header consumes status and supplies the Header Deck renderer.
+4. Pi Vim installs the focused editor component, renders that deck with its live mode,
+   and routes composition through the external-editor adapter.
 
 Taskflow remains a separate optional Pi package. Its bounded runtime events are consumed
 when present; it is not a dependency of this package.
@@ -51,7 +52,7 @@ src/
 ├── external-editor/      # Pi action adapter, not private bridge logic
 ├── header/               # lifecycle and focus rendering
 ├── footer/               # responsive renderer and provider state
-├── prompt-rails/         # mode and bounded telemetry
+├── deck-surface/         # Header Deck renderer and live mode context
 ├── status/               # normalized project/runtime state
 ├── adapters/             # optional OpenSpec, Taskflow, Devbox, MCP
 ├── config/               # namespace, presets, legacy compatibility
@@ -64,10 +65,21 @@ is deliberately retired.
 
 ## External editor boundary
 
-Pi Vim already calls Pi's supported external-editor action. In Galactica that action is
-configured to a private Neovim bridge, but the package does not own or duplicate the
-bridge implementation. Ctrl-E remains the direct action.
+The consolidated package selects Pi Vim's explicit `external-editor-only` surface. The
+focused `ModalEditor` remains the input and hidden-draft authority, but in regular Pi
+mode its render path returns only the Header Deck: no prompt text, editor frame, cursor,
+or autocomplete rows. Pi's fullscreen layout reserves a core three-row editor slot, so
+fullscreen may retain blank space and is not the target workflow.
 
-The deferred automatic-Insert Plan may request this same action when a real mode
-transition enters Insert. The request belongs at the centralized mode seam; invocation
-must be deferred until the current Vim command finishes mutating cursor and prompt text.
+The existing `PromptExternalEditor` adapter remains the single handoff used by direct
+Ctrl-E and automatic Insert-producing commands. It resolves the already configured
+external editor and owns the private temporary prompt file; this package does not alter
+Neovim configuration or duplicate the private Neovim bridge. A centralized
+`setMode('insert')` interception keeps the external-only surface in Normal mode, queues
+one request, and flushes it after the current command finishes mutating cursor and draft
+text. Applying returned text cannot trigger another handoff.
+
+Saving and exiting Neovim updates the hidden draft without submitting it. Enter remains
+the explicit send boundary; Ctrl-E or another supported Insert-producing command reopens
+the draft. Normal, Visual, and EX dispatch continue through the focused custom editor,
+while previously unsupported Vim commands remain unsupported.

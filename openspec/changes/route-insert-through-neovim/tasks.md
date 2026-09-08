@@ -34,13 +34,17 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   Normal/Visual command behavior.
 - **Implementation confirmed at:** 2026-09-08T11:47:03Z
 - **Implementation started at:** 2026-09-08T11:47:40Z
-- **Work completed at:** Pending
-- **Assurance started at:** Pending
-- **Assurance completed at:** Pending
-- **Ready for validation at:** Pending
-- **Actual implementation:** Pending
-- **Observed Human wait:** Pending
-- **Estimate outcome:** Pending
+- **Work completed at:** 2026-09-08T12:16:33Z
+- **Assurance started at:** 2026-09-08T12:16:56Z
+- **Assurance completed at:** 2026-09-08T12:18:11Z
+- **Ready for validation at:** Pending Step 1.3 history verification
+- **Actual implementation:** 13m10s recorded Step implementation plus 1m38s final
+  deterministic assurance; Human wait excluded.
+- **Observed Human wait:** 13m41s between Step 1.1 completion and approved
+  Devbox-allowlisted receipt verification; excluded from implementation.
+- **Estimate outcome:** Below the 55–90 minute range because the confirmed public render,
+  centralized mode, and shared deck seams required no repair; retain low confidence until
+  Human validates live TUI behavior.
 - **Final history target:** `feat(vim): use Neovim as prompt composer`
 - **Current non-Git boundary:** Not applicable; the standalone project uses existing Git.
 - **Human validation:** Pending
@@ -81,16 +85,22 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     this ledger, and `baseline/source.sha256`.
   - History: Expected `step(vim): replace Insert with Neovim handoff`; external receipt
     pending independent verification.
-- [ ] Step 1.3 Document the external-only workflow and run complete offline package
+- [x] Step 1.3 Document the external-only workflow and run complete offline package
       assurance while preserving GREEN.
-  - Estimate: 15–25 minutes; uncertainty is aligning the large standalone Vim reference
+  - Estimate: 15–25 minutes; uncertainty was aligning the large standalone Vim reference
     without misdescribing its unchanged default surface.
-  - Timing: Pending
-  - Check: Formatter, format check, lint, TypeScript, all tests, integrity, composition,
-    and OpenSpec checks pass.
-  - Paths: Root/package documentation, architecture, matching ledger, any formatter-only
-    changes within declared Task paths, and `baseline/source.sha256`.
-  - History: Pending; expected `step(cockpit): document external-only prompt surface`.
+  - Started: 2026-09-08T12:14:59Z
+  - Completed: 2026-09-08T12:18:11Z
+  - Timing: 3m12s implementation/check time; below estimate because the standalone and
+    consolidated surfaces could be documented independently without restructuring the
+    reference.
+  - Check: Full `npm run check` PASS — format, lint, TypeScript, 386 tests, integrity,
+    composition, and OpenSpec; credential-free offline Pi load PASS with 211 model rows.
+  - Paths: `README.md`, `docs/architecture.md`,
+    `packages/pi-vim-top-border/README.md`, this Plan/ledger, and
+    `baseline/source.sha256`.
+  - History: Expected `step(cockpit): document external-only prompt surface`; external
+    receipt pending independent verification.
 
 ### Human validation
 
