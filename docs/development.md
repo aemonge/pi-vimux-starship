@@ -55,14 +55,20 @@ The complete deterministic gate is:
 npm run check
 ```
 
-It verifies current and imported integrity, formatting, Biome and ESLint, strict
-TypeScript, repository tooling tests, every component suite, and schema-aware OpenSpec
-planning state. Formatter writes are separate and explicit:
+It verifies current and imported integrity, the packed-file allowlist, a real temporary
+artifact extraction and credential-free offline Pi load, formatting, Biome and ESLint,
+strict TypeScript, repository tooling tests, every component suite, and schema-aware
+OpenSpec planning state. The package checks are also available independently:
+
+````bash
+npm run check:package
+npm run check:package:load
+``` Formatter writes are separate and explicit:
 
 ```bash
 npm run format
 npm run format:check
-```
+````
 
 `npm run check:openspec` treats `skip_specs: true` only as a planning-schema contract for
 completed `ramona-idea` and `ramona-plan` artifacts. Every other change is delegated to
@@ -93,10 +99,27 @@ use `npm link`; Pi local paths are already linked without copying.
 
 ## Packaging
 
-Use `npm pack --dry-run` before creating an artifact. Any actual tarball belongs under a
-bounded temporary output path during checks. The private package is not authorized for
-npm publication or remote Git push.
+`npm run check:package` wraps `npm pack --dry-run --json --ignore-scripts` and rejects
+planning records, tests, baselines, agent instructions, development configuration,
+private settings, and credentials. `npm run check:package:load` creates the actual
+artifact only in a temporary directory, extracts it, and invokes that package through Pi
+with a fresh HOME, no session, no discovered extensions, no credential environment, and
+o network.
 
-A distributable artifact must include runtime source, README, licenses, provenance and
-required package metadata while excluding tests only when equivalent source checks have
-already passed. Optional adapters must remain optional in clean-room fixtures.
+The private package is not authorized for npm publication or remote Git push. Optional
+capabilities remain fixture-covered without initializing an auxiliary Git or Rustory
+repository.
+
+## VHS demonstration
+
+The demo source is `demo/pi-vimux-starship.tape`. VHS is intentionally not a project
+runtime or development dependency; run it from a workstation that has the real blocking
+Neovim bridge configured:
+
+```bash
+vhs demo/pi-vimux-starship.tape
+```
+
+The tape uses offline, sessionless Pi and submits `/vimux-health` rather than a provider
+prompt. Human must review `docs/assets/pi-vimux-starship.gif` for private runtime content
+before its final Task-boundary commit.

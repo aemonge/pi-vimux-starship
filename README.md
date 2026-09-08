@@ -1,109 +1,203 @@
 # pi-vimux-starship
 
-A Vim- and tmux-inspired command deck for [Pi](https://pi.dev): lifecycle context,
-external-Neovim prompt composition, Vim command handling, and responsive operational
-telemetry in one package.
+A Vim- and tmux-inspired command deck for
+[Pi](https://pi.dev): lifecycle context, external-Neovim prompt
+composition, Vim command handling, and responsive operational telemetry in one package.
+
+![Neovim-owned Pi prompt workflow](docs/assets/pi-vimux-starship.gif)
 
 > [!IMPORTANT]
-> This repository preserves its byte-identical Galactica import at Git commit `9d7bb84`
-> and in `baseline/imported-source.sha256`. The consolidated root package has since
-> evolved intentionally; `baseline/source.sha256` verifies its current authored tree.
+> The best experience is **Pi in regular mode inside `nvim +terminal`**, with a blocking
+> Neovim bridge configured as Pi's `externalEditor`. Pi fullscreen reserves a three-row
+> editor slot and is not the target layout.
 
-“Vimux” joins Vim's editing language with tmux-inspired terminal navigation. “Starship”
-names the integrated cockpit experience; this package does not depend on `starship.rs`.
-
-## What is present
+## The cockpit
 
 ```text
-Header Deck ◀── bounded lifecycle and telemetry snapshots
+Header Deck ◀── bounded lifecycle, work, project, model, and resource context
     │
-    └── bottom separator ◀── live Vim Normal / Visual / EX mode
+    └── bottom separator ◀── live Vim Normal / Visual / EX / Insert feedback
 
-focused zero-row Vim command surface ── Insert transition / Ctrl-E ──▶ Neovim
-                                     ◀── saved draft + auto-submit ───┘
+zero-row Vim command surface ── Insert transition ──▶ Neovim prompt.md
+                             ◀── :x + auto-submit ───┘
+
+responsive Footer ◀── model, quota, context, cost, Git, and capability telemetry
 ```
 
-The imported implementation lives under [`packages/`](packages/):
+The package composes four bounded modules in dependency-safe order:
 
-- `galactica-status` — focus, lifecycle, OpenSpec, Goal, Taskflow, and diagnostics
-  state;
-- `galactica-context-header` — lifecycle header and bounded local telemetry;
-- `pi-fancy-footer-full-palette` — responsive footer renderer and provider status;
-- `pi-vim-top-border` — focused Vim command surface, clipboard policy, and
-  external-editor handoff.
+- **Fancy Footer** — responsive model, quota, context, cost, Git, and resource telemetry;
+- **Status provider** — lifecycle, OpenSpec, Session Work, and diagnostic state;
+- **Header Deck** — current activity, focus, project state, and compact telemetry;
+- **Pi Vim** — hidden-draft Normal/Visual/EX commands and external-editor handoff.
 
-The root Pi manifest lists their existing entrypoints in dependency-safe startup order.
-No implementation was flattened into one large `index.ts`.
+Optional Git, OpenSpec, Devbox, tmux, Neovim, provider-quota, and Nerd Font capabilities
+fail soft when absent. Pi core remains the API authority.
 
-## Handoff
+## Recommended setup
 
-This tree is staged temporarily inside Galactica without Git metadata. Move it first:
+### Requirements
+
+- Node.js 24 or newer;
+- a current Pi installation;
+- Neovim for the recommended workflow;
+- one blocking `externalEditor` executable that accepts the temporary Markdown file as
+  its only argument, opens it in the enclosing Neovim instance, and exits when that
+  buffer closes.
+
+The bridge is deliberately not shipped: connecting to a private Neovim server is
+machine-specific and belongs in your trusted user configuration.
+
+Configure the bridge through Pi's global `~/.pi/agent/settings.json` or `/settings`:
+
+```json
+{
+  "externalEditor": "/absolute/path/to/your/blocking-nvim-bridge"
+}
+```
+
+The current adapter invokes that setting as one executable without a shell. Put arguments
+inside your bridge script rather than appending shell text to `externalEditor`.
+
+Start Neovim, open a terminal, and run Pi in regular mode:
+
+```vim
+:terminal
+```
 
 ```bash
-mv ~/galactica/pi-vimux-starship ~/projects/
-cd ~/projects/pi-vimux-starship
+pi --tui-mode regular
 ```
 
-Then start a fresh Pi session in that directory and follow
-[`docs/handoff.md`](docs/handoff.md). The intended first Git commit is:
+### Optional Ctrl-E mapping
+
+Current Pi defaults `app.editor.external` to Ctrl-G. The validated cockpit uses Ctrl-E;
+this remains your user-owned Pi configuration:
+
+```json
+{
+  "app.editor.external": "ctrl+e"
+}
+```
+
+Place that in `~/.pi/agent/keybindings.json`, then run `/reload`. The package never edits
+Pi or Neovim configuration automatically.
+
+## Prompt workflow
+
+The consolidated surface starts in Normal and renders zero native prompt rows.
+
+1. Press `i`, `a`, `I`, `A`, `o`, `O`, `s`, `S`, `C`, a supported change command, or
+   Pi's configured external-editor shortcut.
+2. The Header Deck shows Insert while Neovim owns the handoff.
+3. Compose in the temporary `prompt.md` buffer.
+4. Use `:x` or `:wq` after writing to return and submit exactly once.
+
+Submission follows the last explicit write—not a content comparison:
+
+- edited `:x` or `:wq` submits;
+- unchanged `:x` that performs no write submits nothing;
+- `:q!` without a write submits nothing;
+- `:w`, further unsaved edits, then `:q!` submits the last saved bytes;
+- failed, inactive, and duplicate handoffs never submit.
+
+Normal, Visual, and EX commands still operate on the hidden draft. Ordinary terminal
+scrollback navigation and text selection belong to the enclosing Neovim terminal buffer.
+Restoring outer Neovim's terminal Insert state after the prompt closes also remains
+Neovim configuration.
+
+## Health check
+
+Run the read-only health report directly:
 
 ```text
-chore: import Galactica cockpit baseline
+/vimux-health
 ```
 
-Starting Pi after the move does not replace the existing global cockpit. Galactica's
-original four package entries remain configured until a later, explicitly authorized
-migration.
+Or through the exact Pi EX-command bridge from Normal mode:
 
-## Isolated package probe
-
-Do not load this umbrella package alongside the four original packages. An isolated
-probe can disable discovered extensions while retaining the explicit package:
-
-```bash
-pi --offline --no-extensions -e "$PWD" --list-models
+```vim
+:vimux-health
 ```
 
-After one-package parity is validated, install the local source with:
+The bounded report classifies package registration, interactive TUI, external-editor
+readiness, recommended Neovim topology, and optional local capabilities as `PASS`,
+`WARN`, or `INFO`. It does not execute the configured editor or expose commands,
+settings, endpoints, environment values, credentials, or absolute paths.
+
+## Installation
+
+This project is currently private and `UNLICENSED`; npm publication is not authorized.
+Review extensions before installation because Pi packages execute with user permissions.
+
+### Local path
+
+From the repository root:
 
 ```bash
+npm ci
+npm run check
 pi install "$(pwd -P)"
 ```
 
-Changing protected Pi settings requires explicit Human authority.
+Do not load this package alongside the four legacy component package entries. Inspect
+`pi list`, then remove or disable duplicates as one reviewed user action. `npm link` is
+not Pi's package-registration mechanism.
 
-## Baseline integrity
+### Pinned private Git source
 
-The import contains 87 authored files and 35,920 lines. `node_modules`, caches,
-generated artifacts, and repository metadata were excluded. Verify the immutable import
-with:
+After the repository has an authorized remote, install an immutable tag or commit:
 
 ```bash
-npm run check:baseline
+pi install git:<host>/<owner>/pi-vimux-starship@<tag-or-commit>
 ```
 
-See [`docs/baseline-evidence.md`](docs/baseline-evidence.md) for the captured checks and
-known development-environment gaps.
+A pinned ref does not move during ordinary package updates. Network access, credentials,
+remote publication, and pushing are outside this repository's automated checks.
 
-## Durable direction
+### Rollback
 
-- [Package Idea](openspec/changes/share-pi-vimux-starship/idea.md)
-- [Cockpit consolidation Plan](openspec/changes/consolidate-imported-pi-cockpit/plan.md)
-- [External-editor-only prompt Plan](openspec/changes/route-insert-through-neovim/plan.md)
+Keep the previous source/ref before changing installation. To remove this package:
 
-The consolidated package selects an explicit `external-editor-only` Pi Vim surface. In
-regular Pi mode it renders no native prompt rows: the Header Deck remains visible, starts
-in Normal mode, and places the live mode icon on its bottom separator. Every supported
-Insert-producing command and direct Ctrl-E opens the existing Neovim handoff after the
-current command mutation completes. The separator shows Insert while Neovim owns the
-handoff. After Neovim exits, an explicitly written draft auto-submits exactly once;
-unwritten exits and failures return to Normal without sending. Restoring the enclosing
-Neovim terminal's `startinsert` state remains Neovim configuration. Pi fullscreen retains
-its core three-row editor slot and is not the target workflow.
+```bash
+pi remove /absolute/path/to/pi-vimux-starship
+```
 
-## Documentation
+For Git installations, pass the same `git:` package identity used during installation.
+Restore the previous package entries only after confirming this package has been removed;
+never keep both cockpit registrations active.
 
-- [`docs/architecture.md`](docs/architecture.md) — current and target boundaries;
-- [`docs/source-inventory.md`](docs/source-inventory.md) — imported source ownership;
-- [`docs/development.md`](docs/development.md) — local package and test workflow;
-- [`docs/handoff.md`](docs/handoff.md) — exact continuation steps.
+## Reproducible VHS demo
+
+The checked-in tape is credential-free and submits `/vimux-health`, not a provider
+prompt. It expects the package and your private blocking Neovim bridge to be configured.
+From the repository root, run:
+
+```bash
+vhs demo/pi-vimux-starship.tape
+```
+
+It writes `docs/assets/pi-vimux-starship.gif`. Review the entire recording for private
+paths, notifications, or terminal history before committing it. The single reviewed GIF
+is the project's explicit demo-asset exception; ordinary screenshots and private runtime
+captures remain excluded.
+
+## Development
+
+```bash
+npm run check:package
+npm run check:package:load
+npm run check
+```
+
+The package gate constrains shipped paths, creates real tarballs only under temporary
+ignored directories, extracts them, and loads them through credential-free offline Pi.
+It never initializes another Git/Rustory repository or mutates Pi settings.
+
+See:
+
+- [`docs/architecture.md`](docs/architecture.md) — package and privacy boundaries;
+- [`docs/development.md`](docs/development.md) — focused checks and local development;
+- [`licenses/README.md`](licenses/README.md) — upstream licenses and provenance;
+- [`packages/pi-vim-top-border/README.md`](packages/pi-vim-top-border/README.md) — complete
+  Vim command reference.

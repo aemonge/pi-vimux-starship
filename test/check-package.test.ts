@@ -5,6 +5,7 @@ import {
   credentialFreeProbeEnvironment,
   packedPathsFromNpmJson,
   REQUIRED_FILES,
+  validateDemoSources,
   validatePackedFiles,
 } from '../scripts/check-package.mjs';
 
@@ -50,6 +51,29 @@ test('clean-room Pi probe environment cannot inherit provider or session secrets
   for (const key of ['ANTHROPIC_API_KEY', 'AWS_ACCESS_KEY_ID', 'PI_SESSION_FILE']) {
     assert.equal(key in environment, false);
   }
+});
+
+test('README and VHS source preserve the credential-free Neovim demonstration', () => {
+  const readme = [
+    'docs/assets/pi-vimux-starship.gif',
+    'nvim +terminal',
+    '/vimux-health',
+    '## Installation',
+    '### Rollback',
+    '## Reproducible VHS demo',
+  ].join('\n');
+  const tape = [
+    'Output docs/assets/pi-vimux-starship.gif',
+    'Type "pi --offline --no-session --no-extensions --no-context-files"',
+    'Type "/vimux-health"',
+    'Type ":x"',
+  ].join('\n');
+
+  assert.deepEqual(validateDemoSources(readme, tape), []);
+  assert.match(
+    validateDemoSources(readme, `${tape}\nType "--api-key secret"`).join('\n'),
+    /forbidden/u,
+  );
 });
 
 test('npm pack JSON exposes exactly one validated path list', () => {

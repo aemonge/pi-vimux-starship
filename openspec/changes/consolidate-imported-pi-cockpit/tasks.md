@@ -176,11 +176,13 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   or one independently validatable outcome pushes implementation beyond 90 minutes.
 - **Implementation confirmed at:** 2026-09-08T14:57:33Z
 - **Implementation started at:** 2026-09-08T15:12:54Z
-- **Work completed at:** Pending
-- **Assurance started at:** Pending
-- **Assurance completed at:** Pending
-- **Ready for validation at:** Pending
-- **Actual implementation:** Pending
+- **Work completed at:** 2026-09-08T15:31:36Z, excluding Human-run VHS output.
+- **Assurance started at:** Approximately 2026-09-08T15:29:00Z after focused package
+  and documentation checks.
+- **Assurance completed at:** 2026-09-08T15:31:36Z
+- **Ready for validation at:** Pending Step 3.3 history verification.
+- **Actual implementation:** 18m42s across Steps 3.1–3.3 including deterministic checks;
+  Human VHS execution and wait are excluded.
 - **Observed Human wait:** Pending
 - **Estimate outcome:** Pending
 - **Final history target:** `feat(distribution): finish the private cockpit package`
@@ -198,8 +200,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     artifact exposed 137 entries.
   - Paths: `package.json`, `scripts/check-package.mjs`, `test/check-package.test.ts`, and
     this Plan/ledger.
-  - History: Expected `step(package): constrain private artifact contents`; external
-    receipt pending independent verification.
+  - History: `85bd5a4` — `step(package): constrain private artifact contents`; external
+    receipt independently verifies the exact five-path clean boundary.
 - [x] Step 3.2 Prove the extracted artifact loads offline and preserve fixture-backed
       coverage for Git, OpenSpec, Devbox, quota, and missing optional capabilities.
   - Started: 2026-09-08T15:17:52Z
@@ -213,20 +215,25 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     persistent clean-room output is created.
   - Paths: `scripts/check-package.mjs`, `test/check-package.test.ts`, `package.json`, and
     this ledger.
-  - History: Expected `step(package): prove offline artifact loading`; external receipt
-    pending independent verification.
-- [ ] Step 3.3 Replace the handoff-oriented root README with the recommended workflow,
+  - History: `982d898` — `step(package): prove offline artifact loading`; external
+    receipt independently verifies the exact four-path clean boundary.
+- [x] Step 3.3 Replace the handoff-oriented root README with the recommended workflow,
       installation/rollback, `/vimux-health`, limitations, privacy, and a deterministic
       VHS tape that Human can run without provider traffic.
-  - Estimate: 20–30 minutes; uncertainty is robust nested-Neovim timing across Human's
-    private bridge while VHS itself is unavailable in the sandbox.
-  - Timing: Pending
-  - Check: Markdown/format checks, link checks, static tape assertions, package allowlist,
-    complete repository checks, and exact Human run instructions PASS.
-  - Paths: `README.md`, bounded supporting docs, `demo/pi-vimux-starship.tape`, this
-    ledger, and—only after Human review—the sanctioned
-    `docs/assets/pi-vimux-starship.gif` final-boundary artifact.
-  - History: Pending; expected `step(docs): present the Neovim cockpit workflow`.
+  - Started: 2026-09-08T15:22:26Z
+  - Estimate: 20–30 minutes; uncertainty remains the nested-Neovim timing across Human's
+    private bridge because VHS is unavailable in the sandbox.
+  - Timing: 2026-09-08T15:22:26Z–2026-09-08T15:31:36Z (9m10s including focused and full
+    deterministic checks; Human VHS execution excluded).
+  - Check: GREEN — README/VHS static safety assertions, 68-file package allowlist and
+    extracted offline load, formatting, lint, strict TypeScript, integrity, composition,
+    OpenSpec, and all 401 repository tests PASS. The reviewed GIF remains the declared
+    Human-generated final-boundary artifact.
+  - Paths: `README.md`, `docs/development.md`, `demo/pi-vimux-starship.tape`,
+    `scripts/check-package.mjs`, `test/check-package.test.ts`, and this ledger; after
+    Human review only, the sanctioned `docs/assets/pi-vimux-starship.gif`.
+  - History: Expected `step(docs): present the Neovim cockpit workflow`; external receipt
+    pending independent verification.
 
 ### Human validation — Task 3
 

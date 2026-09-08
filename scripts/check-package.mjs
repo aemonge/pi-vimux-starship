@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +11,7 @@ const execFileAsync = promisify(execFile);
 
 export const REQUIRED_FILES = [
   'README.md',
+  'demo/pi-vimux-starship.tape',
   'docs/architecture.md',
   'docs/development.md',
   'licenses/pi-fancy-footer-LICENSE',
@@ -50,6 +51,35 @@ export function validatePackedFiles(paths) {
   if (forbidden.length > 0) errors.push(`forbidden=${forbidden.join(',')}`);
   if (unique.length > 80) errors.push(`entry-count=${unique.length}>80`);
   return { files: unique, errors };
+}
+
+export function validateDemoSources(readme, tape) {
+  const errors = [];
+  for (const required of [
+    'docs/assets/pi-vimux-starship.gif',
+    'nvim +terminal',
+    '/vimux-health',
+    '## Installation',
+    '### Rollback',
+    '## Reproducible VHS demo',
+  ]) {
+    if (!readme.includes(required)) errors.push(`README missing ${required}`);
+  }
+  for (const required of [
+    'Output docs/assets/pi-vimux-starship.gif',
+    '--offline',
+    '--no-session',
+    '--no-extensions',
+    '--no-context-files',
+    '/vimux-health',
+    'Type ":x"',
+  ]) {
+    if (!tape.includes(required)) errors.push(`tape missing ${required}`);
+  }
+  for (const forbidden of [/--api-key/u, /(?:^|\\s)--provider(?:\\s|$)/u, /token=/iu]) {
+    if (forbidden.test(tape)) errors.push(`tape contains forbidden ${forbidden}`);
+  }
+  return errors;
 }
 
 export function packedPathsFromNpmJson(value) {
@@ -163,6 +193,15 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     throw new Error(`packed artifact check failed: ${result.errors.join('; ')}`);
   }
   console.log(`packed artifact: PASS (${result.files.length} files)`);
+  const [readme, tape] = await Promise.all([
+    readFile(resolve('README.md'), 'utf8'),
+    readFile(resolve('demo', 'pi-vimux-starship.tape'), 'utf8'),
+  ]);
+  const demoErrors = validateDemoSources(readme, tape);
+  if (demoErrors.length > 0) {
+    throw new Error(`README/VHS check failed: ${demoErrors.join('; ')}`);
+  }
+  console.log('README/VHS source: PASS');
   if (process.argv.includes('--load')) {
     const extracted = await inspectExtractedArtifact();
     console.log(
