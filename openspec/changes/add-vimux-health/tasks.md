@@ -33,9 +33,9 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   imported component.
 - **Implementation confirmed at:** 2026-09-08T14:57:33Z
 - **Implementation started at:** 2026-09-08T14:57:57Z
-- **Work completed at:** Pending
-- **Assurance started at:** Pending
-- **Assurance completed at:** Pending
+- **Work completed at:** 2026-09-08T15:05:20Z
+- **Assurance started at:** 2026-09-08T15:05:21Z
+- **Assurance completed at:** 2026-09-08T15:07:07Z
 - **Ready for validation at:** Pending
 - **Actual implementation:** Pending
 - **Observed Human wait:** Pending
@@ -56,16 +56,21 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `test/health.test.ts`, `test/local-load-probe.test.ts`, and this Plan/ledger.
   - History: Expected `step(health): specify cockpit readiness report`; external receipt
     pending independent verification.
-- [ ] Step 1.2 Implement bounded local probes, deterministic formatting, and root command
+- [x] Step 1.2 Implement bounded local probes, deterministic formatting, and root command
       registration, then run complete assurance.
-  - Estimate: 17–30 minutes; uncertainty is safe executable lookup for the actual
+  - Started: 2026-09-08T15:01:44Z
+  - Estimate: 17–30 minutes; uncertainty was safe executable lookup for the actual
     external-editor setting without parsing or running arbitrary shell text.
-  - Timing: Pending
-  - Check: Focused and complete checks GREEN; offline package loading reports one added
-    command with no duplicate registrations or external effects.
-  - Paths: `src/health.ts`, `src/index.ts`, focused root tests, this ledger, and any
+  - Timing: 3m36s implementation plus 1m46s deterministic assurance; below estimate
+    because injected boolean/local-file evidence avoided process execution and UI work.
+  - Check: GREEN — exact lint/format, strict TypeScript, 9 focused tests, full 396-test
+    repository gate, 92-file current and 87-file import integrity, one-extension/
+    seven-command/two-tool composition, six OpenSpec changes, and credential-free offline
+    Pi load with 213 rows all PASS.
+  - Paths: `src/health.ts`, `src/index.ts`, `test/health.test.ts`, this Plan/ledger, and
     formatter-owned changes to those exact paths.
-  - History: Pending; expected `step(health): report cockpit readiness`.
+  - History: Expected `step(health): report cockpit readiness`; external receipt pending
+    independent verification.
 
 ### Human validation
 

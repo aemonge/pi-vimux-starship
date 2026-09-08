@@ -5,6 +5,7 @@ import galacticaStatus from '../packages/galactica-status/index.js';
 import fancyFooter from '../packages/pi-fancy-footer-full-palette/src/index.js';
 import piVim from '../packages/pi-vim-top-border/index.js';
 import { createCockpitDeckSurface } from './deck-surface.js';
+import { registerVimuxHealth } from './health.js';
 
 export const COCKPIT_SURFACES = {
   footer: 'telemetry',
@@ -28,4 +29,5 @@ export default function piVimuxStarship(pi: ExtensionAPI): void {
     deckSurface,
   });
   piVim(pi, { surface: COCKPIT_SURFACES.vim, deckSurface });
+  registerVimuxHealth(pi);
 }
