@@ -104,13 +104,13 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Work completed at:** Approximately 2026-09-08T09:03:00Z; exact formatter/check transition was not separately timestamped.
 - **Assurance started at:** Approximately 2026-09-08T09:03:00Z; resumed after Human restored the locked dependency environment at 2026-09-08T11:03:40Z.
 - **Assurance completed at:** 2026-09-08T11:05:21Z
-- **Ready for validation at:** Pending independent Step-history verification.
+- **Ready for validation at:** 2026-09-08T11:09:07Z after deterministic independent Step-history verification.
 - **Actual implementation:** Approximately 2 minutes; Human wait and the dependency-environment delay are excluded.
-- **Observed Human wait:** Pending final validation; the separate dependency-restoration delay ran approximately 1h59m.
+- **Observed Human wait:** 3m13s from ready-for-validation at 2026-09-08T11:09:07Z to Human response at 2026-09-08T11:12:20Z; the separate dependency-restoration delay ran approximately 1h59m.
 - **Estimate outcome:** Faster than the 5–12 minute range because both removed files were isolated; assurance then incurred a separate missing-dependency delay.
 - **Final history target:** `chore(config): retire superseded configuration task`
 - **Current non-Git boundary:** Not applicable; the repository uses Git.
-- **Human validation:** Pending
+- **Human validation:** VALID — original response `VALID`, canonical outcome `VALID`, recorded at 2026-09-08T11:12:20Z.
 
 - [x] Historical Step 2.1 defined and tested the `piVimuxStarship` configuration
       boundary; its implementation is preserved in history and superseded by Step 2.2.
@@ -141,9 +141,9 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 
 ### Human validation — Task 2 cleanup
 
-- [ ] Human confirms the package still loads the accepted cockpit and that no public
-      namespace, preset, or theme was introduced; preserve the original response,
-      canonical outcome, and UTC.
+- [x] Human confirmed the package still loads the accepted cockpit and that no public
+      namespace, preset, or theme was introduced — original response `VALID`, canonical
+      outcome `VALID`, recorded at 2026-09-08T11:12:20Z.
 
 ## Task 3 — Prove the private distributable package
 
