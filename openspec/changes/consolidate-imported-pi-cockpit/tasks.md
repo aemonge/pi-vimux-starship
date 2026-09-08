@@ -73,10 +73,10 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 
 - [x] Human loaded only the local package and confirmed parity; original response `VALID`, canonical outcome `VALID`, recorded at 2026-09-03T14:17:57Z.
 
-## Task 2 — Provide one configuration namespace and reference preset
+## Task 2 — Retire the superseded configuration expansion
 
-- **Value:** New users configure one package namespace while current Galactica settings
-  continue to reproduce the accepted cockpit during migration.
+- **Value:** The package keeps its accepted cockpit behavior without shipping an unused
+  package namespace, a duplicate configuration migration, or out-of-scope theming.
 - **Method source:** predefined
 - **Method name:** Happy-path
 - **Method contract:** Preserve the runnable imported baseline while delivering the
@@ -87,58 +87,62 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Execution reason:** The imported modules already communicate through bounded event
   protocols; direct, sequential consolidation keeps compatibility and presentation
   changes reviewable without parallel edits to tightly coupled startup order.
-- **Execution outline:** Establish a reproducible baseline, compose and namespace the
-  modules, consolidate configuration with compatibility fallbacks, then prove the packed
-  artifact in clean capability states.
-- **Estimate basis:** No comparable accepted extraction exists; three existing
-  configuration surfaces must be preserved or migrated.
-- **Estimated implementation:** 40–75 minutes; Human wait excluded.
-- **Estimate confidence:** Low because the Fancy Footer editor currently owns a separate
-  strict file format.
+- **Execution outline:** Establish a reproducible baseline, compose the modules behind
+  one package entrypoint, retire superseded expansion that adds no concrete value, then
+  prove the packed artifact in clean capability states.
+- **Estimate basis:** Step 2.1 took 55 seconds; current inspection proves its two source
+  paths are referenced only by their isolated tests and no runtime factory imports them.
+- **Estimated implementation:** 5–12 minutes; Human wait excluded.
+- **Estimate confidence:** High because the removal boundary is isolated and the full
+  repository gate already covers package composition.
 - **Human-wait estimate:** Separate and unbounded.
-- **Refinement trigger:** Split preset delivery from legacy compatibility if either
-  becomes independently Human-validatable or total work approaches 90 minutes.
-- **Implementation confirmed at:** 2026-09-03T14:19:54Z (`OK`; exact Task 2 brief confirmed earlier in this conversation and recorded when resumed after Task 1 validation).
-- **Implementation started at:** 2026-09-03T14:19:54Z
-- **Work completed at:** Pending
-- **Assurance started at:** Pending
-- **Assurance completed at:** Pending
-- **Ready for validation at:** Pending
-- **Actual implementation:** Pending
-- **Observed Human wait:** Pending
-- **Estimate outcome:** Pending
-- **Final history target:** `feat(config): add the vimux starship namespace and preset`
-- **Current non-Git boundary:** Not applicable after Human moves the scaffold and
-  initializes Git.
+- **Refinement trigger:** Stop and rebrief if removal exposes a runtime dependency or
+  requires any component, Pi setting, dependency, or visible behavior change.
+- **Superseded implementation confirmation:** 2026-09-03T14:19:54Z (`OK`; applied to the abandoned namespace-and-preset scope).
+- **Cleanup implementation confirmed at:** 2026-09-08T09:00:10Z (`Yes, you can implement the cleanup`).
+- **Cleanup implementation started at:** 2026-09-08T09:00:51Z
+- **Work completed at:** Approximately 2026-09-08T09:03:00Z; exact formatter/check transition was not separately timestamped.
+- **Assurance started at:** Approximately 2026-09-08T09:03:00Z; resumed after Human restored the locked dependency environment at 2026-09-08T11:03:40Z.
+- **Assurance completed at:** 2026-09-08T11:05:21Z
+- **Ready for validation at:** Pending independent Step-history verification.
+- **Actual implementation:** Approximately 2 minutes; Human wait and the dependency-environment delay are excluded.
+- **Observed Human wait:** Pending final validation; the separate dependency-restoration delay ran approximately 1h59m.
+- **Estimate outcome:** Faster than the 5–12 minute range because both removed files were isolated; assurance then incurred a separate missing-dependency delay.
+- **Final history target:** `chore(config): retire superseded configuration task`
+- **Current non-Git boundary:** Not applicable; the repository uses Git.
 - **Human validation:** Pending
 
-- [x] Step 2.1 Define and validate the `piVimuxStarship` configuration boundary and
-      security-sensitive setting precedence.
+- [x] Historical Step 2.1 defined and tested the `piVimuxStarship` configuration
+      boundary; its implementation is preserved in history and superseded by Step 2.2.
   - Estimate: 10–20 minutes; uncertainty was preserving project-versus-global trust
     boundaries.
   - Timing: 2026-09-03T14:21:36Z–2026-09-03T14:22:31Z (55s implementation and focused checks).
-  - Check: PASS — 4 focused namespace tests prove the exact `piVimuxStarship` key, malformed-container rejection, deep nested merge with array replacement, and explicit project-layer exclusion for command-capable status configuration. Root formatting, lint, and strict TypeScript checks pass; all 11 tooling/composition tests pass.
+  - Check: PASS at the historical boundary — 4 isolated namespace tests passed, but
+    later inspection confirmed no runtime factory ever consumed the helper.
   - Paths: `src/config.ts`, `test/config.test.ts`, and this Task ledger.
-  - History: Expected `step(config): define the package namespace`.
-- [ ] Step 2.2 Ship the Ramona Gruvbox preset, semantic defaults, Unicode fallbacks, and
-      deterministic module configuration.
-  - Estimate: 15–30 minutes; uncertainty is exact parity across three current config
-    sources.
-  - Timing: Pending
-  - Check: Pending
-  - History: Pending
-- [ ] Step 2.3 Add legacy compatibility tests and migration guidance without silently
-      rewriting user settings.
-  - Estimate: 15–25 minutes; uncertainty is coexistence with the existing Fancy Footer
-    editor.
-  - Timing: Pending
-  - Check: Pending
-  - History: Pending
+  - History: `50f7436` — `step(config): define the package namespace`.
+- [x] Step 2.2 Retire the unused namespace scaffold and stale configuration promise
+      without changing runtime behavior.
+  - Estimate: 5–12 minutes; uncertainty is limited to schema-aware OpenSpec validation
+    after replacing the abandoned acceptance language.
+  - Started: 2026-09-08T09:00:51Z
+  - Timing: 2026-09-08T09:00:51Z–approximately 2026-09-08T09:03:00Z (about 2 minutes implementation; assurance blocked separately).
+  - Check: PASS — after Human restored the lockfile environment, exact-path and full
+    formatting, Biome/ESLint, strict TypeScript, current 92-file and immutable 87-file
+    integrity, 10 tooling tests, 109 Status tests, 86 Header tests, 159 Footer tests, 17
+    Vim tests, one-extension/six-command/two-tool composition, and six schema-aware
+    OpenSpec changes pass. Credential-free offline Pi loading succeeds with 211 rows.
+    The earlier environment-only `tsx` failure and uncached offline-install attempt are
+    preserved above; no product test failed.
+  - Paths: parent Idea, this Plan/Task, `src/config.ts`, and `test/config.test.ts`;
+    `baseline/source.sha256` remains unchanged because it does not track these root
+    scaffold paths.
+  - History: Expected `chore(config): retire unused namespace scaffold`; commit and independent verification pending.
 
-### Human validation — Task 2
+### Human validation — Task 2 cleanup
 
-- [ ] Human selects the reference preset, checks wide and narrow rendering, and confirms
-      legacy configuration still behaves as documented; preserve the original response,
+- [ ] Human confirms the package still loads the accepted cockpit and that no public
+      namespace, preset, or theme was introduced; preserve the original response,
       canonical outcome, and UTC.
 
 ## Task 3 — Prove the private distributable package

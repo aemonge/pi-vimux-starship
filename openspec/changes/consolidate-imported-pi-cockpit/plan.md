@@ -11,9 +11,9 @@
 - **Execution reason:** The imported modules already communicate through bounded event
   protocols; direct, sequential consolidation keeps compatibility and presentation
   changes reviewable without parallel edits to tightly coupled startup order.
-- **Execution outline:** Establish a reproducible baseline, compose and namespace the
-  modules, consolidate configuration with compatibility fallbacks, then prove the packed
-  artifact in clean capability states.
+- **Execution outline:** Establish a reproducible baseline, compose the modules behind
+  one package entrypoint, retire superseded expansion that adds no concrete value, then
+  prove the packed artifact in clean capability states.
 - **Estimate basis:** No comparable Human-validated package extraction exists; the
   imported baseline contains 35,920 authored lines and four existing test suites.
 - **Estimated implementation:** 120–210 minutes across separately validated Tasks; Human
@@ -41,14 +41,14 @@ Human can develop, install, and validate the existing Pi cockpit from one indepe
 
 ## Acceptance criteria
 
-- [ ] One package source loads the lifecycle header, responsive footer, prompt rails,
-      modal editor, and external-editor handoff in deterministic order.
-- [ ] The Ramona Gruvbox preset reproduces the imported appearance while semantic
-      defaults and Unicode fallbacks remain usable.
+- [ ] One package source loads the Human-validated rich lifecycle and telemetry deck,
+      borderless modal editor, and external-editor handoff in deterministic order.
+- [ ] Pi's active theme remains authoritative; the package introduces neither a theme
+      nor an unused package-wide configuration namespace.
 - [ ] Git, OpenSpec, Taskflow, Devbox, provider quota, Nerd Font, Neovim, and tmux
       capabilities remain optional and fail soft when absent.
-- [ ] Legacy configuration inputs have documented compatibility behavior and one stable
-      `pi-vimux-starship` namespace is available for new configuration.
+- [ ] Existing component configuration behavior remains intact until a concrete
+      package-wide configuration use case is separately accepted.
 - [ ] Upstream licenses and local-change provenance ship in the packed artifact.
 - [ ] Formatting, lint, type checks, component tests, composition tests, responsive
       rendering, and package-load checks pass from one reproducible development
@@ -61,9 +61,9 @@ Human can develop, install, and validate the existing Pi cockpit from one indepe
 ## Scope and boundaries
 
 Included paths are the standalone repository's root package metadata, `packages/`,
-future consolidated `src/`, tests, documentation, licenses, and this Plan's progress
-records. The imported files are the immutable comparison baseline until a Task
-explicitly replaces their role.
+bounded composition code in `src/`, tests, documentation, licenses, and this Plan's
+progress records. The immutable imported-source manifest preserves the original
+comparison boundary while the current-source manifest records intentional evolution.
 
 Excluded are Insert-to-Neovim routing, transcript-navigation features, npm publication,
 broad platform guarantees, redesign of accepted presentation, mutation of Galactica
