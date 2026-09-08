@@ -16,7 +16,7 @@ Enter
 Sleep 2s
 
 # Launch only this package, offline and without a session.
-Type "pi --offline --no-session --no-extensions --no-context-files --tui-mode regular -e \"$PWD\""
+Type "pi --offline --no-session --no-extensions --no-context-files --tui-mode regular -e ."
 Enter
 Sleep 4s
 

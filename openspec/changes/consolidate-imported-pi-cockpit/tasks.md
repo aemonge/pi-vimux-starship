@@ -187,7 +187,9 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Estimate outcome:** Pending
 - **Final history target:** `feat(distribution): finish the private cockpit package`
 - **Current non-Git boundary:** Not applicable; the repository uses Git.
-- **Human validation:** Pending
+- **Human validation:** NOT VALID on first VHS attempt — original response `has error
+  (now I can't cpy them)`, canonical outcome `NOT VALID`, recorded from captured parser
+  evidence at 2026-09-08T15:40:57Z; repaired rerun pending.
 
 - [x] Step 3.1 Specify and enforce a minimal packed-artifact allowlist for runtime source,
       user documentation, licenses, package metadata, and the intentional demo assets.
@@ -232,7 +234,23 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `README.md`, `docs/development.md`, `demo/pi-vimux-starship.tape`,
     `scripts/check-package.mjs`, `test/check-package.test.ts`, and this ledger; after
     Human review only, the sanctioned `docs/assets/pi-vimux-starship.gif`.
-  - History: Expected `step(docs): present the Neovim cockpit workflow`; external receipt
+  - History: `59e9c68` — `step(docs): present the Neovim cockpit workflow`; external
+    receipt independently verifies the exact six-path clean boundary.
+- [x] Step 3.4 Repair the VHS launch command after Human validation exposed a parser
+      rejection before recording.
+  - Started: 2026-09-08T15:40:57Z
+  - Symptom: VHS reports four parser errors at `$PWD` and records no GIF.
+  - Cause: The `Type` string used parser-sensitive dollar interpolation and escaped
+    quotes instead of the tape's already-declared repository-root context.
+  - Estimate: 2–5 minutes; uncertainty was limited to parser availability because VHS
+    is outside the sandbox.
+  - Timing: 2026-09-08T15:40:57Z–2026-09-08T15:41:44Z (47s including focused checks).
+  - Check: GREEN — the tape contains the variable-free `-e .` package argument and no
+    `$PWD`; the 68-file package and extracted offline Pi load, README/VHS assertions,
+    strict OpenSpec validation, and diff check PASS. Human VHS rerun remains pending.
+  - Paths: `demo/pi-vimux-starship.tape` and this ledger; captured `vhs-error.log`
+    remains untracked and excluded from history.
+  - History: Expected `fix(demo): avoid VHS parser interpolation`; external receipt
     pending independent verification.
 
 ### Human validation — Task 3
@@ -240,5 +258,7 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - [ ] Human installs the package from one documented source, runs the authored VHS tape
       in the real bridge, reviews the sanitized GIF, checks `/vimux-health` and the
       recommended workflow, then reports a clear outcome; preserve original response,
-      canonical outcome, and UTC. The reviewed GIF enters history only at this final
-      VALID boundary.
+      canonical outcome, and UTC. First attempt was `NOT VALID` at
+      2026-09-08T15:40:57Z because VHS rejected `$PWD` before recording; Step 3.4 repairs
+      that parser mismatch. The reviewed GIF enters history only at the final `VALID`
+      boundary.
