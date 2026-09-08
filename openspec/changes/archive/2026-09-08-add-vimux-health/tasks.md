@@ -36,13 +36,17 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Work completed at:** 2026-09-08T15:05:20Z
 - **Assurance started at:** 2026-09-08T15:05:21Z
 - **Assurance completed at:** 2026-09-08T15:07:07Z
-- **Ready for validation at:** Pending
-- **Actual implementation:** Pending
-- **Observed Human wait:** Pending
-- **Estimate outcome:** Pending
+- **Ready for validation at:** 2026-09-08T15:08:40Z
+- **Actual implementation:** 5m18s Step implementation plus 1m46s final deterministic
+  assurance; Human wait excluded.
+- **Observed Human wait:** 2m15s from ready-for-validation to Human response; excluded
+  from implementation.
+- **Estimate outcome:** Below the 25–45 minute range because public command provenance and
+  injected local evidence required no component redesign; retain low-to-medium confidence
+  until the live Neovim report is validated.
 - **Final history target:** `feat(health): diagnose cockpit readiness`
 - **Current non-Git boundary:** Not applicable; the repository uses Git.
-- **Human validation:** Pending
+- **Human validation:** VALID at 2026-09-08T15:10:55Z; original response: `VALID`.
 
 - [x] Step 1.1 Specify report classification, redaction, optional absence, duplicate
       command detection, and root registration with test-only RED contracts.
@@ -74,7 +78,10 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 
 ### Human validation
 
-- [ ] Human runs `/vimux-health` and `:vimux-health` in the real non-fullscreen
+- [x] Human runs `/vimux-health` and `:vimux-health` in the real non-fullscreen
       `nvim +terminal` workflow, confirms useful accurate classifications and no sensitive
       disclosure, and reports a clear outcome with original response, canonical result,
       and UTC preserved.
+  - Evidence 2026-09-08T15:10:55Z — original response: `VALID`; canonical outcome: VALID.
+  - Estimate refinement: Similar root command/report work can begin at 15–30 minutes
+    when it remains boolean-only, fixture-driven, and free of subprocess execution.
