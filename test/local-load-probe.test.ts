@@ -12,6 +12,7 @@ const EXPECTED_COMMANDS = [
   'galactica-status-debug',
   'galactica-status-refresh',
   'openspec-focus',
+  'vimux-health',
   'work',
 ];
 const EXPECTED_TOOLS = ['openspec_focus', 'work_focus'];
