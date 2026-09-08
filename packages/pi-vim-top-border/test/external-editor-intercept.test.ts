@@ -1,9 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { ModalEditor } from '../index.js';
+import { ModalEditor, type PiVimModeRail } from '../index.js';
+import { MODE_ICONS } from '../mode-label.js';
+import type { PromptExternalEditorResult } from '../prompt-external-editor.js';
 
-function makeEditor(hostSynced = false, externalEditorOnly = false) {
+type DeckRenderer = (width: number, modeRail: PiVimModeRail) => string[];
+
+function makeEditor(
+  hostSynced = false,
+  externalEditorOnly = false,
+  deckRenderer: DeckRenderer | null = null,
+) {
   const tui = { requestRender() {} };
   const theme = { borderColor: (text: string) => text, selectList: {} };
   const keybindings = {
@@ -22,6 +30,7 @@ function makeEditor(hostSynced = false, externalEditorOnly = false) {
     theme as never,
     keybindings as never,
     {
+      labelColorizers: modeColors,
       borderColorizers: modeColors,
       borderSync: hostSynced
         ? { insert: 'host', normal: 'host', visual: 'host', ex: 'host' }
@@ -30,6 +39,7 @@ function makeEditor(hostSynced = false, externalEditorOnly = false) {
         ? { insert: 'mode', normal: 'mode', visual: 'mode', ex: 'mode' }
         : undefined,
       externalEditorOnly,
+      deckRenderer,
     } as never,
   );
 }
@@ -39,6 +49,7 @@ test('intercepts Pi external-editor input before the builtin handler', () => {
   let calls = 0;
   editor.setExternalEditorFn(() => {
     calls += 1;
+    return undefined;
   });
 
   editor.handleInput('<external-editor>');
@@ -77,6 +88,7 @@ test('external-editor-only defers every supported Insert transition until its co
         cursor: editor.getCursor().col,
         mode: editor.getMode(),
       });
+      return undefined;
     });
 
     for (const key of fixture.keys) editor.handleInput(key);
@@ -95,6 +107,7 @@ test('external-editor-only keeps Ctrl-E direct and returned text does not relaun
   editor.setExternalEditorFn(() => {
     launches += 1;
     editor.setText('returned draft');
+    return undefined;
   });
 
   editor.handleInput('<external-editor>');
@@ -104,7 +117,70 @@ test('external-editor-only keeps Ctrl-E direct and returned text does not relaun
   assert.equal(editor.getMode(), 'normal');
 });
 
-test('external-editor-only submits the hidden returned draft only on Enter', () => {
+test('external-editor-only shows Insert only while either handoff route is active', async () => {
+  let settle: (result: PromptExternalEditorResult) => void = () => {};
+  const result = new Promise<PromptExternalEditorResult>((resolve) => {
+    settle = resolve;
+  });
+  const editor = makeEditor(false, true, (_width, modeRail) => [modeRail.styled]);
+  editor.setExternalEditorFn(() => result);
+
+  editor.handleInput('i');
+  assert.deepEqual(editor.render(40), [`[insert]${MODE_ICONS.insert}`]);
+  assert.equal(editor.getMode(), 'normal');
+
+  editor.handleInput('<external-editor>');
+  settle('unchanged');
+  await new Promise<void>((resolve) => setImmediate(resolve));
+
+  assert.deepEqual(editor.render(40), [`[normal]${MODE_ICONS.normal}`]);
+  assert.equal(editor.getMode(), 'normal');
+});
+
+test('external-editor-only auto-submits a saved draft exactly once through Enter', async () => {
+  let settle: (result: PromptExternalEditorResult) => void = () => {};
+  const result = new Promise<PromptExternalEditorResult>((resolve) => {
+    settle = resolve;
+  });
+  const editor = makeEditor(false, true);
+  const submissions: string[] = [];
+  let launches = 0;
+  editor.onSubmit = (text) => submissions.push(text);
+  editor.setText('saved draft');
+  editor.setExternalEditorFn(() => {
+    launches += 1;
+    return result;
+  });
+
+  editor.handleInput('i');
+  editor.handleInput('<external-editor>');
+  assert.deepEqual(submissions, []);
+  assert.equal(launches, 1);
+
+  settle('saved');
+  await new Promise<void>((resolve) => setImmediate(resolve));
+
+  assert.deepEqual(submissions, ['saved draft']);
+  assert.equal(editor.getText(), '');
+  assert.equal(editor.getMode(), 'normal');
+});
+
+test('external-editor-only does not submit an unwritten draft', async () => {
+  const editor = makeEditor(false, true);
+  const submissions: string[] = [];
+  editor.onSubmit = (text) => submissions.push(text);
+  editor.setText('unchanged draft');
+  editor.setExternalEditorFn(async () => 'unchanged' as const);
+
+  editor.handleInput('i');
+  await new Promise<void>((resolve) => setImmediate(resolve));
+
+  assert.deepEqual(submissions, []);
+  assert.equal(editor.getText(), 'unchanged draft');
+  assert.equal(editor.getMode(), 'normal');
+});
+
+test('external-editor-only still submits a hidden draft on explicit Enter', () => {
   const editor = makeEditor(false, true);
   const submissions: string[] = [];
   editor.onSubmit = (text) => submissions.push(text);

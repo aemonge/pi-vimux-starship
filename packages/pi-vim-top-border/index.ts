@@ -59,7 +59,10 @@ import {
   reverseCharMotion,
   type WordMotionClass,
 } from './motions.js';
-import { PromptExternalEditor } from './prompt-external-editor.js';
+import {
+  PromptExternalEditor,
+  type PromptExternalEditorResult,
+} from './prompt-external-editor.js';
 import {
   collectSessionCost,
   FANCY_FOOTER_WIDGET_CHANNEL,
@@ -328,6 +331,7 @@ export class ModalEditor extends CustomEditor {
     | ((width: number, modeRail: PiVimModeRail) => string[])
     | null;
   private pendingExternalEditorOpen = false;
+  private externalEditorActive = false;
 
   private unnamedRegister: string = '';
   private preferRegisterForPut = false;
@@ -340,7 +344,9 @@ export class ModalEditor extends CustomEditor {
   private modeChangeFn: (mode: Mode, prevMode: Mode) => void = () => {};
   private exCommandSettings: ExCommandSettings = DEFAULT_EX_COMMAND_SETTINGS;
   private commandNamesFn: () => ReadonlySet<string> = () => EX_BUILTIN_COMMAND_NAMES;
-  private externalEditorFn: (() => void) | null = null;
+  private externalEditorFn:
+    | (() => Promise<PromptExternalEditorResult> | undefined)
+    | null = null;
   // Pi has no public command-dispatch API. The editor's own submit path is the
   // one mechanism that reaches every command kind (builtin, extension, skill,
   // prompt), so dispatching `:name` is literally the user typing `/name` and
@@ -407,7 +413,9 @@ export class ModalEditor extends CustomEditor {
   setNotifyFn(fn: (message: string) => void): void {
     this.notifyFn = fn;
   }
-  setExternalEditorFn(fn: (() => void) | null): void {
+  setExternalEditorFn(
+    fn: (() => Promise<PromptExternalEditorResult> | undefined) | null,
+  ): void {
     this.externalEditorFn = fn;
   }
   setBorderOverride(colorizer: ((text: string) => string) | null): void {
@@ -442,6 +450,7 @@ export class ModalEditor extends CustomEditor {
   }
 
   private getActiveMode(): ModeColorKey {
+    if (this.externalEditorActive) return 'insert';
     if (this.pendingExCommand !== null) return 'ex';
     if (this.mode === 'insert') return 'insert';
     if (isVisualMode(this.mode)) return 'visual';
@@ -535,7 +544,39 @@ export class ModalEditor extends CustomEditor {
   private flushPendingExternalEditorOpen(): void {
     if (!this.pendingExternalEditorOpen) return;
     this.pendingExternalEditorOpen = false;
-    this.externalEditorFn?.();
+    this.openExternalEditor();
+  }
+
+  private requestEditorRender(): void {
+    const editor = this as unknown as ModalEditorInternals;
+    editor.tui?.requestRender?.();
+  }
+
+  private finishExternalEditor(result?: PromptExternalEditorResult): void {
+    this.externalEditorActive = false;
+    this.requestEditorRender();
+    if (this.externalEditorOnly && result === 'saved') {
+      super.handleInput('\r');
+    }
+  }
+
+  private openExternalEditor(): void {
+    if (this.externalEditorActive || !this.externalEditorFn) return;
+    this.externalEditorActive = true;
+    this.requestEditorRender();
+
+    let result: Promise<PromptExternalEditorResult> | undefined;
+    try {
+      result = this.externalEditorFn();
+    } catch {
+      this.finishExternalEditor('failed');
+      return;
+    }
+
+    void Promise.resolve(result).then(
+      (outcome) => this.finishExternalEditor(outcome),
+      () => this.finishExternalEditor('failed'),
+    );
   }
 
   override setText(text: string): void {
@@ -1302,7 +1343,7 @@ export class ModalEditor extends CustomEditor {
       this.externalEditorFn &&
       this.appKeybindings.matches(data, 'app.editor.external')
     ) {
-      this.externalEditorFn();
+      this.openExternalEditor();
       return;
     }
 
@@ -4061,10 +4102,7 @@ export class ModalEditor extends CustomEditor {
   }
 
   private getModeIcon(): string {
-    if (this.mode === 'insert') return MODE_ICONS.insert;
-    if (this.pendingExCommand !== null) return MODE_ICONS.ex;
-    if (isVisualMode(this.mode)) return MODE_ICONS.visual;
-    return MODE_ICONS.normal;
+    return MODE_ICONS[this.getActiveMode()];
   }
 }
 

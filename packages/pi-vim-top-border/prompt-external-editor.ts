@@ -1,5 +1,13 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import {
+  chmod,
+  mkdtemp,
+  readFile,
+  rm,
+  stat,
+  utimes,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -9,6 +17,13 @@ export type PromptEditorSurface = {
   setBorderOverride(colorizer: ((text: string) => string) | null): void;
 };
 
+export type PromptExternalEditorResult =
+  | 'saved'
+  | 'unchanged'
+  | 'busy'
+  | 'inactive'
+  | 'failed';
+
 type PromptExternalEditorOptions = {
   agentDir: string;
   cwd: string;
@@ -17,6 +32,8 @@ type PromptExternalEditorOptions = {
   notifyError: (message: string) => void;
 };
 
+const WRITE_SENTINEL = new Date('2000-01-01T00:00:00.000Z');
+
 export class PromptExternalEditor {
   private opening = false;
   private active = true;
@@ -24,8 +41,9 @@ export class PromptExternalEditor {
 
   constructor(private readonly options: PromptExternalEditorOptions) {}
 
-  open(): Promise<void> {
-    if (this.opening || !this.active) return Promise.resolve();
+  open(): Promise<PromptExternalEditorResult> {
+    if (this.opening) return Promise.resolve('busy');
+    if (!this.active) return Promise.resolve('inactive');
     this.opening = true;
     return this.openPrompt();
   }
@@ -37,7 +55,7 @@ export class PromptExternalEditor {
     this.options.editor.setBorderOverride(null);
   }
 
-  private async openPrompt(): Promise<void> {
+  private async openPrompt(): Promise<PromptExternalEditorResult> {
     let directory: string | undefined;
     this.options.editor.setBorderOverride(this.options.mutedBorder);
 
@@ -56,14 +74,22 @@ export class PromptExternalEditor {
         encoding: 'utf8',
         mode: 0o600,
       });
+      await utimes(promptFile, WRITE_SENTINEL, WRITE_SENTINEL);
+      const baselineMtime = (await stat(promptFile)).mtimeMs;
 
       await this.runEditor(command, promptFile);
-      const edited = (await readFile(promptFile, 'utf8')).replace(/\n$/, '');
-      if (this.active) this.options.editor.setText(edited);
+      const [edited, editedStat] = await Promise.all([
+        readFile(promptFile, 'utf8'),
+        stat(promptFile),
+      ]);
+      if (!this.active) return 'inactive';
+
+      this.options.editor.setText(edited.replace(/\n$/, ''));
+      return editedStat.mtimeMs === baselineMtime ? 'unchanged' : 'saved';
     } catch (error) {
-      if (this.active) {
-        this.options.notifyError(`Neovim prompt editor: ${formatError(error)}`);
-      }
+      if (!this.active) return 'inactive';
+      this.options.notifyError(`Neovim prompt editor: ${formatError(error)}`);
+      return 'failed';
     } finally {
       this.child = null;
       this.opening = false;

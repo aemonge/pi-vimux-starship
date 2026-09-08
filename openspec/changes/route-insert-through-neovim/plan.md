@@ -27,12 +27,22 @@
   private internals, the existing handoff cannot be reused, or suppressing Insert breaks
   Normal/Visual command behavior.
 - **Implementation confirmed at:** 2026-09-08T11:47:03Z
+- **Repair confirmed at:** 2026-09-08T12:45:15Z
 - **Implementation started at:** 2026-09-08T11:47:40Z
+- **Repair started at:** 2026-09-08T12:45:15Z
 - **Work completed at:** 2026-09-08T12:16:33Z
+- **Repair work completed at:** 2026-09-08T12:53:47Z
 - **Assurance started at:** 2026-09-08T12:16:56Z
 - **Assurance completed at:** 2026-09-08T12:18:11Z
-- **Ready for validation at:** Pending Step 1.3 history verification
-- **Human validation:** Pending
+- **Repair assurance started at:** 2026-09-08T12:55:17Z
+- **Repair assurance completed at:** 2026-09-08T12:56:22Z
+- **Ready for revalidation at:** Pending Step 1.4 history verification
+- **Human validation:** CHANGE at 2026-09-08T12:30:59Z — hidden surface accepted;
+  active Neovim icon and automatic submission require refinement.
+- **Repair boundary:** Show Insert while either Insert routing or Ctrl-E owns an active
+  handoff; submit exactly once after an explicit temporary-file write and successful
+  editor exit. An unwritten exit, failure, inactive controller, or duplicate request
+  never submits. Outer-Neovim `startinsert` remains excluded.
 
 ## Value
 
@@ -49,55 +59,61 @@ external-editor workflow after its command mutation completes.
 - [ ] `i`, `a`, `A`, `I`, `o`, `O`, `s`, `S`, `C`, supported `c` motions and text
       objects, and Visual change/substitute commands request external editing only after
       their cursor/text mutation completes.
-- [ ] Redirected commands remain in Normal mode, one dispatch requests at most one
-      launch, and applying returned editor text does not recursively reopen Neovim.
-- [ ] Direct Ctrl-E uses the same existing `PromptExternalEditor` route and remains
-      available; saving updates the hidden draft and Enter submits it without automatic
-      submission.
+- [ ] Redirected command state remains Normal, one dispatch requests at most one launch,
+      and applying returned editor text does not recursively reopen Neovim.
+- [ ] Insert is shown while either Insert routing or direct Ctrl-E owns an active
+      handoff, then returns to Normal after exit or failure.
+- [ ] A successful exit after an explicit write, including a same-content write,
+      auto-submits the last saved bytes exactly once through Pi's ordinary Enter path;
+      an unwritten exit, failure, inactive controller, or duplicate request never sends.
 - [ ] Normal and Visual commands plus essential Pi application controls remain active
       against the hidden draft; previously unsupported Vim commands remain unsupported.
-- [ ] The live, already-styled Normal/Visual/EX mode icon appears once at the left edge
-      of the Header Deck bottom separator and no prompt rail remains.
-- [ ] Empty, unchanged, unavailable, and failed handoffs preserve bounded existing
-      behavior without changing Pi configuration or the Neovim bridge.
+- [ ] The live, already-styled Insert/Normal/Visual/EX mode icon appears once at the left
+      edge of the Header Deck bottom separator and no prompt rail remains.
+- [ ] Empty, unchanged, unavailable, and failed handoffs preserve bounded behavior
+      without changing Pi or Neovim configuration or the private bridge.
 - [ ] Deterministic package checks pass and Human validates representative commands in
       the non-fullscreen `nvim +terminal` workflow.
 
 ## Scope and boundaries
 
 Implementation is confined to the consolidated surface selection, Pi Vim editor and
-focused tests, the internal deck-surface contract, Header Deck rendering and tests,
-related documentation, OpenSpec artifacts, and the mutable source-integrity manifest.
-It adds no dependency or configuration setting.
+external-editor adapter with focused tests, the internal deck-surface contract, Header
+Deck rendering and tests, related documentation, OpenSpec artifacts, and the mutable
+source-integrity manifest. It adds no dependency or configuration setting.
 
 Regular non-fullscreen Pi can render the focused custom editor as zero rows. Pi's
 fullscreen layout reserves a core three-row editor slot, so blank fullscreen space is an
 explicit unsupported limitation rather than a reason to use private internals.
 
-The Plan excludes auto-submit, new Vim commands, Starship/Zsh or tmux changes, Neovim
-configuration or bridge changes, Pi keybindings or Pi core changes, clipboard-policy
-changes, network activity, publication, protected Pi configuration, external commands
-beyond the already configured handoff, and history rewriting.
+The Plan excludes new Vim commands, Starship/Zsh or tmux changes, outer-Neovim
+`startinsert`, Neovim configuration or bridge changes, Pi keybindings or Pi core changes,
+clipboard-policy changes, network activity, publication, protected Pi configuration,
+external commands beyond the already configured handoff, and history rewriting.
 
 ## Method and execution
 
 TDD records deterministic RED evidence before production behavior. Native direct
 execution keeps the cross-package mode/deck contract and deferred input ordering under
 one sequencer. The external-only surface queues a request at the centralized Insert
-transition seam and flushes it once after the current input dispatch. The same editor
-retains focus and hidden buffer state, while its render path returns only the Header
-Deck. A bounded, diagnosed in-scope mismatch may return to implementation; a material
-architecture or authority change stops for Human direction.
+transition seam and flushes it once after the current input dispatch. While the returned
+promise is active, the live rail resolves to Insert. The adapter distinguishes explicit
+writes with a known temporary-file modification-time sentinel and returns a bounded
+outcome; only `saved` reuses the editor's Enter path. The same editor retains focus and
+hidden buffer state, while its render path returns only the Header Deck. A bounded,
+diagnosed in-scope mismatch may return to implementation; a material architecture or
+authority change stops for Human direction.
 
 ## Verification
 
 Run focused RED/GREEN tests for zero-row rendering, initial Normal state, supported
 Insert-producing commands, command-completion ordering, deduplication, recursion
-prevention, Ctrl-E preservation, hidden-draft submission semantics, and ANSI-safe mode
-icon placement. Then run formatting, lint, TypeScript, all component and tooling tests,
-source integrity, OpenSpec validation, and the offline package composition probe. Human
-manually tries `i`, `a`, `A`, `o`, `cw`, Visual `c`, cancellation/unchanged return,
-Ctrl-E, and Enter submission in non-fullscreen Pi inside `nvim +terminal`.
+prevention, Ctrl-E preservation, explicit-write outcomes, exactly-once auto-submission,
+and ANSI-safe mode icon placement. Then run formatting, lint, TypeScript, all component
+and tooling tests, source integrity, OpenSpec validation, and the offline package
+composition probe. Human manually tries `i`, `a`, `A`, `o`, `cw`, Visual `c`, `:x`,
+`:wq`, `:q!`, unchanged `:x`, and Ctrl-E in non-fullscreen Pi inside
+`nvim +terminal`.
 
 **Final history target:** `feat(vim): use Neovim as prompt composer`
 

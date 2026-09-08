@@ -75,11 +75,18 @@ The existing `PromptExternalEditor` adapter remains the single handoff used by d
 Ctrl-E and automatic Insert-producing commands. It resolves the already configured
 external editor and owns the private temporary prompt file; this package does not alter
 Neovim configuration or duplicate the private Neovim bridge. A centralized
-`setMode('insert')` interception keeps the external-only surface in Normal mode, queues
-one request, and flushes it after the current command finishes mutating cursor and draft
-text. Applying returned text cannot trigger another handoff.
+`setMode('insert')` interception keeps the external-only surface's command state in
+Normal, queues one request, and flushes it after the current command finishes mutating
+cursor and draft text. While the handoff is active, the live deck rail resolves visually
+to Insert without recursively changing command state.
 
-Saving and exiting Neovim updates the hidden draft without submitting it. Enter remains
-the explicit send boundary; Ctrl-E or another supported Insert-producing command reopens
-the draft. Normal, Visual, and EX dispatch continue through the focused custom editor,
-while previously unsupported Vim commands remain unsupported.
+Before launch, the adapter assigns the temporary file a known modification-time
+sentinel. A successful exit whose file metadata moved away from that sentinel proves an
+explicit write, including a same-content write. The returned saved bytes then submit
+exactly once through the editor's ordinary Enter path. An unwritten exit, failed launch,
+inactive controller, or duplicate request returns to Normal feedback without sending.
+If a user writes, keeps editing, then exits without saving again, the last written bytes
+are the honest submission boundary. Normal, Visual, and EX dispatch continue through the
+focused custom editor, while previously unsupported Vim commands remain unsupported.
+Restoring the enclosing Neovim terminal's `startinsert` mode remains Neovim configuration
+and is intentionally outside this package.

@@ -33,11 +33,16 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   private internals, the existing handoff cannot be reused, or suppressing Insert breaks
   Normal/Visual command behavior.
 - **Implementation confirmed at:** 2026-09-08T11:47:03Z
+- **Repair confirmed at:** 2026-09-08T12:45:15Z
 - **Implementation started at:** 2026-09-08T11:47:40Z
+- **Repair started at:** 2026-09-08T12:45:15Z
 - **Work completed at:** 2026-09-08T12:16:33Z
+- **Repair work completed at:** 2026-09-08T12:53:47Z
 - **Assurance started at:** 2026-09-08T12:16:56Z
 - **Assurance completed at:** 2026-09-08T12:18:11Z
-- **Ready for validation at:** Pending Step 1.3 history verification
+- **Repair assurance started at:** 2026-09-08T12:55:17Z
+- **Repair assurance completed at:** 2026-09-08T12:56:22Z
+- **Ready for revalidation at:** Pending Step 1.4 history verification
 - **Actual implementation:** 13m10s recorded Step implementation plus 1m38s final
   deterministic assurance; Human wait excluded.
 - **Observed Human wait:** 13m41s between Step 1.1 completion and approved
@@ -47,7 +52,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   Human validates live TUI behavior.
 - **Final history target:** `feat(vim): use Neovim as prompt composer`
 - **Current non-Git boundary:** Not applicable; the standalone project uses existing Git.
-- **Human validation:** Pending
+- **Human validation:** CHANGE at 2026-09-08T12:30:59Z — hidden surface accepted;
+  active Neovim icon and automatic submission require refinement.
 
 - [x] Step 1.1 Specify the external-only surface, deferred Insert-command routing, and
       Header Deck mode-icon placement with test-only RED contracts.
@@ -66,8 +72,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     `packages/pi-vim-top-border/test/{editor-only-surface,external-editor-intercept}.test.ts`,
     `packages/galactica-context-header/test/deck.test.ts`,
     `test/{deck-surface,local-load-probe}.test.ts`, and `baseline/source.sha256`.
-  - History: Expected `step(vim): specify external-only prompt handoff`; external receipt
-    pending independent verification.
+  - History: `step(vim): specify external-only prompt handoff`; independently verified
+    through its owner-only external receipt.
 - [x] Step 1.2 Implement the explicit consolidated surface, centralized deferred handoff,
       zero-row prompt render, and live styled separator mode icon.
   - Estimate: 25–40 minutes; uncertainty was preserving hidden-buffer change, repeat,
@@ -83,8 +89,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     `packages/pi-vim-top-border/test/external-editor-intercept.test.ts`,
     `packages/galactica-context-header/{index.ts,src/deck.ts}`, `src/{deck-surface,index}.ts`,
     this ledger, and `baseline/source.sha256`.
-  - History: Expected `step(vim): replace Insert with Neovim handoff`; external receipt
-    pending independent verification.
+  - History: `step(vim): replace Insert with Neovim handoff`; independently verified
+    through its owner-only external receipt.
 - [x] Step 1.3 Document the external-only workflow and run complete offline package
       assurance while preserving GREEN.
   - Estimate: 15–25 minutes; uncertainty was aligning the large standalone Vim reference
@@ -99,12 +105,37 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `README.md`, `docs/architecture.md`,
     `packages/pi-vim-top-border/README.md`, this Plan/ledger, and
     `baseline/source.sha256`.
-  - History: Expected `step(cockpit): document external-only prompt surface`; external
-    receipt pending independent verification.
+  - History: `step(cockpit): document external-only prompt surface`; independently
+    verified through its owner-only external receipt.
+- [x] Step 1.4 Align active-handoff mode feedback and post-Neovim submission with Human
+      validation using the clarified explicit-write boundary.
+  - Estimate: 20–35 minutes; uncertainty was distinguishing intentional same-content
+    writes from unwritten exits without changing established adapter safety behavior.
+  - Started: 2026-09-08T12:45:15Z
+  - Completed: 2026-09-08T12:56:22Z
+  - Timing: 8m32s implementation plus 1m05s deterministic assurance; below estimate
+    because a fixed modification-time sentinel made the write boundary discriminating.
+  - Check: RED — 6 focused failures for absent outcomes, active Insert feedback,
+    exactly-once submission, and deduplication. GREEN — full format, lint, TypeScript,
+    integrity, composition, OpenSpec, and 391 tests PASS; credential-free offline Pi
+    load PASS with 213 model rows.
+  - Paths: `packages/pi-vim-top-border/{index.ts,prompt-external-editor.ts}`, focused
+    external-editor tests, `README.md`, `docs/architecture.md`, package README, this
+    Plan/ledger, and `baseline/source.sha256`.
+  - History: Expected `step(vim): align handoff state and submission`; external receipt
+    pending independent verification.
 
 ### Human validation
 
 - [ ] Human tries representative Insert-producing commands, unchanged/cancel return,
-      direct Ctrl-E, hidden-draft reopening, and Enter submission in non-fullscreen Pi
-      inside `nvim +terminal`, then reports a clear outcome; preserve the original
-      response, canonical outcome, and UTC.
+      direct Ctrl-E, hidden-draft reopening, and submission in non-fullscreen Pi inside
+      `nvim +terminal`, then reports a clear outcome; preserve the original response,
+      canonical outcome, and UTC.
+  - Evidence 2026-09-08T12:30:59Z — original response: “The icon don't change upon
+    launching the insert mode. The hidden thing is AWESOME !!! <3 We should submit
+    automatically, specially now that when nvim `:x` saves and exit, we don't see the
+    text. Rest is ok :)”
+  - Canonical outcome: CHANGE.
+  - Accepted: zero-row hidden prompt surface and remaining tested behavior.
+  - Requested: active Neovim/Insert icon feedback and automatic submission after the
+    intended save-and-exit flow.

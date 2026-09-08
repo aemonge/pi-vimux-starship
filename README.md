@@ -20,7 +20,7 @@ Header Deck ◀── bounded lifecycle and telemetry snapshots
     └── bottom separator ◀── live Vim Normal / Visual / EX mode
 
 focused zero-row Vim command surface ── Insert transition / Ctrl-E ──▶ Neovim
-                                     ◀── hidden draft ────────────────┘
+                                     ◀── saved draft + auto-submit ───┘
 ```
 
 The imported implementation lives under [`packages/`](packages/):
@@ -95,9 +95,11 @@ The consolidated package selects an explicit `external-editor-only` Pi Vim surfa
 regular Pi mode it renders no native prompt rows: the Header Deck remains visible, starts
 in Normal mode, and places the live mode icon on its bottom separator. Every supported
 Insert-producing command and direct Ctrl-E opens the existing Neovim handoff after the
-current command mutation completes. Saving returns a hidden draft; Enter submits it, and
-another Insert command or Ctrl-E reopens it. Pi fullscreen retains its core three-row
-editor slot and is not the target workflow.
+current command mutation completes. The separator shows Insert while Neovim owns the
+handoff. After Neovim exits, an explicitly written draft auto-submits exactly once;
+unwritten exits and failures return to Normal without sending. Restoring the enclosing
+Neovim terminal's `startinsert` state remains Neovim configuration. Pi fullscreen retains
+its core three-row editor slot and is not the target workflow.
 
 ## Documentation
 
