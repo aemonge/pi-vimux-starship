@@ -64,16 +64,23 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     `test/{deck-surface,local-load-probe}.test.ts`, and `baseline/source.sha256`.
   - History: Expected `step(vim): specify external-only prompt handoff`; external receipt
     pending independent verification.
-- [ ] Step 1.2 Implement the explicit consolidated surface, centralized deferred handoff,
+- [x] Step 1.2 Implement the explicit consolidated surface, centralized deferred handoff,
       zero-row prompt render, and live styled separator mode icon.
-  - Estimate: 25–40 minutes; uncertainty is preserving hidden-buffer change, repeat, and
-    undo behavior after command pre-mutations.
-  - Timing: Pending
-  - Check: Focused RED contracts become GREEN without changing the external-editor
-    adapter or Neovim bridge.
-  - Paths: Pi Vim editor, Context Header/deck, shared deck surface, consolidated entry,
-    focused tests, matching ledger, and `baseline/source.sha256`.
-  - History: Pending; expected `step(vim): replace Insert with Neovim handoff`.
+  - Estimate: 25–40 minutes; uncertainty was preserving hidden-buffer change, repeat,
+    and undo behavior after command pre-mutations.
+  - Started: 2026-09-08T12:07:51Z
+  - Completed: 2026-09-08T12:13:13Z
+  - Timing: 5m22s implementation/check time; below estimate because centralized
+    transition and render seams accepted the bounded change without repair.
+  - Check: GREEN — Vim 21/21, Header 87/87, tooling 10/10, TypeScript and lint PASS;
+    source integrity PASS (92 current, 87 imported files). The adapter and Neovim bridge
+    remain unchanged.
+  - Paths: `packages/pi-vim-top-border/index.ts`,
+    `packages/pi-vim-top-border/test/external-editor-intercept.test.ts`,
+    `packages/galactica-context-header/{index.ts,src/deck.ts}`, `src/{deck-surface,index}.ts`,
+    this ledger, and `baseline/source.sha256`.
+  - History: Expected `step(vim): replace Insert with Neovim handoff`; external receipt
+    pending independent verification.
 - [ ] Step 1.3 Document the external-only workflow and run complete offline package
       assurance while preserving GREEN.
   - Estimate: 15–25 minutes; uncertainty is aligning the large standalone Vim reference

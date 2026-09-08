@@ -10,6 +10,11 @@ import type {
 } from './gauge.ts';
 import type { ResourceTelemetry } from './process-resources.ts';
 
+export interface HeaderDeckModeRail {
+  plain: string;
+  styled: string;
+}
+
 export interface HeaderDeckState {
   elapsedMs: number | null;
   header: HeaderSnapshot | null;
@@ -57,6 +62,27 @@ function color(theme: Theme, name: string, text: string, bold = false): string {
 
 function fit(line: string, width: number): string {
   return truncateToWidth(line, Math.max(0, width), '');
+}
+
+const MODE_ICONS: Record<VimMode, string> = {
+  insert: '󰏫',
+  normal: '󰆾',
+  visual: '󰒅',
+  'visual-line': '󰒅',
+  ex: '󰆍',
+};
+
+const MODE_COLORS: Record<VimMode, string> = {
+  insert: 'borderMuted',
+  normal: 'borderAccent',
+  visual: 'customMessageLabel',
+  'visual-line': 'customMessageLabel',
+  ex: 'warning',
+};
+
+function fallbackModeRail(state: HeaderDeckState, theme: Theme): HeaderDeckModeRail {
+  const plain = MODE_ICONS[state.mode];
+  return { plain, styled: color(theme, MODE_COLORS[state.mode], plain) };
 }
 
 export function formatDeckElapsed(elapsedMs: number | null): string {
@@ -322,6 +348,7 @@ export function renderHeaderDeck(
   state: HeaderDeckState,
   width: number,
   theme: Theme,
+  suppliedModeRail?: HeaderDeckModeRail,
 ): string[] {
   const boundedWidth = Math.max(0, Math.floor(width));
   if (boundedWidth === 0) return [];
@@ -333,11 +360,18 @@ export function renderHeaderDeck(
     lineColor,
     '─'.repeat(Math.max(0, boundedWidth - visibleWidth(topPrefix))),
   )}`;
+  const modeRail = suppliedModeRail ?? fallbackModeRail(state, theme);
+  const bottomPrefix = `${color(theme, lineColor, '─ ')}${modeRail.styled}${color(theme, lineColor, ' ')}`;
   const bottomSuffix = `${color(theme, lineColor, ' ‹ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' ─')}`;
-  const bottom = `${color(
+  const bottom = `${bottomPrefix}${color(
     theme,
     lineColor,
-    '─'.repeat(Math.max(0, boundedWidth - visibleWidth(bottomSuffix))),
+    '─'.repeat(
+      Math.max(
+        0,
+        boundedWidth - visibleWidth(bottomPrefix) - visibleWidth(bottomSuffix),
+      ),
+    ),
   )}${bottomSuffix}`;
   const divider = `\u001b[2m${color(theme, 'text', '┈'.repeat(boundedWidth))}\u001b[22m`;
   const current = lifecycle(state);

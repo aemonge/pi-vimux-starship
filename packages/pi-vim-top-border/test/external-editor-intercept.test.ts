@@ -104,6 +104,19 @@ test('external-editor-only keeps Ctrl-E direct and returned text does not relaun
   assert.equal(editor.getMode(), 'normal');
 });
 
+test('external-editor-only submits the hidden returned draft only on Enter', () => {
+  const editor = makeEditor(false, true);
+  const submissions: string[] = [];
+  editor.onSubmit = (text) => submissions.push(text);
+  editor.setText('returned draft');
+
+  assert.deepEqual(submissions, []);
+  editor.handleInput('\r');
+
+  assert.deepEqual(submissions, ['returned draft']);
+  assert.equal(editor.getMode(), 'normal');
+});
+
 test('temporarily overrides the modal prompt border color', () => {
   const editor = makeEditor(true);
   const muted = (text: string) => `[muted]${text}`;

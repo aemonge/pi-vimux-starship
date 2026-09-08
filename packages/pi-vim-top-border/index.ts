@@ -240,6 +240,8 @@ type ModalEditorInternals = {
 
 type CustomEditorConstructorArgs = ConstructorParameters<typeof CustomEditor>;
 
+export type PiVimModeRail = { plain: string; styled: string };
+
 type ModalEditorOptions = {
   labelColorizers?: ModeColorizers | null;
   borderColorizers?: ModeColorizers | null;
@@ -260,7 +262,8 @@ type ModalEditorOptions = {
   promptRailColorize?: PromptRailColorize;
   promptRailsEnabled?: boolean;
   editorFrameEnabled?: boolean;
-  deckRenderer?: ((width: number) => string[]) | null;
+  externalEditorOnly?: boolean;
+  deckRenderer?: ((width: number, modeRail: PiVimModeRail) => string[]) | null;
 };
 
 export class ModalEditor extends CustomEditor {
@@ -320,7 +323,11 @@ export class ModalEditor extends CustomEditor {
   private readonly promptRailColorize: PromptRailColorize;
   private readonly promptRailsEnabled: boolean;
   private readonly editorFrameEnabled: boolean;
-  private readonly deckRenderer: ((width: number) => string[]) | null;
+  private readonly externalEditorOnly: boolean;
+  private readonly deckRenderer:
+    | ((width: number, modeRail: PiVimModeRail) => string[])
+    | null;
+  private pendingExternalEditorOpen = false;
 
   private unnamedRegister: string = '';
   private preferRegisterForPut = false;
@@ -371,7 +378,9 @@ export class ModalEditor extends CustomEditor {
     this.promptRailColorize = opts?.promptRailColorize ?? ((_color, text) => text);
     this.promptRailsEnabled = opts?.promptRailsEnabled ?? true;
     this.editorFrameEnabled = opts?.editorFrameEnabled ?? true;
+    this.externalEditorOnly = opts?.externalEditorOnly ?? false;
     this.deckRenderer = opts?.deckRenderer ?? null;
+    if (this.externalEditorOnly) this.mode = 'normal';
     this.installModeBorderColorizer();
   }
 
@@ -504,19 +513,29 @@ export class ModalEditor extends CustomEditor {
 
   private setMode(mode: Mode = 'insert'): void {
     const prev = this.mode;
-    this.mode = mode;
+    const next = this.externalEditorOnly && mode === 'insert' ? 'normal' : mode;
+    this.mode = next;
+    if (this.externalEditorOnly && mode === 'insert') {
+      this.pendingExternalEditorOpen = true;
+    }
     // Leaving insert ends any host-tainted session, so the next implicit
     // insert (post-submit or a re-entry) records normally again.
-    if (prev === 'insert' && mode !== 'insert') {
+    if (prev === 'insert' && next !== 'insert') {
       this.implicitInsertSuppressed = false;
     }
-    if (prev !== mode) {
+    if (prev !== next) {
       try {
-        this.modeChangeFn(mode, prev);
+        this.modeChangeFn(next, prev);
       } catch {
         // mode-change side effects must never break editing
       }
     }
+  }
+
+  private flushPendingExternalEditorOpen(): void {
+    if (!this.pendingExternalEditorOpen) return;
+    this.pendingExternalEditorOpen = false;
+    this.externalEditorFn?.();
   }
 
   override setText(text: string): void {
@@ -1274,6 +1293,7 @@ export class ModalEditor extends CustomEditor {
       this.handleInputCore(data);
     } finally {
       this.refreshPendingDispatchRestore();
+      this.flushPendingExternalEditorOpen();
     }
   }
 
@@ -4003,6 +4023,14 @@ export class ModalEditor extends CustomEditor {
   }
 
   render(width: number): string[] {
+    if (this.externalEditorOnly) {
+      try {
+        return this.deckRenderer?.(width, this.getModeRailItem()) ?? [];
+      } catch {
+        return [];
+      }
+    }
+
     const lines = super.render(width);
     this.syncCursorShapeForRender(lines);
     const editorLines = !this.editorFrameEnabled
@@ -4018,7 +4046,7 @@ export class ModalEditor extends CustomEditor {
           });
     if (!this.deckRenderer) return editorLines;
     try {
-      return [...this.deckRenderer(width), ...editorLines];
+      return [...this.deckRenderer(width, this.getModeRailItem()), ...editorLines];
     } catch {
       return editorLines;
     }
@@ -4041,17 +4069,19 @@ export class ModalEditor extends CustomEditor {
 }
 
 export interface PiVimDeckSurface {
-  render(width: number, theme: Theme): string[];
+  render(width: number, theme: Theme, modeRail?: PiVimModeRail): string[];
   setRequestRender(requestRender: (() => void) | null): void;
 }
 
 export interface PiVimOptions {
-  surface?: 'rails' | 'editor-only';
+  surface?: 'rails' | 'editor-only' | 'external-editor-only';
   deckSurface?: PiVimDeckSurface;
 }
 
 export default function (pi: ExtensionAPI, options: PiVimOptions = {}) {
   const editorOnly = options.surface === 'editor-only';
+  const externalEditorOnly = options.surface === 'external-editor-only';
+  const deckIntegrated = editorOnly || externalEditorOnly;
   let cursorShapeCleanup: CursorShapeCleanup | null = null;
   let promptExternalEditor: PromptExternalEditor | null = null;
   let requestPromptRender: (() => void) | null = null;
@@ -4111,11 +4141,13 @@ export default function (pi: ExtensionAPI, options: PiVimOptions = {}) {
         offBorderColor,
         getPromptRail: () => promptRail.snapshot(),
         promptRailColorize: (color, text) => (t ? t.fg(color, text) : text),
-        promptRailsEnabled: !editorOnly,
-        editorFrameEnabled: !editorOnly,
+        promptRailsEnabled: !deckIntegrated,
+        editorFrameEnabled: !deckIntegrated,
+        externalEditorOnly,
         deckRenderer:
-          editorOnly && options.deckSurface
-            ? (width) => options.deckSurface?.render(width, ctx.ui.theme) ?? []
+          deckIntegrated && options.deckSurface
+            ? (width, modeRail) =>
+                options.deckSurface?.render(width, ctx.ui.theme, modeRail) ?? []
             : null,
       });
       editor.setClipboardMirrorPolicy(clipboardMirrorPolicy.policy);
@@ -4130,7 +4162,7 @@ export default function (pi: ExtensionAPI, options: PiVimOptions = {}) {
       });
       editor.setExternalEditorFn(() => promptExternalEditor?.open());
       editor.setModeChangeFn(modeChangeHandler);
-      if (editorOnly) {
+      if (deckIntegrated) {
         const mode = editor.getMode();
         pi.events.emit('pi-vim:mode-change', { mode, previousMode: mode });
       }

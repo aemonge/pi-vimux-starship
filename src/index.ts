@@ -9,7 +9,7 @@ import { createCockpitDeckSurface } from './deck-surface.js';
 export const COCKPIT_SURFACES = {
   footer: 'telemetry',
   contextHeader: 'editor-deck',
-  vim: 'editor-only',
+  vim: 'external-editor-only',
 } as const;
 
 export const COCKPIT_COMPOSITION = [

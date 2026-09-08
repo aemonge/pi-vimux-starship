@@ -83,8 +83,17 @@ const EMPTY_GIT: GitStatusSummary = {
   conflicts: 0,
 };
 
+export interface ContextHeaderModeRail {
+  plain: string;
+  styled: string;
+}
+
 export interface ContextHeaderDeckSurface {
-  setRenderer(renderer: ((width: number, theme: Theme) => string[]) | null): void;
+  setRenderer(
+    renderer:
+      | ((width: number, theme: Theme, modeRail?: ContextHeaderModeRail) => string[])
+      | null,
+  ): void;
   requestRender(): void;
 }
 
@@ -430,7 +439,11 @@ export default function galacticaContextHeader(
     activeCwd = ctx.cwd;
     void refreshGit();
 
-    const renderDeck = (width: number, theme: Theme): string[] => {
+    const renderDeck = (
+      width: number,
+      theme: Theme,
+      modeRail?: ContextHeaderModeRail,
+    ): string[] => {
       if (width <= 0) return [];
       const usage = ctx.getContextUsage();
       const contextWindow = usage?.contextWindow ?? ctx.model?.contextWindow;
@@ -467,6 +480,7 @@ export default function galacticaContextHeader(
         },
         width,
         theme,
+        modeRail,
       );
     };
 
