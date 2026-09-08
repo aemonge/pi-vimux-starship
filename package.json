@@ -12,6 +12,23 @@
     "cockpit"
   ],
   "license": "UNLICENSED",
+  "files": [
+    "README.md",
+    "docs/architecture.md",
+    "docs/development.md",
+    "docs/assets/pi-vimux-starship.gif",
+    "demo/pi-vimux-starship.tape",
+    "licenses",
+    "src/*.ts",
+    "!src/local-load-probe.ts",
+    "packages/*/*.ts",
+    "packages/*/src/**/*.ts",
+    "!packages/*/src/**/*.test.ts",
+    "packages/*/package.json",
+    "packages/*/README.md",
+    "packages/*/LICENSE",
+    "packages/*/LOCAL-CHANGES.md"
+  ],
   "engines": {
     "node": ">=24.0.0"
   },
@@ -24,8 +41,9 @@
     "lint": "biome check --config-path=biome.json packages/pi-vim-top-border && eslint packages scripts src test",
     "typecheck": "tsc --noEmit && npm run typecheck --workspaces --if-present",
     "test": "npm run test:tooling && npm run test:components",
-    "check": "npm run check:baseline && npm run format:check && npm run lint && npm run typecheck && npm test && npm run check:composition && npm run check:openspec",
+    "check": "npm run check:baseline && npm run check:package && npm run format:check && npm run lint && npm run typecheck && npm test && npm run check:composition && npm run check:openspec",
     "check:baseline": "node scripts/check-baseline.mjs",
+    "check:package": "node scripts/check-package.mjs",
     "check:composition": "node --import tsx/esm src/local-load-probe.ts",
     "check:openspec": "node scripts/check-openspec.mjs",
     "test:tooling": "node --import tsx/esm --test test/*.test.ts",

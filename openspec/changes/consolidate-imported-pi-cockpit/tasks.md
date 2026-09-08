@@ -145,10 +145,11 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       namespace, preset, or theme was introduced — original response `VALID`, canonical
       outcome `VALID`, recorded at 2026-09-08T11:12:20Z.
 
-## Task 3 — Prove the private distributable package
+## Task 3 — Finish the private distributable package and user-facing guide
 
-- **Value:** A packed or Git/local installation works from one instruction across the
-  declared capability matrix.
+- **Value:** A minimal packed package can be installed from one documented source, and a
+  new user can understand the recommended Neovim workflow from the README and one honest
+  reproducible demonstration.
 - **Method source:** predefined
 - **Method name:** Happy-path
 - **Method contract:** Preserve the runnable imported baseline while delivering the
@@ -156,22 +157,25 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   hardening.
 - **Execution source:** direct
 - **Execution name:** Incremental in-repository consolidation
-- **Execution reason:** The imported modules already communicate through bounded event
-  protocols; direct, sequential consolidation keeps compatibility and presentation
-  changes reviewable without parallel edits to tightly coupled startup order.
-- **Execution outline:** Establish a reproducible baseline, compose and namespace the
-  modules, consolidate configuration with compatibility fallbacks, then prove the packed
-  artifact in clean capability states.
-- **Estimate basis:** No comparable accepted clean-room demonstration exists; the
-  expected matrix has six bounded states.
-- **Estimated implementation:** 35–60 minutes; Human wait excluded.
-- **Estimate confidence:** Low because clean-room Pi package resolution has not yet been
-  exercised for this code.
-- **Human-wait estimate:** Separate and unbounded.
-- **Refinement trigger:** Stop and rebrief if a check requires credentials, provider
-  requests, external publication, or platform support beyond current Linux behavior.
-- **Implementation confirmed at:** Pending
-- **Implementation started at:** Pending
+- **Execution reason:** Package filtering, clean-room loading, and documentation all
+  describe one artifact boundary; direct sequential execution keeps the tarball evidence
+  synchronized with the README and VHS source without parallel drift.
+- **Execution outline:** Restrict the packed files with a deterministic contract, prove
+  one extracted tarball offline plus fixture-backed optional states, then replace stale
+  handoff prose with installation, rollback, health, bridge, and VHS guidance.
+- **Estimate basis:** Current `npm pack --dry-run` exposes 137 entries including AGENTS,
+  OpenSpec, tests, baselines, and development configuration; local composition and 391
+  tests already pass, but no accepted clean-room tarball or VHS tape exists.
+- **Estimated implementation:** 55–90 minutes; Human wait and VHS execution excluded.
+- **Estimate confidence:** Low-to-medium because package filtering is concrete, while
+  nested `nvim +terminal` VHS timing must be exercised only in Human's real bridge.
+- **Human-wait estimate:** Separate and unbounded; Human installs one source, runs the
+  authored VHS tape, reviews the generated GIF, and validates the complete guide.
+- **Refinement trigger:** Stop and rebrief if the extracted package requires network
+  resolution, the tape requires shipping private bridge logic or captures private data,
+  or one independently validatable outcome pushes implementation beyond 90 minutes.
+- **Implementation confirmed at:** 2026-09-08T14:57:33Z
+- **Implementation started at:** 2026-09-08T15:12:54Z
 - **Work completed at:** Pending
 - **Assurance started at:** Pending
 - **Assurance completed at:** Pending
@@ -179,34 +183,51 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Actual implementation:** Pending
 - **Observed Human wait:** Pending
 - **Estimate outcome:** Pending
-- **Final history target:** `feat(distribution): prove private package installation`
-- **Current non-Git boundary:** Not applicable after Human moves the scaffold and
-  initializes Git.
+- **Final history target:** `feat(distribution): finish the private cockpit package`
+- **Current non-Git boundary:** Not applicable; the repository uses Git.
 - **Human validation:** Pending
 
-- [ ] Step 3.1 Make the packed artifact include only required source, documentation,
-      licenses, and runtime metadata.
-  - Estimate: 10–15 minutes; uncertainty is package-file filtering.
+- [x] Step 3.1 Specify and enforce a minimal packed-artifact allowlist for runtime source,
+      user documentation, licenses, package metadata, and the intentional demo assets.
+  - Started: 2026-09-08T15:12:54Z
+  - Estimate: 15–25 minutes; uncertainty was preserving every TypeScript runtime import
+    while excluding tests, OpenSpec, baselines, AGENTS, and development configuration.
+  - Timing: 2026-09-08T15:12:54Z–2026-09-08T15:15:47Z (2m53s).
+  - Check: Three focused package-contract tests and the real dry run PASS with 67 files,
+    191,536 packed bytes, and no forbidden/private artifact; the prior unconstrained
+    artifact exposed 137 entries.
+  - Paths: `package.json`, `scripts/check-package.mjs`, `test/check-package.test.ts`, and
+    this Plan/ledger.
+  - History: Expected `step(package): constrain private artifact contents`; external
+    receipt pending independent verification.
+- [ ] Step 3.2 Prove the extracted artifact loads offline and preserve fixture-backed
+      coverage for Git, OpenSpec, Devbox, quota, and missing optional capabilities.
+  - Estimate: 20–35 minutes; uncertainty is resolving Pi peer imports from a temporary
+    extracted package without network access or settings mutation.
   - Timing: Pending
-  - Check: Pending
-  - History: Pending
-- [ ] Step 3.2 Run offline clean-room checks for plain, Git, OpenSpec, Devbox,
-      quota-state, and missing-capability behavior.
-  - Estimate: 15–30 minutes; uncertainty is deterministic fixtures for optional
-    capabilities.
+  - Check: Credential-free temporary extraction and `pi --offline --no-session
+    --no-extensions -e <package>` load PASS; existing capability fixtures and complete
+    package checks remain GREEN. No Git/Rustory repository is initialized.
+  - Paths: bounded package/check scripts and tests, `package.json`, this ledger, and no
+    persistent clean-room output.
+  - History: Pending; expected `step(package): prove offline artifact loading`.
+- [ ] Step 3.3 Replace the handoff-oriented root README with the recommended workflow,
+      installation/rollback, `/vimux-health`, limitations, privacy, and a deterministic
+      VHS tape that Human can run without provider traffic.
+  - Estimate: 20–30 minutes; uncertainty is robust nested-Neovim timing across Human's
+    private bridge while VHS itself is unavailable in the sandbox.
   - Timing: Pending
-  - Check: Pending
-  - History: Pending
-- [ ] Step 3.3 Document local-path and pinned-Git installation, rollback, and the Human
-      validation checklist.
-  - Estimate: 10–15 minutes; uncertainty is none beyond matching current Pi
-    documentation.
-  - Timing: Pending
-  - Check: Pending
-  - History: Pending
+  - Check: Markdown/format checks, link checks, static tape assertions, package allowlist,
+    complete repository checks, and exact Human run instructions PASS.
+  - Paths: `README.md`, bounded supporting docs, `demo/pi-vimux-starship.tape`, this
+    ledger, and—only after Human review—the sanctioned
+    `docs/assets/pi-vimux-starship.gif` final-boundary artifact.
+  - History: Pending; expected `step(docs): present the Neovim cockpit workflow`.
 
 ### Human validation — Task 3
 
-- [ ] Human installs the package from one source, checks the declared capability states,
-      and reports a clear outcome; preserve the original response, canonical outcome,
-      and UTC.
+- [ ] Human installs the package from one documented source, runs the authored VHS tape
+      in the real bridge, reviews the sanitized GIF, checks `/vimux-health` and the
+      recommended workflow, then reports a clear outcome; preserve original response,
+      canonical outcome, and UTC. The reviewed GIF enters history only at this final
+      VALID boundary.
