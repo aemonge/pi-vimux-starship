@@ -11,13 +11,16 @@ experience rather than a dependency on `starship.rs`.
 
 The package must preserve the validated information architecture and privacy boundary.
 Narrative work, selected progress, project state, model state, provider telemetry, and
-bounded resources stay in the rich deck; immediate editing and mode behavior stay in the
-borderless editor. Raw prompts, generated prose, tool inputs, child output, credentials,
-clipboard content, hidden reasoning, and unintended paths never enter status surfaces.
+bounded resources stay in the rich deck. In the consolidated cockpit, Neovim owns prompt
+composition while the focused zero-row Pi Vim surface retains Normal/Visual commands and
+places its live mode icon on the deck's bottom separator. Raw prompts, generated prose,
+tool inputs, child output, credentials, clipboard content, hidden reasoning, and
+unintended paths never enter status surfaces.
 
 The reusable design remains modular. Core behavior must fail soft without Git, OpenSpec,
 Taskflow, Devbox, Nerd Fonts, Neovim, or tmux. Pi core remains the API authority;
-`pi-vim` and the local Fancy Footer fork retain their licenses and provenance. External
-Insert routing, transcript navigation, package-wide public configuration, theming,
-broader platform support, and publication require separate concrete Human-validatable
-value rather than hidden additions to package extraction.
+`pi-vim` and the local Fancy Footer fork retain their licenses and provenance. The
+external-editor-only consolidated surface is one explicit value slice; transcript
+navigation, package-wide public configuration, theming, broader platform support, and
+publication require separate concrete Human-validatable value rather than hidden
+additions to package extraction.

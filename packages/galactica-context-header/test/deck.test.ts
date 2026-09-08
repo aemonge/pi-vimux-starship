@@ -102,7 +102,7 @@ test('renders the approved rich wide header without side borders or spacer rows'
     / 63% › 󰜦 \$5\.16 ⟩  0\/0 › 󰈙 37\/53 ⟩  48\.2% ›  268M ›  3\/3$/u,
   );
   assert.equal(lines.join('\n').includes('32K/128K'), false);
-  assert.match(lines[7] ?? '', /^─+ ‹ 󰠭 ─$/u);
+  assert.match(lines[7] ?? '', /^─ 󰆾 ─+ ‹ 󰠭 ─$/u);
   assert.ok(lines.every((line) => line.length > 0));
   assert.ok(lines.every((line) => !line.startsWith('│') && !line.endsWith('│')));
   assert.equal(lines.join('').split('󰠭').length - 1, 2);
@@ -261,12 +261,33 @@ test('uses prompt-line color for rules and major separators with violet ladybugs
 
   assert.ok(colors.some((entry) => entry.startsWith('thinkingHigh:─')));
   assert.ok(colors.includes('thinkingHigh:⟩'));
+  assert.ok(colors.includes('borderAccent:󰆾'));
   assert.equal(colors.filter((entry) => entry.startsWith('text:┈')).length, 1);
   assert.equal(colors.filter((entry) => entry === 'customMessageLabel:󰠭').length, 2);
   assert.equal(
     colors.some((entry) => entry.startsWith('thinkingMax:')),
     false,
   );
+});
+
+test('places a supplied live styled mode icon on the bottom separator', () => {
+  const renderWithModeRail = renderHeaderDeck as unknown as (
+    state: HeaderDeckState,
+    width: number,
+    theme: typeof plainTheme,
+    modeRail: { plain: string; styled: string },
+  ) => string[];
+  const modeRail = {
+    plain: '󰒅',
+    styled: '\u001b[35m󰒅\u001b[0m',
+  };
+
+  const lines = renderWithModeRail(fixture(), 80, plainTheme, modeRail);
+  const bottom = lines.at(-1) ?? '';
+
+  assert.match(plain(bottom), /^─ 󰒅 ─+ ‹ 󰠭 ─$/u);
+  assert.equal(bottom.includes(modeRail.styled), true);
+  assert.equal(lines.join('').split('󰒅').length - 1, 1);
 });
 
 test('keeps compact telemetry islands together with one gap cell', () => {

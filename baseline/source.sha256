@@ -11,7 +11,7 @@ b0b480d5188d03f467c372b2dcf5712095cca21820ec2e089e6c378f9e13cf6d  packages/galac
 37afc2004716e60630768da80e6cbb46f7238d9acf05734b9260aa85d6e37460  packages/galactica-context-header/src/title.ts
 bf6ecc8639ecc4b63da4eaa6eb4e7fcff60367c6a61a03f7aeba0e598f3fc9ff  packages/galactica-context-header/test/activity-age.test.ts
 11c78c31645b108b16755ca475466030aec3a82853ae42e1cd3f6e24449899c1  packages/galactica-context-header/test/capabilities.test.ts
-c9afdc0610ac22a66d48d28b4ea1afefa1d4a5093a3d98322a1314a380e988fd  packages/galactica-context-header/test/deck.test.ts
+85a70f1d2d5a8bd498d9fd1b02798e4b0c7280d3fb711e09274948ed3b12cff8  packages/galactica-context-header/test/deck.test.ts
 f17874a630a3d680a1ef5dd9d98407f04979311c720f5357947197d519f8732b  packages/galactica-context-header/test/fixtures/fancy-footer.json
 80e60c0d68e1dba49c390d8e4df3a1bf386b07b6723e03a58c0d82037edd2b70  packages/galactica-context-header/test/gauge.test.ts
 bcf25f6df314714bcd4828b2c3b5a020c0b38bf250744209acf2adafe41f95dd  packages/galactica-context-header/test/git-refresh.test.ts
@@ -80,8 +80,8 @@ fe8b3ac6e700aabd75e33b217863af77a7fbe3bc5593ff7f362d9293109a5d31  packages/pi-vi
 b8bd3d433aea619b01ef27ca842078647888a896ee54130b2d067494b290a97e  packages/pi-vim-top-border/prompt-rail.ts
 206e4d21b424539b841bf9e1e04ccad986e8d1f38e745727129218c6c7d3d002  packages/pi-vim-top-border/prompt-status.ts
 2c18d39f2e6c75848a485815a97433a797bcb3079115a672e1d6c5cbfeeab36c  packages/pi-vim-top-border/settings.ts
-0ea9b6d92d2f7f8956755dd16c16cc83cbdae5bfdad576b69cd61a9f9648a9a7  packages/pi-vim-top-border/test/editor-only-surface.test.ts
-28a4040fe0b8fa905e8129e0fcac3d848af2ab45037222da8fe2ca953ac1a6e1  packages/pi-vim-top-border/test/external-editor-intercept.test.ts
+056b94c4cdd71c4ba8b81e1c519a19389872cb1252efa87f392f8dc95c7f0e1d  packages/pi-vim-top-border/test/editor-only-surface.test.ts
+2dbcf40c1392fa419d9c1f046ef490021877b84c7cbda475f14ab9c4335fd005  packages/pi-vim-top-border/test/external-editor-intercept.test.ts
 31b955602cd090c63b6d5de199c925a9a22fa223f65852c45994c507325d11ec  packages/pi-vim-top-border/test/prompt-external-editor.test.ts
 f810e4a301377e71d0c6fa8c093199a90f829f788cd7d7e539a16ff494297d72  packages/pi-vim-top-border/test/prompt-rail.test.ts
 b8c5cfb96e5149a7bb9b380d578568ce78b11bcae005785610552feeb44b4f48  packages/pi-vim-top-border/test/prompt-status.test.ts

@@ -6,6 +6,7 @@ import { ModalEditor } from '../index.js';
 function makeEditor(
   editorFrameEnabled: boolean,
   deckRenderer: ((width: number) => string[]) | null = null,
+  externalEditorOnly = false,
 ): ModalEditor {
   const tui = { requestRender() {}, terminal: { rows: 40 } };
   const theme = {
@@ -13,11 +14,17 @@ function makeEditor(
     selectList: {},
   };
   const keybindings = { matches: () => false };
-  return new ModalEditor(tui as never, theme as never, keybindings as never, {
-    promptRailsEnabled: false,
-    editorFrameEnabled,
-    deckRenderer,
-  });
+  return new ModalEditor(
+    tui as never,
+    theme as never,
+    keybindings as never,
+    {
+      promptRailsEnabled: false,
+      editorFrameEnabled,
+      deckRenderer,
+      externalEditorOnly,
+    } as never,
+  );
 }
 
 test('editor-only removes inherited frame rows and preserves prompt content', () => {
@@ -93,6 +100,25 @@ test('editor deck renders contiguously before prompt and autocomplete rows', () 
   assert.equal(lines.at(-1)?.includes('second completion'), true);
   assert.equal(editor.getText(), '/command');
   assert.equal(editor.getMode(), 'insert');
+});
+
+test('external-editor-only starts in Normal and renders only the deck', () => {
+  const editor = makeEditor(
+    false,
+    (width) => [`deck top ${width}`, '─ mode ─ deck bottom'],
+    true,
+  );
+  editor.setText('/hidden command');
+  const internals = editor as unknown as {
+    autocompleteState: string;
+    autocompleteList: { render: () => string[] };
+  };
+  internals.autocompleteState = 'regular';
+  internals.autocompleteList = { render: () => ['hidden completion'] };
+
+  assert.deepEqual(editor.render(48), ['deck top 48', '─ mode ─ deck bottom']);
+  assert.equal(editor.getText(), '/hidden command');
+  assert.equal(editor.getMode(), 'normal');
 });
 
 test('rails surface retains the inherited editor frame', () => {

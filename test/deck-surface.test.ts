@@ -7,26 +7,44 @@ const theme = {} as never;
 
 test('deck surface joins one bounded renderer to editor invalidation', () => {
   const surface = createCockpitDeckSurface();
+  const modeRail = { plain: '󰆾', styled: '[normal]󰆾' };
+  const contextualSurface = surface as unknown as {
+    setRenderer(
+      renderer:
+        | ((
+            width: number,
+            receivedTheme: typeof theme,
+            receivedModeRail?: typeof modeRail,
+          ) => string[])
+        | null,
+    ): void;
+    render(
+      width: number,
+      receivedTheme: typeof theme,
+      mode?: typeof modeRail,
+    ): string[];
+  };
   let rendersRequested = 0;
   surface.setRequestRender(() => {
     rendersRequested += 1;
   });
 
-  assert.deepEqual(surface.render(80, theme), []);
-  surface.setRenderer((width, receivedTheme) => {
+  assert.deepEqual(contextualSurface.render(80, theme, modeRail), []);
+  contextualSurface.setRenderer((width, receivedTheme, receivedModeRail) => {
     assert.equal(width, 80);
     assert.equal(receivedTheme, theme);
+    assert.equal(receivedModeRail, modeRail);
     return ['deck'];
   });
 
   assert.equal(rendersRequested, 1);
-  assert.deepEqual(surface.render(80, theme), ['deck']);
+  assert.deepEqual(contextualSurface.render(80, theme, modeRail), ['deck']);
   surface.requestRender();
   assert.equal(rendersRequested, 2);
 
-  surface.setRenderer(null);
+  contextualSurface.setRenderer(null);
   assert.equal(rendersRequested, 3);
-  assert.deepEqual(surface.render(80, theme), []);
+  assert.deepEqual(contextualSurface.render(80, theme, modeRail), []);
 });
 
 test('deck surface reconnects after either extension starts first and fails soft', () => {

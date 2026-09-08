@@ -16,13 +16,13 @@ const EXPECTED_COMMANDS = [
 ];
 const EXPECTED_TOOLS = ['openspec_focus', 'work_focus'];
 
-test('editor deck composition suppresses the above-editor widget seam', () => {
-  assert.equal(COCKPIT_SURFACES.vim, 'editor-only');
+test('external-only deck composition suppresses the native prompt surface', () => {
+  assert.equal(COCKPIT_SURFACES.vim, 'external-editor-only');
   assert.deepEqual(COCKPIT_COMPOSITION, [
     'fancy-footer:telemetry',
     'galactica-status:provider',
     'galactica-context-header:editor-deck',
-    'pi-vim:editor-only',
+    'pi-vim:external-editor-only',
   ]);
 });
 
