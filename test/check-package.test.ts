@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  credentialFreeProbeEnvironment,
   packedPathsFromNpmJson,
   REQUIRED_FILES,
   validatePackedFiles,
@@ -32,6 +33,23 @@ test('package contents reject development, planning, test, and private paths', (
   assert.match(result.errors[0] ?? '', /\.env\.private/u);
   assert.match(result.errors[0] ?? '', /openspec/u);
   assert.match(result.errors[0] ?? '', /editor\.test\.ts/u);
+});
+
+test('clean-room Pi probe environment cannot inherit provider or session secrets', () => {
+  const environment = credentialFreeProbeEnvironment('/tmp/clean-home', '/usr/bin');
+
+  assert.deepEqual(Object.keys(environment).sort(), [
+    'HOME',
+    'LANG',
+    'PATH',
+    'PI_CODING_AGENT_DIR',
+    'PI_OFFLINE',
+    'TERM',
+  ]);
+  assert.equal(environment.PI_OFFLINE, '1');
+  for (const key of ['ANTHROPIC_API_KEY', 'AWS_ACCESS_KEY_ID', 'PI_SESSION_FILE']) {
+    assert.equal(key in environment, false);
+  }
 });
 
 test('npm pack JSON exposes exactly one validated path list', () => {

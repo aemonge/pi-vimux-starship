@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
 import { execFile } from 'node:child_process';
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
@@ -76,10 +79,94 @@ export async function inspectPackedArtifact(cwd = process.cwd()) {
   return validatePackedFiles(packedPathsFromNpmJson(JSON.parse(stdout)));
 }
 
+export function credentialFreeProbeEnvironment(home, pathValue) {
+  return {
+    HOME: home,
+    LANG: 'C.UTF-8',
+    PATH: pathValue,
+    PI_CODING_AGENT_DIR: join(home, '.pi', 'agent'),
+    PI_OFFLINE: '1',
+    TERM: 'xterm-256color',
+  };
+}
+
+export async function inspectExtractedArtifact(cwd = process.cwd()) {
+  const directory = await mkdtemp(join(tmpdir(), 'pi-vimux-package-'));
+  const archiveDirectory = join(directory, 'archive');
+  const extractedDirectory = join(directory, 'extracted');
+  const home = join(directory, 'home');
+  const work = join(directory, 'work');
+
+  try {
+    await Promise.all([
+      mkdir(archiveDirectory),
+      mkdir(extractedDirectory),
+      mkdir(join(home, '.pi', 'agent'), { recursive: true }),
+      mkdir(work),
+    ]);
+    const { stdout: packOutput } = await execFileAsync(
+      'npm',
+      ['pack', '--json', '--ignore-scripts', '--pack-destination', archiveDirectory],
+      { cwd, encoding: 'utf8', maxBuffer: 2 * 1024 * 1024 },
+    );
+    const packageResults = JSON.parse(packOutput);
+    const paths = packedPathsFromNpmJson(packageResults);
+    const validation = validatePackedFiles(paths);
+    if (validation.errors.length > 0) {
+      throw new Error(`packed artifact check failed: ${validation.errors.join('; ')}`);
+    }
+
+    const packageResult = Object.values(packageResults)[0];
+    if (
+      !packageResult ||
+      typeof packageResult !== 'object' ||
+      typeof packageResult.filename !== 'string'
+    ) {
+      throw new Error('npm pack result has no archive filename');
+    }
+    const archive = join(archiveDirectory, basename(packageResult.filename));
+    await execFileAsync('tar', ['-xzf', archive, '-C', extractedDirectory], {
+      encoding: 'utf8',
+    });
+
+    const pi = resolve(cwd, 'node_modules', '.bin', 'pi');
+    const { stdout } = await execFileAsync(
+      pi,
+      [
+        '--offline',
+        '--no-session',
+        '--no-extensions',
+        '-e',
+        join(extractedDirectory, 'package'),
+        '--list-models',
+      ],
+      {
+        cwd: work,
+        encoding: 'utf8',
+        env: credentialFreeProbeEnvironment(home, process.env.PATH ?? ''),
+        maxBuffer: 2 * 1024 * 1024,
+        timeout: 30_000,
+      },
+    );
+    const rows = stdout.split('\n').filter(Boolean).length;
+    if (rows === 0)
+      throw new Error('offline extracted package load returned no models');
+    return { files: validation.files, rows };
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const result = await inspectPackedArtifact();
   if (result.errors.length > 0) {
     throw new Error(`packed artifact check failed: ${result.errors.join('; ')}`);
   }
   console.log(`packed artifact: PASS (${result.files.length} files)`);
+  if (process.argv.includes('--load')) {
+    const extracted = await inspectExtractedArtifact();
+    console.log(
+      `extracted package load: PASS (${extracted.files.length} files, ${extracted.rows} model rows)`,
+    );
+  }
 }

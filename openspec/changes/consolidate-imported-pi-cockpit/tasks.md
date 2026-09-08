@@ -200,17 +200,21 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     this Plan/ledger.
   - History: Expected `step(package): constrain private artifact contents`; external
     receipt pending independent verification.
-- [ ] Step 3.2 Prove the extracted artifact loads offline and preserve fixture-backed
+- [x] Step 3.2 Prove the extracted artifact loads offline and preserve fixture-backed
       coverage for Git, OpenSpec, Devbox, quota, and missing optional capabilities.
-  - Estimate: 20–35 minutes; uncertainty is resolving Pi peer imports from a temporary
+  - Started: 2026-09-08T15:17:52Z
+  - Estimate: 20–35 minutes; uncertainty was resolving Pi peer imports from a temporary
     extracted package without network access or settings mutation.
-  - Timing: Pending
-  - Check: Credential-free temporary extraction and `pi --offline --no-session
-    --no-extensions -e <package>` load PASS; existing capability fixtures and complete
-    package checks remain GREEN. No Git/Rustory repository is initialized.
-  - Paths: bounded package/check scripts and tests, `package.json`, this ledger, and no
-    persistent clean-room output.
-  - History: Pending; expected `step(package): prove offline artifact loading`.
+  - Timing: 2026-09-08T15:17:52Z–2026-09-08T15:20:59Z (3m07s including focused and full
+    deterministic checks).
+  - Check: GREEN — a 67-file artifact packs, extracts, and loads through credential-free
+    `pi --offline --no-session --no-extensions -e <package>` with three catalog rows;
+    four package tests and all 400 repository tests PASS. No Git/Rustory repository or
+    persistent clean-room output is created.
+  - Paths: `scripts/check-package.mjs`, `test/check-package.test.ts`, `package.json`, and
+    this ledger.
+  - History: Expected `step(package): prove offline artifact loading`; external receipt
+    pending independent verification.
 - [ ] Step 3.3 Replace the handoff-oriented root README with the recommended workflow,
       installation/rollback, `/vimux-health`, limitations, privacy, and a deterministic
       VHS tape that Human can run without provider traffic.
