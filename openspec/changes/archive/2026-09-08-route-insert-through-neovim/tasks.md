@@ -42,18 +42,20 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Assurance completed at:** 2026-09-08T12:18:11Z
 - **Repair assurance started at:** 2026-09-08T12:55:17Z
 - **Repair assurance completed at:** 2026-09-08T12:56:22Z
-- **Ready for revalidation at:** Pending Step 1.4 history verification
-- **Actual implementation:** 13m10s recorded Step implementation plus 1m38s final
+- **Ready for revalidation at:** 2026-09-08T12:58:33Z
+- **Actual implementation:** 13m10s recorded initial Step implementation plus 1m38s
   deterministic assurance; Human wait excluded.
-- **Observed Human wait:** 13m41s between Step 1.1 completion and approved
-  Devbox-allowlisted receipt verification; excluded from implementation.
+- **Repair implementation:** 8m32s implementation plus 1m05s deterministic assurance;
+  Human wait excluded.
+- **Observed Human wait:** 13m41s for the Devbox receipt-boundary decision plus 27m09s
+  for final live revalidation; both excluded from implementation.
 - **Estimate outcome:** Below the 55–90 minute range because the confirmed public render,
   centralized mode, and shared deck seams required no repair; retain low confidence until
   Human validates live TUI behavior.
 - **Final history target:** `feat(vim): use Neovim as prompt composer`
 - **Current non-Git boundary:** Not applicable; the standalone project uses existing Git.
-- **Human validation:** CHANGE at 2026-09-08T12:30:59Z — hidden surface accepted;
-  active Neovim icon and automatic submission require refinement.
+- **Human validation:** VALID at 2026-09-08T13:25:42Z after one CHANGE repair; original
+  final response: `VALID`.
 
 - [x] Step 1.1 Specify the external-only surface, deferred Insert-command routing, and
       Header Deck mode-icon placement with test-only RED contracts.
@@ -122,12 +124,12 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `packages/pi-vim-top-border/{index.ts,prompt-external-editor.ts}`, focused
     external-editor tests, `README.md`, `docs/architecture.md`, package README, this
     Plan/ledger, and `baseline/source.sha256`.
-  - History: Expected `step(vim): align handoff state and submission`; external receipt
-    pending independent verification.
+  - History: `step(vim): align handoff state and submission`; independently verified
+    through its owner-only external receipt.
 
 ### Human validation
 
-- [ ] Human tries representative Insert-producing commands, unchanged/cancel return,
+- [x] Human tries representative Insert-producing commands, unchanged/cancel return,
       direct Ctrl-E, hidden-draft reopening, and submission in non-fullscreen Pi inside
       `nvim +terminal`, then reports a clear outcome; preserve the original response,
       canonical outcome, and UTC.
@@ -139,3 +141,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Accepted: zero-row hidden prompt surface and remaining tested behavior.
   - Requested: active Neovim/Insert icon feedback and automatic submission after the
     intended save-and-exit flow.
+  - Final evidence 2026-09-08T13:25:42Z — original response: `VALID`; canonical outcome:
+    VALID.
+  - Estimate refinement: Existing focused editor/adapter seams made both initial delivery
+    and repair much faster than conservative low-confidence ranges; future comparable
+    work should start at 15–30 minutes while retaining a live-TUI uncertainty premium.

@@ -36,9 +36,9 @@
 - **Assurance completed at:** 2026-09-08T12:18:11Z
 - **Repair assurance started at:** 2026-09-08T12:55:17Z
 - **Repair assurance completed at:** 2026-09-08T12:56:22Z
-- **Ready for revalidation at:** Pending Step 1.4 history verification
-- **Human validation:** CHANGE at 2026-09-08T12:30:59Z — hidden surface accepted;
-  active Neovim icon and automatic submission require refinement.
+- **Ready for revalidation at:** 2026-09-08T12:58:33Z
+- **Human validation:** VALID at 2026-09-08T13:25:42Z after one CHANGE repair; original
+  final response: `VALID`.
 - **Repair boundary:** Show Insert while either Insert routing or Ctrl-E owns an active
   handoff; submit exactly once after an explicit temporary-file write and successful
   editor exit. An unwritten exit, failure, inactive controller, or duplicate request
