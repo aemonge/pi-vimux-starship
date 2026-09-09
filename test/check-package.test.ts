@@ -65,13 +65,25 @@ test('README and VHS source preserve the credential-free public health demo', ()
   const tape = [
     'Output docs/assets/pi-vimux-starship.gif',
     'Set Theme "Gruvbox Light"',
-    'Type "pi --offline --no-session --no-extensions --no-context-files"',
+    'Set Height 520',
+    'Set Padding 20',
+    'Hide',
+    'Type "clear && pi --offline --no-session --no-extensions --no-context-files"',
     'Wait+Screen /waiting/',
+    'Show',
+    'Type ":name Public cockpit demo"',
+    'Wait+Screen /Public cockpit demo/',
     'Type ":vimux-health"',
     'Wait+Screen /pi-vimux-starship health/',
   ].join('\n');
 
   assert.deepEqual(validateDemoSources(readme, tape), []);
+  const misordered = tape.replace(
+    'Wait+Screen /waiting/\nShow',
+    'Show\nWait+Screen /waiting/',
+  );
+  assert.match(validateDemoSources(readme, misordered).join('\n'), /order invalid/u);
+
   for (const forbidden of [
     'Type "--api-key secret"',
     'Type "--provider private"',

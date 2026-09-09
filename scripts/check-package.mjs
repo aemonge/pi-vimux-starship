@@ -68,15 +68,39 @@ export function validateDemoSources(readme, tape) {
   for (const required of [
     'Output docs/assets/pi-vimux-starship.gif',
     'Set Theme "Gruvbox Light"',
+    'Set Height 520',
+    'Set Padding 20',
     '--offline',
     '--no-session',
     '--no-extensions',
     '--no-context-files',
+    'Type "clear && pi ',
     'Wait+Screen /waiting/',
+    'Type ":name Public cockpit demo"',
+    'Wait+Screen /Public cockpit demo/',
     'Type ":vimux-health"',
     'Wait+Screen /pi-vimux-starship health/',
   ]) {
     if (!tape.includes(required)) errors.push(`tape missing ${required}`);
+  }
+  const orderedCommands = [
+    'Hide',
+    'Type "clear && pi ',
+    'Wait+Screen /waiting/',
+    'Show',
+    'Type ":name Public cockpit demo"',
+    'Wait+Screen /Public cockpit demo/',
+    'Type ":vimux-health"',
+    'Wait+Screen /pi-vimux-starship health/',
+  ];
+  let previous = -1;
+  for (const command of orderedCommands) {
+    const current = tape.indexOf(command, previous + 1);
+    if (current < 0 || current <= previous) {
+      errors.push(`tape command order invalid at ${command}`);
+      break;
+    }
+    previous = current;
   }
   for (const forbidden of [
     /--api-key/u,

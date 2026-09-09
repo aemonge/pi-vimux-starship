@@ -4,7 +4,7 @@ A Vim- and tmux-inspired command deck for
 [Pi](https://pi.dev): lifecycle context, external-Neovim prompt
 composition, Vim command handling, and responsive operational telemetry in one package.
 
-![Pi cockpit health demonstration](docs/assets/pi-vimux-starship.gif)
+![Pi cockpit header demonstration](docs/assets/pi-vimux-starship.gif)
 
 > [!IMPORTANT]
 > The best experience is **Pi in regular mode inside `nvim +terminal`**, with a blocking
@@ -169,18 +169,20 @@ never keep both cockpit registrations active.
 
 ## Reproducible VHS demo
 
-The checked-in tape is credential-free and invokes `:vimux-health` through Pi Vim's
-Normal-mode EX bridge, not a provider prompt. It runs Pi directly and requires no private
-Neovim bridge. From the repository root, run:
+The checked-in tape is a header-led, credential-free demonstration. It hides routine
+startup, applies one ephemeral no-session title, then invokes `:vimux-health` through Pi
+Vim's Normal-mode EX bridge rather than sending a provider prompt. It runs Pi directly
+and requires no private Neovim bridge. From the repository root, run:
 
 ```bash
 vhs demo/pi-vimux-starship.tape
 ```
 
 It writes `docs/assets/pi-vimux-starship.gif` using VHS's explicit Gruvbox Light terminal
-theme. Review the entire recording for private paths, notifications, or terminal history
-before committing it. The single reviewed GIF is the project's explicit demo-asset
-exception; ordinary screenshots and private runtime captures remain excluded.
+theme and a compact frame that keeps the cockpit prominent. Review the entire recording
+for private paths, notifications, or terminal history before committing it. The single
+reviewed GIF is the project's explicit demo-asset exception; ordinary screenshots and
+private runtime captures remain excluded.
 
 ## Development
 

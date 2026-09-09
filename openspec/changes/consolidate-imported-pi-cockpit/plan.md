@@ -60,9 +60,10 @@ Human can develop, install, and validate the existing Pi cockpit from one indepe
       initializing auxiliary repositories.
 - [ ] The root README leads with the recommended non-fullscreen `nvim +terminal` bridge
       workflow, installation/rollback, `/vimux-health`, limitations, and privacy.
-- [ ] A deterministic VHS tape uses an explicit public theme to demonstrate the cockpit
-      and Normal-mode `:vimux-health` dispatch without provider traffic, private editor
-      configuration, or session content; Human reviews the sanctioned GIF before history.
+- [ ] A deterministic VHS tape hides routine startup and uses an explicit public theme,
+      compact header-led framing, one ephemeral title change, and Normal-mode
+      `:vimux-health` without provider traffic, private editor configuration, or session
+      content; Human reviews the sanctioned GIF before history.
 - [ ] Human validates each Task in Pi and validates the complete package before the Plan
       closes.
 

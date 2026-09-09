@@ -176,8 +176,10 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   or one independently validatable outcome pushes implementation beyond 90 minutes.
 - **Implementation confirmed at:** 2026-09-08T14:57:33Z
 - **Public-demo repair confirmed at:** 2026-09-09T10:16:13Z
+- **Public-presentation repair confirmed at:** 2026-09-09T10:39:13Z
 - **Implementation started at:** 2026-09-08T15:12:54Z
 - **Public-demo repair started at:** 2026-09-09T10:16:13Z
+- **Public-presentation repair started at:** 2026-09-09T10:39:13Z
 - **Work completed at:** 2026-09-08T15:31:36Z, excluding Human-run VHS output.
 - **Assurance started at:** Approximately 2026-09-08T15:29:00Z after focused package
   and documentation checks.
@@ -276,15 +278,40 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `README.md`, `docs/development.md`, `demo/pi-vimux-starship.tape`,
     `scripts/check-package.mjs`, `test/check-package.test.ts`, this Plan/ledger,
     deletion of `vhs-error.log`, and the Human-reviewed final GIF.
-  - History: Expected `fix(demo): make public VHS deterministic` before final GIF
+  - History: `23f429a` — `fix(demo): make public VHS deterministic`; the candidate
+    generated afterward was rejected for framing while its Gruvbox Light colors passed.
+- [x] Step 3.6 Foreground the public cockpit with hidden startup, tighter framing, and a
+      real ephemeral title transition.
+  - Started: 2026-09-09T10:39:13Z
+  - Symptom: The accepted-color candidate spent its opening on the routine `pi ...`
+    launch and let the health report dominate instead of showcasing the header.
+  - Cause: The tape recorded shell startup at 900px height and changed no title before
+    dispatching health, leaving the cockpit small and mostly static.
+  - Estimate: 5–12 minutes; uncertainty is the visual result of hidden VHS startup and
+    the no-session `:name` title transition on Human's host recorder.
+  - Timing: 2026-09-09T10:39:13Z–2026-09-09T10:42:29Z (3m16s including focused
+    checks and the complete deterministic gate).
+  - Check: GREEN — accepted Gruvbox Light, a hidden cleared launch, 520px header-led
+    frame, real ephemeral `:name Public cockpit demo`, stable-screen waits, and
+    `:vimux-health` are enforced in order without provider traffic or synthetic status.
+    Formatting, lint, strict TypeScript, current 92-file and immutable 87-file integrity,
+    a 69-file extracted offline package, 20 tooling tests, 109 Status tests, 87 Header
+    tests, 159 Footer tests, 26 Vim tests, composition, and OpenSpec pass. Human host VHS
+    generation and GIF review remain at the Task boundary.
+  - Paths: `README.md`, `docs/development.md`, `demo/pi-vimux-starship.tape`,
+    `scripts/check-package.mjs`, `test/check-package.test.ts`, this Plan/ledger, and the
+    Human-reviewed final GIF.
+  - History: Expected `fix(demo): foreground the public cockpit` before final GIF
     validation.
 
 ### Human validation — Task 3
 
-- [ ] Human installs the package from one documented source, runs the authored VHS tape
-      in the real bridge, reviews the sanitized GIF, checks `/vimux-health` and the
-      recommended workflow, then reports a clear outcome; preserve original response,
-      canonical outcome, and UTC. First attempt was `NOT VALID` at
-      2026-09-08T15:40:57Z because VHS rejected `$PWD` before recording; Step 3.4 repairs
-      that parser mismatch. The reviewed GIF enters history only at the final `VALID`
-      boundary.
+- [ ] Human runs the public cockpit tape, reviews the sanitized GIF, checks the header
+      presentation and `/vimux-health`, then reports a clear outcome; preserve original
+      response, canonical outcome, and UTC. The parser and private-handoff attempts were
+      `NOT VALID`. The first direct-health candidate received canonical `CHANGE` at
+      2026-09-09T10:32:20Z — original response: “That's not showcasing all the magics
+      of the header ..... and it's showing the start `pi ....` which is obviluly not
+      needed. COlors are excelent !” Human then accepted the bounded honest presentation
+      as good enough while deferring a perfect real OpenSpec/lifecycle recording. The
+      reviewed GIF enters history only at the final `VALID` boundary.
