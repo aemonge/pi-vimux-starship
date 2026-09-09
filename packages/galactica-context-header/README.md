@@ -4,15 +4,25 @@ A dependency-free Pi extension that coordinates the prompt information architect
 through Pi's supported widget and event APIs.
 
 ```text
- answer › implementing selected change ⟩ Pi prompt › Reorganize footer
- wait › Human validation ⟩ Pi prompt › Reorganize footer
-─ 󰏫 ───────────────────────────────  3/3 ⟩  7/15 ›  36/45 ──
-│ prompt/editor
-─ 00:00'00 ───────────── 󰾆 42% › 󰎞 2 ⟩ ▤ 375M ›  12% ⟩ $0.1 ──
- ~/galactica ›  (no Git)            󰚩 Opus › high ›  10% ⟨ 󰠭
+─ 󰠭 › ─────────────────────────────────────────────────────────────────────
+( 3 ›  2 · 00:05'12) working › checking 󰁕 validate result ⟩  task 1/2 ›  stps 3/5
+󰓾 Stabilize runtime and focus in the cockpit
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+[󰆧]  ~/projects/example                                     main ⟩  clean
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+󰚩 Opus › high ⟩ 󰾆 42% › 󰎞 2         10% › 󰜦 $0.10 ⟩  12% ›  375M ›  3/3
+─ 󰏫 ─────────────────────────────────────────────────────────────── ‹ 󰠭 ─
 ```
 
-The above-editor widget owns only current work identity and preserves the
+The preferred editor-deck surface keeps two stable semantic rows. The first is a
+left-packed operational strip: runtime capsule, lifecycle, activity, controlled next
+action, and Task/Step progress. The second is a full-width explicit selection canvas
+that wraps to at most two lines. Every slot remains present; zero, idle, unavailable,
+and unselected states are dim instead of appearing or disappearing. Long content may
+wrap responsively, but runtime state never changes the deck topology. Decorative rails
+remain slim and contain no telemetry.
+
+The legacy above-editor widget owns only current work identity and preserves the
 ` ready ⟩ no focused task` idle row when no work is selected. The leading icon is
 runtime-authoritative: `` while Pi is busy in an active lifecycle and `` while
 settled, waiting, blocked, listening, or aborted. Internal lifecycle states render as
@@ -53,7 +63,24 @@ fallbacks also remain eight cells. Active timing uses the high-contrast deep-cya
 the formatted chronometer changes and is cleared on shutdown. No message content,
 thinking, reasoning, prompts, tool arguments, or child-agent output enters the widget.
 
-The preferred consumer contract is a structured path that never stores separators:
+The additive header protocol projects selection independently from live work:
+
+```ts
+selection: {
+  source: 'openspec' | 'goal' | 'session-work';
+  titles: string[]; // one or two bounded, normalized titles
+  color: HeaderColor;
+} | null;
+suggestion: HeaderSuggestion | null; // controlled enum, never generated prose
+```
+
+Selection priority remains exact OpenSpec Task, Goal, then Session Work. Older
+protocol-1 events may use sanitized non-placeholder work titles as a legacy selection;
+explicit malformed selection is rejected rather than borrowing a fallback. The
+suggestion vocabulary is producer-owned and bounded to lifecycle actions such as
+`complete scope`, `validate result`, `Human validation`, and `resolve blocker`.
+
+The preferred activity contract is a structured path that never stores separators:
 
 ```ts
 work.activityPath?: Array<{
@@ -132,12 +159,13 @@ groups. In the title, lifecycle and bounded activity are blue; the major boundar
 purple; real focus and optional Task hierarchy are green; empty focus fallbacks and the
 footer runtime age/state are dim. Persistent cache-hit presentation is disabled, while
 Fancy Footer retains its internal cache accounting. Compaction count is hidden at zero.
-The compact right telemetry row inserts an active-work island only while child work is
-running. ` N` is the lifecycle-evidenced child-run count; a nonzero subagent count adds
-`›  N`. Each zero section is omitted, so idle state has no island or orphan separator.
-The renderer removes a separator exposed by final narrow-width truncation. It never
-renders the main Pi process, historical worker totals, completed-file progress, queued
-subagent placeholders, or any runtime identity and output fields.
+The first deck row always begins with the compact runtime capsule
+`( children ›  subagents · 00:00'00)`. Each zero count and the settled timer remain
+dim in place; a live count or timer changes color without moving neighboring content.
+The active-run aggregate no longer appears in the lower resource row. Final
+narrow-width fitting remains ANSI-aware and removes exposed trailing separators. The
+renderer never shows the main Pi process, historical worker totals, completed-file
+progress, queued subagent placeholders, or runtime identity and output fields.
 Quota is reduced to the most constrained provider-reported percentage with no weekly
 analysis. Cost is Pi's native estimated session cost in USD, rendered without trailing
 fractional zeros; its preceding `⟩` retains the shared purple major-boundary color while

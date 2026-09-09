@@ -83,8 +83,39 @@ export type HeaderWork = {
   activity?: HeaderActivity;
   activityPath?: HeaderActivitySegment[];
 };
+
+export const HEADER_SELECTION_SOURCES = [
+  'openspec',
+  'goal',
+  'session-work',
+  'legacy',
+] as const;
+
+export type HeaderSelection = {
+  source: (typeof HEADER_SELECTION_SOURCES)[number];
+  titles: string[];
+  color: HeaderColor;
+};
+
+export const HEADER_SUGGESTIONS = [
+  'shape-direction',
+  'complete-scope',
+  'validate-result',
+  'capture-learning',
+  'human-review',
+  'continue',
+  'human-input',
+  'human-validation',
+  'resolve-blocker',
+  'resume-or-redirect',
+] as const;
+
+export type HeaderSuggestion = (typeof HEADER_SUGGESTIONS)[number];
+
 export type HeaderSnapshot = {
   activity?: HeaderActivity | null;
+  selection?: HeaderSelection | null;
+  suggestion?: HeaderSuggestion | null;
   work: HeaderWork | null;
   diagnostics: HeaderDiagnostics | null;
   backgroundActivity: boolean;
@@ -755,6 +786,66 @@ export function parseVimMode(raw: unknown): VimMode | null {
     : null;
 }
 
+function parseHeaderSelection(value: unknown): HeaderSelection | null {
+  if (value === null || !value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  const candidate = value as Record<string, unknown>;
+  if (
+    typeof candidate.source !== 'string' ||
+    !(HEADER_SELECTION_SOURCES as readonly string[]).includes(candidate.source) ||
+    !Array.isArray(candidate.titles) ||
+    candidate.titles.length < 1 ||
+    candidate.titles.length > 2 ||
+    !candidate.titles.every((title) => typeof title === 'string') ||
+    !isHeaderColor(candidate.color)
+  ) {
+    return null;
+  }
+  const titles = candidate.titles.flatMap((title) => {
+    const normalized = normalizeActivityLabel(String(title), 180);
+    return normalized ? [normalized] : [];
+  });
+  if (titles.length !== candidate.titles.length) return null;
+  return {
+    source: candidate.source as HeaderSelection['source'],
+    titles,
+    color: candidate.color,
+  };
+}
+
+function parseHeaderSuggestion(value: unknown): HeaderSuggestion | null {
+  return typeof value === 'string' &&
+    (HEADER_SUGGESTIONS as readonly string[]).includes(value)
+    ? (value as HeaderSuggestion)
+    : null;
+}
+
+const EMPTY_SELECTION_TITLES = new Set([
+  'no focus',
+  'no openspec',
+  'no focused task',
+  'openspec',
+  'openspec unavailable',
+  'openspec clear',
+  'taskflow run',
+]);
+
+function legacyHeaderSelection(work: HeaderWork | null): HeaderSelection | null {
+  if (!work || work.titles.length === 0) return null;
+  const titles = work.titles.slice(0, 2).flatMap((title) => {
+    const normalized = normalizeActivityLabel(title, 180);
+    return normalized ? [normalized] : [];
+  });
+  if (
+    titles.length === 0 ||
+    titles.some((title) => EMPTY_SELECTION_TITLES.has(title.toLowerCase()))
+  ) {
+    return null;
+  }
+  return { source: 'legacy', titles, color: work.color };
+}
+
 export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const message = raw as Record<string, unknown>;
@@ -866,8 +957,17 @@ export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
       })
     : [];
 
+  const hasExplicitSelection = Object.prototype.hasOwnProperty.call(
+    message,
+    'selection',
+  );
+
   return {
     activity: standaloneActivity,
+    selection: hasExplicitSelection
+      ? parseHeaderSelection(message.selection)
+      : legacyHeaderSelection(work),
+    suggestion: parseHeaderSuggestion(message.suggestion),
     work,
     diagnostics,
     backgroundActivity: message.backgroundActivity === true,

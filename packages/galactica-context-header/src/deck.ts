@@ -5,6 +5,8 @@ import type { LspCapability, McpCapability } from './capabilities.ts';
 import type {
   FooterTelemetrySnapshot,
   GitStatusSummary,
+  HeaderActivity,
+  HeaderSuggestion,
   HeaderSnapshot,
   VimMode,
 } from './gauge.ts';
@@ -152,9 +154,9 @@ function formatCost(value: number): string {
   return `$${normalized.toFixed(decimals).replace(/\.?0+$/u, '')}`;
 }
 
-function lifecycle(state: HeaderDeckState): { label: string; focus: string } {
-  const work = state.header?.work;
-  const raw = work?.lifecycle || (state.elapsedMs === null ? 'waiting' : 'working');
+function lifecycle(state: HeaderDeckState): { label: string; active: boolean } {
+  const raw =
+    state.header?.work?.lifecycle || (state.elapsedMs === null ? 'waiting' : 'working');
   const aliases: Record<string, string> = {
     listening: 'waiting',
     active: 'working',
@@ -164,15 +166,9 @@ function lifecycle(state: HeaderDeckState): { label: string; focus: string } {
     'awaiting input': 'waiting',
   };
   const label = safeText(aliases[raw.toLowerCase()] ?? raw, 24) || 'waiting';
-  const path = work?.activityPath ?? [];
-  const activeFocus = safeText(path.at(-1)?.compact || path.at(-1)?.label || '');
-  const titleFocus = safeText(work?.titles.at(-1) ?? '');
   return {
     label,
-    focus:
-      label === 'waiting'
-        ? 'next direction'
-        : titleFocus || activeFocus || 'next direction',
+    active: !['waiting', 'listening'].includes(raw.toLowerCase()),
   };
 }
 
@@ -201,15 +197,25 @@ function wrapFocus(text: string, width: number, maximumLines: number): string[] 
   return lines.slice(0, maximumLines);
 }
 
-function narrativeLines(
+function selectionLines(
   state: HeaderDeckState,
   width: number,
   maximumLines: number,
+  theme: Theme,
 ): string[] {
-  const work = state.header?.work;
-  const titles = (work?.titles ?? []).map((value) => safeText(value)).filter(Boolean);
-  const narrativeTitles = titles.length > 1 ? titles.slice(1) : [];
-  return wrapFocus(narrativeTitles.join(' › '), width, maximumLines);
+  const prefix = '󰓾 ';
+  const indent = ' '.repeat(visibleWidth(prefix));
+  const selection = state.header?.selection;
+  const titles = (selection?.titles ?? [])
+    .map((value) => safeText(value))
+    .filter(Boolean);
+  if (!selection || titles.length === 0) {
+    return [color(theme, 'dim', `${prefix}—`)];
+  }
+  const contentWidth = Math.max(1, width - visibleWidth(prefix));
+  return wrapFocus(titles.join(' › '), contentWidth, maximumLines).map((line, index) =>
+    color(theme, selection.color, `${index === 0 ? prefix : indent}${line}`),
+  );
 }
 
 function semanticSeparator(theme: Theme): string {
@@ -226,15 +232,6 @@ function alignedRows(left: string, right: string, width: number): string[] {
   return [fit(left, width), fit(right, width)].filter(Boolean);
 }
 
-function alignedSingleRow(left: string, right: string, width: number): string {
-  if (!right) return fit(left, width);
-  const rightWidth = visibleWidth(right);
-  if (rightWidth >= width) return fit(right, width);
-  const fittedLeft = truncateToWidth(left, width - rightWidth - 1, '…');
-  const gap = Math.max(1, width - visibleWidth(fittedLeft) - rightWidth);
-  return `${fittedLeft}${' '.repeat(gap)}${right}`;
-}
-
 function progressLine(state: HeaderDeckState, theme: Theme): string {
   const tasks = state.header?.counters.tasks;
   const steps = state.header?.counters.steps;
@@ -243,6 +240,75 @@ function progressLine(state: HeaderDeckState, theme: Theme): string {
   const counterColor = (counter: typeof tasks): string => (counter ? 'success' : 'dim');
   const separatorColor = tasks || steps ? 'success' : 'dim';
   return `${color(theme, counterColor(tasks), ` task ${taskText}`, true)} ${minorSeparator(theme, separatorColor)} ${color(theme, counterColor(steps), ` stps ${stepText}`)}`;
+}
+
+const ACTIVITY_LABELS: Record<HeaderActivity['kind'], string> = {
+  understanding: 'interpreting',
+  inspection: 'inspecting',
+  synthesis: 'synthesizing',
+  planning: 'planning',
+  'skill-proposal': 'proposing skill',
+  mutation: 'updating',
+  implementation: 'implementing',
+  'change-review': 'reviewing change',
+  regression: 'testing',
+  verification: 'checking',
+  'result-review': 'reviewing result',
+  recovery: 'recovering',
+  'awaiting-validation': 'validation',
+  'awaiting-input': 'input',
+  'operation-aborted': 'stopped',
+};
+
+function activityLabel(state: HeaderDeckState): string {
+  const pathActivity = state.header?.work?.activityPath?.at(-1);
+  const pathLabel = safeText(pathActivity?.compact || pathActivity?.label || '');
+  if (pathLabel) return pathLabel;
+  const activity = state.header?.work?.activity;
+  return activity ? ACTIVITY_LABELS[activity.kind] : '';
+}
+
+const SUGGESTION_LABELS: Record<HeaderSuggestion, string> = {
+  'shape-direction': 'shape direction',
+  'complete-scope': 'complete scope',
+  'validate-result': 'validate result',
+  'capture-learning': 'capture learning',
+  'human-review': 'Human review',
+  continue: 'continue',
+  'human-input': 'Human input',
+  'human-validation': 'Human validation',
+  'resolve-blocker': 'resolve blocker',
+  'resume-or-redirect': 'resume or redirect',
+};
+
+function suggestionLine(state: HeaderDeckState, theme: Theme): string {
+  const suggestion = state.header?.suggestion;
+  const semanticColor = !suggestion
+    ? 'dim'
+    : suggestion === 'resolve-blocker'
+      ? 'error'
+      : ['human-input', 'human-validation'].includes(suggestion)
+        ? 'warning'
+        : 'accent';
+  return color(
+    theme,
+    semanticColor,
+    `󰁕 ${suggestion ? SUGGESTION_LABELS[suggestion] : '—'}`,
+  );
+}
+
+function runtimeCapsule(state: HeaderDeckState, theme: Theme): string {
+  const children = state.header?.counters.activeRuns?.children ?? 0;
+  const subagents = state.header?.counters.activeRuns?.subagents ?? 0;
+  const childColor = children > 0 ? 'accent' : 'dim';
+  const subagentColor = subagents > 0 ? 'accent' : 'dim';
+  const separatorColor = children > 0 || subagents > 0 ? 'accent' : 'dim';
+  const timeColor = state.elapsedMs === null ? 'dim' : 'accent';
+  return (
+    `${color(theme, 'dim', '(')}${color(theme, childColor, ` ${children}`)} ` +
+    `${minorSeparator(theme, separatorColor)} ${color(theme, subagentColor, ` ${subagents}`)} ` +
+    `${color(theme, timeColor, `· ${formatDeckElapsed(state.elapsedMs)}`)}${color(theme, 'dim', ')')}`
+  );
 }
 
 function projectLeft(state: HeaderDeckState, theme: Theme): string {
@@ -304,15 +370,6 @@ function compactTelemetryLeft(state: HeaderDeckState, theme: Theme): string {
   ].join(' ');
 }
 
-function activeRunsIsland(state: HeaderDeckState, theme: Theme): string {
-  const children = state.header?.counters.activeRuns?.children ?? 0;
-  const subagents = state.header?.counters.activeRuns?.subagents ?? 0;
-  const parts: string[] = [];
-  if (children > 0) parts.push(color(theme, 'accent', ` ${children}`));
-  if (subagents > 0) parts.push(color(theme, 'accent', ` ${subagents}`));
-  return parts.join(` ${minorSeparator(theme)} `);
-}
-
 function compactTelemetryRight(state: HeaderDeckState, theme: Theme): string {
   const quota = state.footerTelemetry?.quotaPercent;
   const quotaColor =
@@ -357,9 +414,7 @@ function compactTelemetryRight(state: HeaderDeckState, theme: Theme): string {
     minorSeparator(theme),
     color(theme, state.mcp ? 'accent' : 'dim', ` ${mcp}`),
   ].join(' ');
-  return [quotaAndCost, activeRunsIsland(state, theme), resourcesAndCapabilities]
-    .filter(Boolean)
-    .join(` ${semanticSeparator(theme)} `);
+  return [quotaAndCost, resourcesAndCapabilities].join(` ${semanticSeparator(theme)} `);
 }
 
 export function renderHeaderDeck(
@@ -393,36 +448,28 @@ export function renderHeaderDeck(
   )}${bottomSuffix}`;
   const divider = `\u001b[2m${color(theme, 'text', '┈'.repeat(boundedWidth))}\u001b[22m`;
   const current = lifecycle(state);
-  const activity = state.header?.work?.activityPath?.at(-1);
-  const activityText = safeText(activity?.compact || activity?.label || '');
-  const titles = (state.header?.work?.titles ?? [])
-    .map((value) => safeText(value))
-    .filter(Boolean);
-  const planTitle = titles[0] ?? '';
-  const waiting = current.label === 'waiting';
-  const statusLeft = [
-    color(theme, state.header?.work?.color ?? 'accent', current.label, true),
-    color(theme, 'dim', `(${formatDeckElapsed(state.elapsedMs)})`),
-    ...(!waiting && activityText
-      ? [minorSeparator(theme), color(theme, 'accent', activityText)]
-      : []),
+  const activityText = activityLabel(state);
+  const lifecycleColor = state.header?.blocked
+    ? 'error'
+    : state.header?.approvalRequired
+      ? 'warning'
+      : current.active
+        ? (state.header?.work?.color ?? 'accent')
+        : 'dim';
+  const status = [
+    runtimeCapsule(state, theme),
+    color(theme, lifecycleColor, current.label, true),
+    minorSeparator(theme, activityText ? 'accent' : 'dim'),
+    color(theme, activityText ? 'accent' : 'dim', activityText || 'idle'),
+    suggestionLine(state, theme),
     semanticSeparator(theme),
-    ...(waiting
-      ? [
-          color(theme, 'accent', 'next direction'),
-          ...(planTitle
-            ? [minorSeparator(theme), color(theme, 'accent', planTitle)]
-            : []),
-        ]
-      : [color(theme, 'accent', planTitle || current.focus)]),
+    progressLine(state, theme),
   ].join(' ');
-  const focusLines = narrativeLines(state, boundedWidth, 2).map((line) =>
-    color(theme, 'accent', line),
-  );
+  const focusLines = selectionLines(state, boundedWidth, 2, theme);
 
   const rows = [
     top,
-    alignedSingleRow(statusLeft, progressLine(state, theme), boundedWidth),
+    status,
     ...focusLines,
     divider,
     ...alignedRows(projectLeft(state, theme), gitRight(state, theme), boundedWidth),

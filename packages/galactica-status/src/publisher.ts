@@ -501,9 +501,34 @@ export const HEADER_LIFECYCLES = [
 
 export type HeaderLifecycle = (typeof HEADER_LIFECYCLES)[number];
 
+export const HEADER_SELECTION_SOURCES = ['openspec', 'goal', 'session-work'] as const;
+
+export type HeaderSelection = {
+  source: (typeof HEADER_SELECTION_SOURCES)[number];
+  titles: string[];
+  color: WidgetColor;
+};
+
+export const HEADER_SUGGESTIONS = [
+  'shape-direction',
+  'complete-scope',
+  'validate-result',
+  'capture-learning',
+  'human-review',
+  'continue',
+  'human-input',
+  'human-validation',
+  'resolve-blocker',
+  'resume-or-redirect',
+] as const;
+
+export type HeaderSuggestion = (typeof HEADER_SUGGESTIONS)[number];
+
 export type HeaderStatusEvent = {
   protocol: 1;
   activity: HeaderActivity | null;
+  selection: HeaderSelection | null;
+  suggestion: HeaderSuggestion | null;
   work: {
     lifecycle: string;
     titles: string[];
@@ -534,6 +559,72 @@ function narrativeTaskTitle(title: string): string {
     /^(?:Step|Task)\s+\d+(?:\.\d+)*(?:[.:])?\s+/iu,
     '',
   );
+}
+
+function selectedOpenSpecTitles(
+  state: OpenSpecState,
+  focusedTaskId: string | undefined,
+): string[] {
+  const activeTask = focusedTaskId
+    ? (state.allTasks ?? state.pendingTasks).find((task) => task.id === focusedTaskId)
+    : undefined;
+  return activeTask
+    ? [normalizeInline(state.title), narrativeTaskTitle(activeTask.title)]
+    : [normalizeInline(state.changeId), normalizeInline(focusedTaskId ?? 'no focus')];
+}
+
+function headerSelection(options: {
+  openSpec?: OpenSpecState | null;
+  focusedTaskId?: string;
+  goal?: GoalHeaderState | null;
+  workFocus?: SessionWorkFocus;
+}): HeaderSelection | null {
+  if (options.openSpec) {
+    return {
+      source: 'openspec',
+      titles: selectedOpenSpecTitles(options.openSpec, options.focusedTaskId),
+      color: openSpecColor(options.openSpec),
+    };
+  }
+  if (options.goal) {
+    return {
+      source: 'goal',
+      titles: ['Goal'],
+      color: goalHeaderColor(options.goal),
+    };
+  }
+  if (options.workFocus && options.workFocus.state !== 'clear') {
+    return {
+      source: 'session-work',
+      titles: [normalizeInline(options.workFocus.intent)],
+      color: options.workFocus.state === 'validation' ? 'warning' : 'accent',
+    };
+  }
+  return null;
+}
+
+function headerSuggestion(options: {
+  lifecycle: HeaderLifecycle;
+  activity?: HeaderActivity;
+  selection: HeaderSelection | null;
+  approvalRequired: boolean;
+  blocked: boolean;
+}): HeaderSuggestion | null {
+  if (options.blocked) return 'resolve-blocker';
+  if (options.approvalRequired || options.activity?.kind === 'awaiting-validation') {
+    return 'human-validation';
+  }
+  if (options.activity?.kind === 'awaiting-input') return 'human-input';
+  if (options.lifecycle === 'aborted') return 'resume-or-redirect';
+  if (options.lifecycle === 'understanding') return 'shape-direction';
+  if (options.lifecycle === 'working') return 'complete-scope';
+  if (options.lifecycle === 'assuring') return 'validate-result';
+  if (options.lifecycle === 'learning') return 'capture-learning';
+  if (options.lifecycle === 'answering') return 'human-review';
+  if (['waiting', 'listening'].includes(options.lifecycle) && options.selection) {
+    return 'continue';
+  }
+  return null;
 }
 
 function classifyHeaderActivity(sourceText: string): HeaderActivity | undefined {
@@ -970,23 +1061,23 @@ export function buildHeaderStatusEvent(
         ordinaryLifecycle);
   const projectedActivity =
     activityPath !== undefined ? { activityPath } : activity ? { activity } : {};
+  const selection = headerSelection(options);
+  const approvalRequired =
+    options.workFocus?.state === 'validation' || options.goal?.status === 'complete';
+  const suggestion = headerSuggestion({
+    lifecycle,
+    activity,
+    selection,
+    approvalRequired,
+    blocked,
+  });
 
   let work: HeaderStatusEvent['work'] = null;
   if (options.openSpec) {
     const state = options.openSpec;
-    const activeTask = options.focusedTaskId
-      ? (state.allTasks ?? state.pendingTasks).find(
-          (task) => task.id === options.focusedTaskId,
-        )
-      : undefined;
     work = {
       lifecycle,
-      titles: activeTask
-        ? [normalizeInline(state.title), narrativeTaskTitle(activeTask.title)]
-        : [
-            normalizeInline(state.changeId),
-            normalizeInline(options.focusedTaskId ?? 'no focus'),
-          ],
+      titles: selectedOpenSpecTitles(state, options.focusedTaskId),
       color: openSpecColor(state),
       ...projectedActivity,
     };
@@ -1038,6 +1129,8 @@ export function buildHeaderStatusEvent(
   return {
     protocol: 1,
     activity: activity ?? null,
+    selection,
+    suggestion,
     work,
     diagnostics:
       diagnosticsWidget && diagnosticsState
@@ -1052,8 +1145,7 @@ export function buildHeaderStatusEvent(
       (orchestration?.activeWorkers ?? 0) > 0 ||
       (options.goal?.status === 'active' && !options.goal.waiting),
     ),
-    approvalRequired:
-      options.workFocus?.state === 'validation' || options.goal?.status === 'complete',
+    approvalRequired,
     blocked,
     counters: {
       agents: {

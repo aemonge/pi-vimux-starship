@@ -33,15 +33,19 @@ The imported modules currently coordinate through:
 
 - `pi-fancy-footer:widget` — complete protocol-1 widget snapshots;
 - `pi-fancy-footer:ready` — consumer readiness and producer republish;
-- `galactica-status:header` — bounded lifecycle, focus, and active-run snapshots;
+- `galactica-status:header` — bounded lifecycle, selection, suggestion, and active-run
+  snapshots;
 - `galactica-status:prompt-row` — prompt-rail telemetry;
 - `pi-vim:mode-change` — bounded editor mode events;
 - `pi-mcp-adapter/status/v1` — optional MCP availability.
 
 These channels are compatibility boundaries. Consolidation may centralize their types
-but must not silently change semantics or permit sensitive payloads. Active-run telemetry
+but must not silently change semantics or permit sensitive payloads. Selection is an
+additive protocol-1 projection of explicit OpenSpec, Goal, or Session Work state;
+suggestion is controlled vocabulary rather than generated prose. Active-run telemetry
 contains only bounded child and subagent counts derived from Pi lifecycle events. It
-never carries prompts, names, process identities, arguments, or child output.
+never carries prompts, names, process identities, arguments, or child output. The deck
+renders these as a fixed operational row above a bounded full-width selection canvas.
 
 ## Target module shape
 

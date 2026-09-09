@@ -30,9 +30,18 @@ function fixture(): HeaderDeckState {
         ],
         color: 'accent',
       },
+      selection: {
+        source: 'openspec',
+        titles: [
+          'Read-only preflight for the interrupted one-line Review ledger fix',
+          'before further OpenSpec validation and implementation',
+        ],
+        color: 'accent',
+      },
+      suggestion: 'human-validation',
       diagnostics: null,
       backgroundActivity: false,
-      approvalRequired: false,
+      approvalRequired: true,
       blocked: false,
       counters: {
         agents: { active: 0, total: 0 },
@@ -84,11 +93,14 @@ test('renders the approved rich wide header without side borders or spacer rows'
 
   assert.equal(lines.length, 8);
   assert.match(lines[0] ?? '', /^─ 󰠭 › ─+$/u);
-  assert.match(
-    lines[1] ?? '',
-    /^waiting \(00:07'00\) ⟩ next direction › Read-only preflight for the interrupted one-line Review ledger fix\s+ task 0\/1 ›  stps 6\/16$/u,
+  assert.equal(
+    lines[1],
+    "( 2 ›  1 · 00:07'00) waiting › idle 󰁕 Human validation ⟩  task 0/1 ›  stps 6/16",
   );
-  assert.equal(lines[2], 'before further OpenSpec validation and implementation');
+  assert.equal(
+    lines[2],
+    '󰓾 Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation',
+  );
   assert.equal(plain(lines[3] ?? ''), '┈'.repeat(160));
   assert.equal(plain(lines[5] ?? ''), '┈'.repeat(160));
   assert.match(lines[3] ?? '', /^\u001b\[2m/u);
@@ -98,10 +110,7 @@ test('renders the approved rich wide header without side borders or spacer rows'
     / feature\/review-ledger\/preserve-openspec-validation ⟩  2 ›  3 ›  1$/u,
   );
   assert.match(lines[6] ?? '', /^󰚩 GPT-5\.6 Sol › high ⟩ 󰾆 38% › 󰎞 2\s+/u);
-  assert.match(
-    lines[6] ?? '',
-    / 63% › 󰜦 \$5\.16 ⟩  2 ›  1 ⟩  48\.2% ›  268M ›  3\/3$/u,
-  );
+  assert.match(lines[6] ?? '', / 63% › 󰜦 \$5\.16 ⟩  48\.2% ›  268M ›  3\/3$/u);
   assert.equal(lines.join('\n').includes('32K/128K'), false);
   assert.match(lines[7] ?? '', /^─ 󰆾 ─+ ‹ 󰠭 ─$/u);
   assert.ok(lines.every((line) => line.length > 0));
@@ -118,43 +127,65 @@ test('keeps activity and focus distinct on the title row', () => {
     color: 'accent',
     activityPath: [{ id: 'verification', label: 'Running checks', compact: 'verify' }],
   };
+  state.header!.selection = {
+    source: 'openspec',
+    titles: ['Plan title', 'Current task'],
+    color: 'accent',
+  };
+  state.header!.suggestion = 'validate-result';
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.match(lines[1] ?? '', /^assuring \(00:07'00\) › verify ⟩ Plan title\s+/u);
-  assert.equal(lines[2], 'Current task');
+  assert.match(
+    lines[1] ?? '',
+    /^\( 2 ›  1 · 00:07'00\) assuring › verify 󰁕 validate result ⟩  task/u,
+  );
+  assert.equal(lines[2], '󰓾 Plan title › Current task');
   assert.equal(lines.join('\n').split('Running checks').length - 1, 0);
 });
 
-test('moves Plan to the status row and wraps only the current Task', () => {
+test('gives the complete selected scope a bounded full-width focus canvas', () => {
   const state = fixture();
   const expected =
     'Deliver one deliberately long current Task description that needs a second responsive line without repeating its parent Plan title';
   state.header!.work!.titles = ['Parent Plan title', expected];
+  state.header!.selection = {
+    source: 'openspec',
+    titles: ['Parent Plan title', expected],
+    color: 'accent',
+  };
 
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.match(wide[1] ?? '', /next direction › Parent Plan title\s+/u);
-  assert.equal(wide[2], expected);
+  assert.doesNotMatch(wide[1] ?? '', /Parent Plan title/u);
+  assert.equal(wide[2], `󰓾 Parent Plan title › ${expected}`);
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
   assert.match(narrow[0] ?? '', /󰠭/u);
-  assert.match(narrow[1] ?? '', /^waiting \(00:07'00\).+ task 0\/1 ›  stps 6\/16$/u);
+  assert.match(narrow[1] ?? '', /^\( 2 ›  1 · 00:07'00\) waiting › idle/u);
   const dividerIndex = narrow.findIndex((line) => plain(line) === '┈'.repeat(79));
-  const narrative = narrow.slice(dividerIndex - 2, dividerIndex);
-  assert.equal(narrative.length, 2);
-  assert.equal(narrative.join(' '), expected);
-  assert.equal(narrative.join(' ').includes('Parent Plan title'), false);
+  const focus = narrow.slice(dividerIndex - 2, dividerIndex);
+  assert.equal(focus.length, 2);
+  assert.equal(
+    focus.join(' ').replace(/󰓾 |  /gu, ''),
+    `Parent Plan title › ${expected}`,
+  );
 });
 
-test('keeps a single work title on the one-line status row only', () => {
+test('keeps a single selected title on the focus row only', () => {
   const state = fixture();
   state.header!.work!.titles = ['One focused work title'];
+  state.header!.selection = {
+    source: 'session-work',
+    titles: ['One focused work title'],
+    color: 'accent',
+  };
 
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.match(wide[1] ?? '', /next direction › One focused work title.* task/u);
+  assert.doesNotMatch(wide[1] ?? '', /One focused work title/u);
+  assert.equal(wide[2], '󰓾 One focused work title');
   assert.equal(wide.join('\n').split('One focused work title').length - 1, 1);
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
-  assert.match(plain(narrow[1] ?? ''), /next direction › One focused wor.* task/u);
+  assert.equal(plain(narrow[2] ?? ''), '󰓾 One focused work title');
 });
 
 test('bolds only current control and status anchors', () => {
@@ -174,9 +205,10 @@ test('bolds only current control and status anchors', () => {
   assert.ok(bolded.includes('[󰆧]'));
   assert.ok(bolded.includes('⟩'));
   for (const regular of [
-    "(00:07'00)",
-    'next direction',
-    'Read-only preflight for the interrupted one-line Review ledger fix',
+    "( 2 ›  1 · 00:07'00)",
+    'idle',
+    'Human validation',
+    '󰓾 Read-only preflight for the interrupted one-line Review ledger fix',
     'before further OpenSpec validation and implementation',
     ' stps 6/16',
     ' ~/galactica',
@@ -202,16 +234,13 @@ test('keeps lifecycle contextual and renders available progress as one green gro
   renderHeaderDeck(state, 160, theme as never);
 
   assert.ok(colors.includes('warning:waiting'));
-  assert.ok(colors.includes("dim:(00:07'00)"));
-  assert.ok(colors.includes('accent:next direction'));
-  assert.ok(colors.includes('accent:›'));
+  assert.ok(colors.includes("accent:· 00:07'00"));
+  assert.ok(colors.includes('dim:idle'));
+  assert.ok(colors.includes('warning:󰁕 Human validation'));
   assert.ok(
     colors.includes(
-      'accent:Read-only preflight for the interrupted one-line Review ledger fix',
+      'accent:󰓾 Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation',
     ),
-  );
-  assert.ok(
-    colors.includes('accent:before further OpenSpec validation and implementation'),
   );
   assert.ok(colors.includes('success: task 0/1'));
   assert.ok(colors.includes('success:›'));
@@ -293,28 +322,44 @@ test('places a supplied live styled mode icon on the bottom separator', () => {
 
 test('keeps compact telemetry islands together with one gap cell', () => {
   const left = '󰚩 GPT-5.6 Sol › high ⟩ 󰾆 38% › 󰎞 2';
-  const right = ' 63% › 󰜦 $5.16 ⟩  2 ›  1 ⟩  48.2% ›  268M ›  3/3';
+  const right = ' 63% › 󰜦 $5.16 ⟩  48.2% ›  268M ›  3/3';
   const width = visibleWidth(left) + visibleWidth(right) + 1;
 
   const lines = renderHeaderDeck(fixture(), width, plainTheme as never);
   assert.ok(lines.includes(`${left} ${right}`));
 });
 
-test('shows only nonzero active child-run and subagent sections', () => {
+test('keeps child-run and subagent counters visible and changes only their color', () => {
   const state = fixture();
-  state.header!.counters.activeRuns = { children: 1, subagents: 0 };
-  let telemetry = renderHeaderDeck(state, 160, plainTheme as never).join('\n');
-  assert.match(telemetry, /󰜦 \$5\.16 ⟩  1 ⟩ /u);
-  assert.doesNotMatch(telemetry, /|󰈙/u);
-
-  state.header!.counters.activeRuns = { children: 3, subagents: 2 };
-  telemetry = renderHeaderDeck(state, 160, plainTheme as never).join('\n');
-  assert.match(telemetry, / 3 ›  2/u);
+  const colors: string[] = [];
+  const theme = {
+    fg: (semanticColor: string, text: string) => {
+      colors.push(`${semanticColor}:${plain(text)}`);
+      return text;
+    },
+    bold: (text: string) => text,
+  };
 
   state.header!.counters.activeRuns = { children: 0, subagents: 0 };
-  telemetry = renderHeaderDeck(state, 160, plainTheme as never).join('\n');
-  assert.match(telemetry, /󰜦 \$5\.16 ⟩ /u);
-  assert.doesNotMatch(telemetry, /||󰈙/u);
+  let lines = renderHeaderDeck(state, 160, theme as never);
+  assert.match(lines[1] ?? '', /^\( 0 ›  0 · 00:07'00\)/u);
+  assert.ok(colors.includes('dim: 0'));
+  assert.ok(colors.includes('dim: 0'));
+  assert.doesNotMatch(lines[6] ?? '', /||󰈙/u);
+
+  colors.length = 0;
+  state.header!.counters.activeRuns = { children: 1, subagents: 0 };
+  lines = renderHeaderDeck(state, 160, theme as never);
+  assert.match(lines[1] ?? '', /^\( 1 ›  0 · 00:07'00\)/u);
+  assert.ok(colors.includes('accent: 1'));
+  assert.ok(colors.includes('dim: 0'));
+
+  colors.length = 0;
+  state.header!.counters.activeRuns = { children: 3, subagents: 2 };
+  lines = renderHeaderDeck(state, 160, theme as never);
+  assert.match(lines[1] ?? '', /^\( 3 ›  2 · 00:07'00\)/u);
+  assert.ok(colors.includes('accent: 3'));
+  assert.ok(colors.includes('accent: 2'));
 });
 
 test('never leaves a telemetry separator dangling at narrow widths', () => {
@@ -375,7 +420,12 @@ test('renders unavailable optional telemetry honestly', () => {
   state.gitAvailable = false;
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.match(lines[1] ?? '', /waiting \(00:00'00\) ⟩ next direction/u);
+  assert.match(
+    lines[1] ?? '',
+    /^\( 0 ›  0 · 00:00'00\) waiting › idle 󰁕 — ⟩  task — ›  stps —$/u,
+  );
+  assert.equal(lines[2], '󰓾 —');
+  assert.doesNotMatch(lines.join('\n'), /next direction/u);
   assert.match(lines.find((line) => line.includes('')) ?? '', / \(no Git\) ⟩ —/u);
   assert.doesNotMatch(lines.join('\n'), /clean/u);
   assert.match(lines.find((line) => line.includes('')) ?? '', / task — ›  stps —/u);
@@ -383,6 +433,8 @@ test('renders unavailable optional telemetry honestly', () => {
     lines.find((line) => line.includes('')) ?? '',
     /󰜦 — ⟩  — ›  — ›  —/u,
   );
-  assert.doesNotMatch(lines.join('\n'), /||󰈙/u);
+  assert.equal(lines.join('\n').split('').length - 1, 1);
+  assert.equal(lines.join('\n').split('').length - 1, 1);
+  assert.doesNotMatch(lines.join('\n'), /󰈙/u);
   assert.match(lines.find((line) => line.includes('')) ?? '', /󰾆 —.* — › 󰜦 —/u);
 });

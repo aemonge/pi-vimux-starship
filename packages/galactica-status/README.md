@@ -96,7 +96,11 @@ branch-local OpenSpec and Session Work state, commands, restoration, titles, and
 publication.
 
 The header projection uses the rich lifecycle `understanding`, `working`, `waiting`,
-`assuring`, `learning`, `answering`, `blocked`, `listening`, or `aborted`. Direct tool
+`assuring`, `learning`, `answering`, `blocked`, `listening`, or `aborted`. It separately
+publishes one explicit selection with OpenSpec Task → Goal → Session Work precedence,
+or `null` when no work is selected. A controlled suggestion enum communicates only the
+next lifecycle boundary, such as `complete-scope`, `validate-result`,
+`human-validation`, or `resolve-blocker`; it never carries generated prose. Direct tool
 categories, read-only Pi Goal state, and known Taskflow phases move the lifecycle
 without exposing arguments or raw node prose. Goal state is restored from Pi's canonical
 `goal-state` session entries without enabling Goal RPC. An active Goal renders bounded
@@ -122,10 +126,10 @@ tools keep the newest remaining operation visible until all complete; any failed
 operation transitions to bounded recovery. This prevents a completed command from
 looking permanently active while Pi prepares its next action. A Ctrl-C assistant stop
 reason moves it to `aborted` and remains visible until the next turn resets it to
-`understanding`. Header focus selection prefers an exact OpenSpec Task, then Goal, then
-Session Work. Without a selection, active turns use the explicit `OpenSpec › no focus`,
-`no OpenSpec`, or `no focus` state; `Direct response` is never presented as focus and
-Human prompt text is never copied into it.
+`understanding`. Legacy work titles still preserve the existing explicit fallback states for compatible
+consumers. The additive selection field contains only an exact OpenSpec Task, Goal, or
+Session Work; otherwise it is `null`, so the deck renders a stable dim `󰓾 —`. `Direct
+response` is never presented as selection and Human prompt text is never copied into it.
 
 The header protocol also carries a bounded `activeRuns` aggregate. Bash is active from
 Pi's `tool_execution_start` through `tool_execution_end` and contributes only one child
@@ -134,7 +138,8 @@ active only after `sawAgentStart`, before `sawAgentSettled`, and while its `exit
 remains `-1`. Placeholder headline totals are never used because they include queued
 calls. The aggregate contains only child-run and subagent integers; prompts, agent names,
 PIDs, arguments, and child output are discarded. The main Pi process is intentionally
-absent.
+absent. The deck always renders both counts in its first-row runtime capsule and changes
+zero/live color instead of publishing state-dependent display visibility.
 
 The generic outer request has no `change` or `task` arguments and therefore creates no
 durable focus side effect here. Existing specialized Taskflow calls may still acquire

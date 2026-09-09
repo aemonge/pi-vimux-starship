@@ -390,6 +390,12 @@ test('accepts only bounded Footer telemetry and Vim mode events', () => {
 test('parses bounded work counters without accepting impossible progress', () => {
   const parsed = gaugeModule.parseHeaderSnapshot({
     protocol: 1,
+    selection: {
+      source: 'openspec',
+      titles: ['Long Plan title', 'Current Task title'],
+      color: 'accent',
+    },
+    suggestion: 'validate-result',
     counters: {
       agents: { active: 2, total: 3 },
       activeRuns: { children: 3, subagents: 2 },
@@ -397,6 +403,12 @@ test('parses bounded work counters without accepting impossible progress', () =>
       files: { completed: 37, total: 53 },
     },
   });
+  assert.deepEqual(parsed?.selection, {
+    source: 'openspec',
+    titles: ['Long Plan title', 'Current Task title'],
+    color: 'accent',
+  });
+  assert.equal(parsed?.suggestion, 'validate-result');
   assert.deepEqual(parsed?.counters, {
     agents: { active: 2, total: 3 },
     activeRuns: { children: 3, subagents: 2 },
@@ -412,6 +424,28 @@ test('parses bounded work counters without accepting impossible progress', () =>
     },
   });
   assert.deepEqual(invalid?.counters, { agents: { active: 0, total: 0 } });
+});
+
+test('rejects malformed selection and suggestion without borrowing work placeholders', () => {
+  const parsed = gaugeModule.parseHeaderSnapshot({
+    protocol: 1,
+    selection: {
+      source: 'private-agent',
+      titles: ['private generated title'],
+      color: 'accent',
+    },
+    suggestion: 'run private command',
+    work: {
+      lifecycle: 'working',
+      titles: ['no focus'],
+      color: 'accent',
+      activity: { kind: 'inspection' },
+    },
+  });
+
+  assert.equal(parsed?.selection, null);
+  assert.equal(parsed?.suggestion, null);
+  assert.doesNotMatch(JSON.stringify(parsed), /private-agent|generated title|command/u);
 });
 
 test('never derives title focus from conversation-shaped fields', () => {
@@ -433,6 +467,22 @@ test('never derives title focus from conversation-shaped fields', () => {
     },
   });
   assert.equal(explicit?.work?.titles[0], 'Ramona-authored focus update');
+  assert.deepEqual(explicit?.selection, {
+    source: 'legacy',
+    titles: ['Ramona-authored focus update'],
+    color: 'accent',
+  });
+
+  const placeholder = gaugeModule.parseHeaderSnapshot({
+    protocol: 1,
+    work: {
+      lifecycle: 'working',
+      titles: ['OpenSpec', 'no focus'],
+      color: 'accent',
+      activity: { kind: 'inspection' },
+    },
+  });
+  assert.equal(placeholder?.selection, null);
 });
 
 test('parses a bounded multi-segment activity path', () => {

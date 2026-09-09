@@ -261,6 +261,8 @@ test('builds a bounded diagnostics event for the prompt header', () => {
   assert.deepEqual(buildHeaderStatusEvent?.(widgets), {
     protocol: 1,
     activity: null,
+    selection: null,
+    suggestion: null,
     work: null,
     diagnostics: { text: 'clean  ✓ tests', color: 'success', state: 'pass' },
     backgroundActivity: false,
@@ -272,6 +274,8 @@ test('builds a bounded diagnostics event for the prompt header', () => {
   assert.deepEqual(buildHeaderStatusEvent?.([]), {
     protocol: 1,
     activity: null,
+    selection: null,
+    suggestion: null,
     work: null,
     diagnostics: null,
     backgroundActivity: false,
@@ -280,6 +284,45 @@ test('builds a bounded diagnostics event for the prompt header', () => {
     counters: { agents: { active: 0, total: 0 } },
     progress: [],
   });
+});
+
+test('publishes explicit selection and controlled next-action suggestions', () => {
+  const selected = publisherModule.buildHeaderStatusEvent([], {
+    openSpec,
+    focusedTaskId: '3.8',
+    lifecycle: 'assuring',
+    activity: { kind: 'verification' },
+  });
+  assert.deepEqual(selected.selection, {
+    source: 'openspec',
+    titles: [
+      'Shape a Pi-first closed-loop development harness',
+      'Gondolin-backed permission profiles',
+    ],
+    color: 'accent',
+  });
+  assert.equal(selected.suggestion, 'validate-result');
+
+  const idle = publisherModule.buildHeaderStatusEvent([]);
+  assert.equal(idle.selection, null);
+  assert.equal(idle.suggestion, null);
+
+  const restoredWork = publisherModule.buildHeaderStatusEvent([], {
+    workFocus: { state: 'active', intent: 'Continue stable cockpit layout' },
+  });
+  assert.equal(restoredWork.work?.lifecycle, 'listening');
+  assert.equal(restoredWork.suggestion, 'continue');
+
+  const validation = publisherModule.buildHeaderStatusEvent([], {
+    workFocus: { state: 'validation', intent: 'Validate stable cockpit layout' },
+  });
+  assert.deepEqual(validation.selection, {
+    source: 'session-work',
+    titles: ['Validate stable cockpit layout'],
+    color: 'warning',
+  });
+  assert.equal(validation.suggestion, 'human-validation');
+  assert.doesNotMatch(JSON.stringify([selected, validation]), /prompt|command|path/u);
 });
 
 test('publishes bounded active-run counters without runtime identities', () => {
