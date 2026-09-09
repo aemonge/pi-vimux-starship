@@ -67,16 +67,26 @@ export function validateDemoSources(readme, tape) {
   }
   for (const required of [
     'Output docs/assets/pi-vimux-starship.gif',
+    'Set Theme "Gruvbox Light"',
     '--offline',
     '--no-session',
     '--no-extensions',
     '--no-context-files',
-    '/vimux-health',
-    'Type ":x"',
+    'Wait+Screen /waiting/',
+    'Type ":vimux-health"',
+    'Wait+Screen /pi-vimux-starship health/',
   ]) {
     if (!tape.includes(required)) errors.push(`tape missing ${required}`);
   }
-  for (const forbidden of [/--api-key/u, /(?:^|\\s)--provider(?:\\s|$)/u, /token=/iu]) {
+  for (const forbidden of [
+    /--api-key/u,
+    /--provider\b/u,
+    /token=/iu,
+    /\bnvim\b/iu,
+    /Type\s+"i"/u,
+    /Type\s+":x"/u,
+    /externalEditor/iu,
+  ]) {
     if (forbidden.test(tape)) errors.push(`tape contains forbidden ${forbidden}`);
   }
   return errors;

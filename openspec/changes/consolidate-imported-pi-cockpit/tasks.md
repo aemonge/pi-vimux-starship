@@ -175,7 +175,9 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   resolution, the tape requires shipping private bridge logic or captures private data,
   or one independently validatable outcome pushes implementation beyond 90 minutes.
 - **Implementation confirmed at:** 2026-09-08T14:57:33Z
+- **Public-demo repair confirmed at:** 2026-09-09T10:16:13Z
 - **Implementation started at:** 2026-09-08T15:12:54Z
+- **Public-demo repair started at:** 2026-09-09T10:16:13Z
 - **Work completed at:** 2026-09-08T15:31:36Z, excluding Human-run VHS output.
 - **Assurance started at:** Approximately 2026-09-08T15:29:00Z after focused package
   and documentation checks.
@@ -250,8 +252,32 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     strict OpenSpec validation, and diff check PASS. Human VHS rerun remains pending.
   - Paths: `demo/pi-vimux-starship.tape` and this ledger; captured `vhs-error.log`
     remains untracked and excluded from history.
-  - History: Expected `fix(demo): avoid VHS parser interpolation`; external receipt
-    pending independent verification.
+  - History: `3ebeb12` — `fix(demo): avoid VHS parser interpolation`; the rushed
+    follow-up `04d7854` preserved a failed partial GIF and log without closing Task 3.
+- [x] Step 3.5 Replace the private-bridge VHS path with the selected reproducible public
+      cockpit health demonstration.
+  - Started: 2026-09-09T10:16:13Z
+  - Symptom: Both generated GIF attempts ended with
+    `Warning: Unsupported ex command: :x` because the recording never transferred
+    input ownership to the private Neovim bridge.
+  - Cause: The public tape depended on machine-specific Neovim configuration and fixed
+    sleeps even though the package's direct Normal-mode EX bridge can dispatch the
+    credential-free health command without that dependency.
+  - Estimate: 15–30 minutes; uncertainty is VHS synchronization with Pi's interactive
+    screen and final media rendering.
+  - Timing: 2026-09-09T10:16:13Z–2026-09-09T10:21:35Z (5m22s including the
+    diagnosed negative-fixture correction and complete deterministic gate).
+  - Check: GREEN — explicit Gruvbox Light, direct offline package launch, screen-aware
+    waits, `:vimux-health`, and absence of private-editor/Insert/`:x` tape commands are
+    enforced. Formatting, lint, strict TypeScript, current 92-file and immutable 87-file
+    integrity, a 69-file extracted offline package, 20 tooling tests, 109 Status tests,
+    87 Header tests, 159 Footer tests, 26 Vim tests, composition, and OpenSpec pass.
+    Real VHS generation and Human GIF review remain at the Task boundary.
+  - Paths: `README.md`, `docs/development.md`, `demo/pi-vimux-starship.tape`,
+    `scripts/check-package.mjs`, `test/check-package.test.ts`, this Plan/ledger,
+    deletion of `vhs-error.log`, and the Human-reviewed final GIF.
+  - History: Expected `fix(demo): make public VHS deterministic` before final GIF
+    validation.
 
 ### Human validation — Task 3
 

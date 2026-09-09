@@ -53,7 +53,7 @@ test('clean-room Pi probe environment cannot inherit provider or session secrets
   }
 });
 
-test('README and VHS source preserve the credential-free Neovim demonstration', () => {
+test('README and VHS source preserve the credential-free public health demo', () => {
   const readme = [
     'docs/assets/pi-vimux-starship.gif',
     'nvim +terminal',
@@ -64,16 +64,27 @@ test('README and VHS source preserve the credential-free Neovim demonstration', 
   ].join('\n');
   const tape = [
     'Output docs/assets/pi-vimux-starship.gif',
+    'Set Theme "Gruvbox Light"',
     'Type "pi --offline --no-session --no-extensions --no-context-files"',
-    'Type "/vimux-health"',
-    'Type ":x"',
+    'Wait+Screen /waiting/',
+    'Type ":vimux-health"',
+    'Wait+Screen /pi-vimux-starship health/',
   ].join('\n');
 
   assert.deepEqual(validateDemoSources(readme, tape), []);
-  assert.match(
-    validateDemoSources(readme, `${tape}\nType "--api-key secret"`).join('\n'),
-    /forbidden/u,
-  );
+  for (const forbidden of [
+    'Type "--api-key secret"',
+    'Type "--provider private"',
+    'Type "nvim"',
+    'Type "i"',
+    'Type ":x"',
+    'Type "externalEditor"',
+  ]) {
+    assert.match(
+      validateDemoSources(readme, `${tape}\n${forbidden}`).join('\n'),
+      /forbidden/u,
+    );
+  }
 });
 
 test('npm pack JSON exposes exactly one validated path list', () => {

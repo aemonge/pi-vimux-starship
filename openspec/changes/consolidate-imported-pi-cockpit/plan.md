@@ -60,9 +60,9 @@ Human can develop, install, and validate the existing Pi cockpit from one indepe
       initializing auxiliary repositories.
 - [ ] The root README leads with the recommended non-fullscreen `nvim +terminal` bridge
       workflow, installation/rollback, `/vimux-health`, limitations, and privacy.
-- [ ] A deterministic VHS tape demonstrates `Normal → i → Neovim → :x → automatic
-      submission` without provider traffic or private session content; Human runs and
-      reviews the one sanctioned generated GIF before it enters final history.
+- [ ] A deterministic VHS tape uses an explicit public theme to demonstrate the cockpit
+      and Normal-mode `:vimux-health` dispatch without provider traffic, private editor
+      configuration, or session content; Human reviews the sanctioned GIF before history.
 - [ ] Human validates each Task in Pi and validates the complete package before the Plan
       closes.
 
@@ -70,9 +70,9 @@ Human can develop, install, and validate the existing Pi cockpit from one indepe
 
 Included paths are the standalone repository's root package metadata, `packages/`,
 bounded composition code in `src/`, tests, user-facing and maintainer documentation,
-licenses, one VHS tape, one Human-generated reviewed demo GIF, and this Plan's progress
-records. The immutable imported-source manifest preserves the original comparison
-boundary while the current-source manifest records intentional evolution.
+licenses, one public cockpit-health VHS tape, one Human-reviewed demo GIF, and this
+Plan's progress records. The immutable imported-source manifest preserves the original
+comparison boundary while the current-source manifest records intentional evolution.
 
 Excluded are further Insert-to-Neovim changes, transcript-navigation features, npm
 publication, broad platform guarantees, redesign of accepted presentation, shipping the

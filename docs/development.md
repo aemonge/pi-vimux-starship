@@ -113,13 +113,15 @@ repository.
 ## VHS demonstration
 
 The demo source is `demo/pi-vimux-starship.tape`. VHS is intentionally not a project
-runtime or development dependency; run it from a workstation that has the real blocking
-Neovim bridge configured:
+runtime or development dependency. The public cockpit-health recording runs Pi directly
+and does not require the private Neovim bridge:
 
 ```bash
 vhs demo/pi-vimux-starship.tape
 ```
 
-The tape uses offline, sessionless Pi and submits `/vimux-health` rather than a provider
-prompt. Human must review `docs/assets/pi-vimux-starship.gif` for private runtime content
-before its final Task-boundary commit.
+The tape uses offline, sessionless Pi and dispatches `:vimux-health` through Pi Vim's
+Normal-mode EX bridge rather than sending a provider prompt. It pins VHS's Gruvbox Light
+terminal theme and waits for stable screen text instead of relying only on launch timing.
+Human must review `docs/assets/pi-vimux-starship.gif` for private runtime content before
+its final Task-boundary commit.
