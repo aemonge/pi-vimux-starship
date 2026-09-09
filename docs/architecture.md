@@ -46,6 +46,11 @@ suggestion is controlled vocabulary rather than generated prose. Active-run tele
 contains only bounded child and subagent counts derived from Pi lifecycle events. It
 never carries prompts, names, process identities, arguments, or child output. The deck
 renders these as a fixed operational row above a bounded full-width selection canvas.
+Its presentation keeps live runtime and the bold lifecycle anchor blue, uses regular
+blue for explicit selection, and keeps ordinary activity neutral. Recovery activity and
+its direction return to blue together; other ordinary direction remains green.
+Incomplete progress stays neutral and right-aligned, while yellow/red remain reserved
+for attention and blocked states.
 
 ## Target module shape
 

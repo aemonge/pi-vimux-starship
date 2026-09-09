@@ -213,8 +213,11 @@ function selectionLines(
     return [color(theme, 'dim', `${prefix}—`)];
   }
   const contentWidth = Math.max(1, width - visibleWidth(prefix));
+  const selectionColor = ['accent', 'success'].includes(selection.color)
+    ? 'accent'
+    : selection.color;
   return wrapFocus(titles.join(' › '), contentWidth, maximumLines).map((line, index) =>
-    color(theme, selection.color, `${index === 0 ? prefix : indent}${line}`),
+    color(theme, selectionColor, `${index === 0 ? prefix : indent}${line}`),
   );
 }
 
@@ -232,14 +235,27 @@ function alignedRows(left: string, right: string, width: number): string[] {
   return [fit(left, width), fit(right, width)].filter(Boolean);
 }
 
+function alignedSingleRow(left: string, right: string, width: number): string {
+  if (!right) return fit(left, width);
+  const rightWidth = visibleWidth(right);
+  if (rightWidth >= width) return fit(right, width);
+  const fittedLeft = truncateToWidth(left, width - rightWidth - 1, '…');
+  const gap = Math.max(1, width - visibleWidth(fittedLeft) - rightWidth);
+  return `${fittedLeft}${' '.repeat(gap)}${right}`;
+}
+
 function progressLine(state: HeaderDeckState, theme: Theme): string {
   const tasks = state.header?.counters.tasks;
   const steps = state.header?.counters.steps;
   const taskText = tasks ? `${tasks.completed}/${tasks.total}` : '—';
   const stepText = steps ? `${steps.completed}/${steps.total}` : '—';
-  const counterColor = (counter: typeof tasks): string => (counter ? 'success' : 'dim');
-  const separatorColor = tasks || steps ? 'success' : 'dim';
-  return `${color(theme, counterColor(tasks), ` task ${taskText}`, true)} ${minorSeparator(theme, separatorColor)} ${color(theme, counterColor(steps), ` stps ${stepText}`)}`;
+  const counterColor = (counter: typeof tasks): string =>
+    !counter
+      ? 'dim'
+      : counter.total > 0 && counter.completed >= counter.total
+        ? 'success'
+        : 'text';
+  return `${color(theme, counterColor(tasks), ` task ${taskText}`, true)} ${minorSeparator(theme, 'dim')} ${color(theme, counterColor(steps), ` stps ${stepText}`)}`;
 }
 
 const ACTIVITY_LABELS: Record<HeaderActivity['kind'], string> = {
@@ -281,7 +297,11 @@ const SUGGESTION_LABELS: Record<HeaderSuggestion, string> = {
   'resume-or-redirect': 'resume or redirect',
 };
 
-function suggestionLine(state: HeaderDeckState, theme: Theme): string {
+function suggestionLine(
+  state: HeaderDeckState,
+  theme: Theme,
+  recovering: boolean,
+): string {
   const suggestion = state.header?.suggestion;
   const semanticColor = !suggestion
     ? 'dim'
@@ -289,7 +309,9 @@ function suggestionLine(state: HeaderDeckState, theme: Theme): string {
       ? 'error'
       : ['human-input', 'human-validation'].includes(suggestion)
         ? 'warning'
-        : 'accent';
+        : recovering
+          ? 'accent'
+          : 'success';
   return color(
     theme,
     semanticColor,
@@ -302,11 +324,10 @@ function runtimeCapsule(state: HeaderDeckState, theme: Theme): string {
   const subagents = state.header?.counters.activeRuns?.subagents ?? 0;
   const childColor = children > 0 ? 'accent' : 'dim';
   const subagentColor = subagents > 0 ? 'accent' : 'dim';
-  const separatorColor = children > 0 || subagents > 0 ? 'accent' : 'dim';
   const timeColor = state.elapsedMs === null ? 'dim' : 'accent';
   return (
     `${color(theme, 'dim', '(')}${color(theme, childColor, ` ${children}`)} ` +
-    `${minorSeparator(theme, separatorColor)} ${color(theme, subagentColor, ` ${subagents}`)} ` +
+    `${minorSeparator(theme, 'dim')} ${color(theme, subagentColor, ` ${subagents}`)} ` +
     `${color(theme, timeColor, `· ${formatDeckElapsed(state.elapsedMs)}`)}${color(theme, 'dim', ')')}`
   );
 }
@@ -449,6 +470,9 @@ export function renderHeaderDeck(
   const divider = `\u001b[2m${color(theme, 'text', '┈'.repeat(boundedWidth))}\u001b[22m`;
   const current = lifecycle(state);
   const activityText = activityLabel(state);
+  const recovering =
+    state.header?.work?.activity?.kind === 'recovery' ||
+    activityText.toLowerCase() === 'recovering';
   const lifecycleColor = state.header?.blocked
     ? 'error'
     : state.header?.approvalRequired
@@ -456,15 +480,18 @@ export function renderHeaderDeck(
       : current.active
         ? (state.header?.work?.color ?? 'accent')
         : 'dim';
-  const status = [
+  const statusLeft = [
     runtimeCapsule(state, theme),
     color(theme, lifecycleColor, current.label, true),
-    minorSeparator(theme, activityText ? 'accent' : 'dim'),
-    color(theme, activityText ? 'accent' : 'dim', activityText || 'idle'),
-    suggestionLine(state, theme),
     semanticSeparator(theme),
-    progressLine(state, theme),
+    color(
+      theme,
+      activityText ? (recovering ? 'accent' : 'text') : 'dim',
+      activityText || 'idle',
+    ),
+    suggestionLine(state, theme, recovering),
   ].join(' ');
+  const status = alignedSingleRow(statusLeft, progressLine(state, theme), boundedWidth);
   const focusLines = selectionLines(state, boundedWidth, 2, theme);
 
   const rows = [

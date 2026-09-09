@@ -5,7 +5,7 @@ through Pi's supported widget and event APIs.
 
 ```text
 ─ 󰠭 › ─────────────────────────────────────────────────────────────────────
-( 3 ›  2 · 00:05'12) working › checking 󰁕 validate result ⟩  task 1/2 ›  stps 3/5
+( 3 ›  2 · 00:05'12) working ⟩ checking 󰁕 validate result     task 1/2 ›  stps 3/5
 󰓾 Stabilize runtime and focus in the cockpit
 ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 [󰆧]  ~/projects/example                                     main ⟩  clean
@@ -21,6 +21,15 @@ that wraps to at most two lines. Every slot remains present; zero, idle, unavail
 and unselected states are dim instead of appearing or disappearing. Long content may
 wrap responsively, but runtime state never changes the deck topology. Decorative rails
 remain slim and contain no telemetry.
+
+The editor deck uses blue for the active runtime capsule, the bold lifecycle anchor,
+and regular-weight explicit selection. Ordinary active activity remains neutral, except
+that `recovering` and its ordinary suggestion are blue together while only the lifecycle
+is bold. Other ordinary suggestions remain green. Incomplete Task/Step progress is
+neutral until each counter completes and stays right-aligned without a major boundary.
+The lifecycle/activity boundary and rails remain purple; minor separators are dim.
+Human-input and validation cues stay yellow, blockers stay red, and every inactive value
+stays dim.
 
 The legacy above-editor widget owns only current work identity and preserves the
 ` ready ⟩ no focused task` idle row when no work is selected. The leading icon is

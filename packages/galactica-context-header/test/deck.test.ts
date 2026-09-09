@@ -93,10 +93,11 @@ test('renders the approved rich wide header without side borders or spacer rows'
 
   assert.equal(lines.length, 8);
   assert.match(lines[0] ?? '', /^─ 󰠭 › ─+$/u);
-  assert.equal(
-    lines[1],
-    "( 2 ›  1 · 00:07'00) waiting › idle 󰁕 Human validation ⟩  task 0/1 ›  stps 6/16",
+  assert.match(
+    lines[1] ?? '',
+    /^\( 2 ›  1 · 00:07'00\) waiting ⟩ idle 󰁕 Human validation\s+ task 0\/1 ›  stps 6\/16$/u,
   );
+  assert.doesNotMatch(lines[1] ?? '', /Human validation ⟩  task/u);
   assert.equal(
     lines[2],
     '󰓾 Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation',
@@ -137,7 +138,7 @@ test('keeps activity and focus distinct on the title row', () => {
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
   assert.match(
     lines[1] ?? '',
-    /^\( 2 ›  1 · 00:07'00\) assuring › verify 󰁕 validate result ⟩  task/u,
+    /^\( 2 ›  1 · 00:07'00\) assuring ⟩ verify 󰁕 validate result\s+ task/u,
   );
   assert.equal(lines[2], '󰓾 Plan title › Current task');
   assert.equal(lines.join('\n').split('Running checks').length - 1, 0);
@@ -160,7 +161,7 @@ test('gives the complete selected scope a bounded full-width focus canvas', () =
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
   assert.match(narrow[0] ?? '', /󰠭/u);
-  assert.match(narrow[1] ?? '', /^\( 2 ›  1 · 00:07'00\) waiting › idle/u);
+  assert.match(narrow[1] ?? '', /^\( 2 ›  1 · 00:07'00\) waiting ⟩ idle/u);
   const dividerIndex = narrow.findIndex((line) => plain(line) === '┈'.repeat(79));
   const focus = narrow.slice(dividerIndex - 2, dividerIndex);
   assert.equal(focus.length, 2);
@@ -219,7 +220,79 @@ test('bolds only current control and status anchors', () => {
   }
 });
 
-test('keeps lifecycle contextual and renders available progress as one green group', () => {
+test('uses a bold blue lifecycle with neutral activity and green direction', () => {
+  const state = fixture();
+  state.header!.work = {
+    lifecycle: 'assuring',
+    titles: ['Plan title', 'Current task'],
+    color: 'accent',
+    activityPath: [{ id: 'verification', label: 'Running checks', compact: 'verify' }],
+  };
+  state.header!.selection = {
+    source: 'openspec',
+    titles: ['Plan title', 'Current task'],
+    color: 'accent',
+  };
+  state.header!.suggestion = 'validate-result';
+  state.header!.approvalRequired = false;
+  const colors: string[] = [];
+  const theme = {
+    fg: (semanticColor: string, text: string) => {
+      colors.push(`${semanticColor}:${plain(text)}`);
+      return text;
+    },
+    bold: (text: string) => text,
+  };
+
+  renderHeaderDeck(state, 160, theme as never);
+
+  assert.ok(colors.includes('accent:assuring'));
+  assert.ok(colors.includes('text:verify'));
+  assert.ok(colors.includes('success:󰁕 validate result'));
+  assert.ok(colors.includes('accent:󰓾 Plan title › Current task'));
+  assert.equal(colors.includes('accent:verify'), false);
+  assert.equal(colors.includes('accent:󰁕 validate result'), false);
+});
+
+test('colors recovery activity and direction blue while only lifecycle stays bold', () => {
+  const state = fixture();
+  state.header!.work = {
+    lifecycle: 'working',
+    titles: ['Repair runtime state'],
+    color: 'accent',
+    activity: { kind: 'recovery' },
+  };
+  state.header!.selection = {
+    source: 'session-work',
+    titles: ['Repair runtime state'],
+    color: 'accent',
+  };
+  state.header!.suggestion = 'complete-scope';
+  state.header!.approvalRequired = false;
+  const colors: string[] = [];
+  const bolded: string[] = [];
+  const theme = {
+    fg: (semanticColor: string, text: string) => {
+      colors.push(`${semanticColor}:${plain(text)}`);
+      return text;
+    },
+    bold: (text: string) => {
+      bolded.push(text);
+      return text;
+    },
+  };
+
+  const lines = renderHeaderDeck(state, 160, theme as never);
+
+  assert.match(lines[1] ?? '', /working ⟩ recovering 󰁕 complete scope\s+ task/u);
+  assert.ok(colors.includes('accent:recovering'));
+  assert.ok(colors.includes('accent:󰁕 complete scope'));
+  assert.ok(bolded.includes('working'));
+  assert.equal(bolded.includes('recovering'), false);
+  assert.equal(bolded.includes('󰁕 complete scope'), false);
+});
+
+test('keeps lifecycle contextual and colors progress by completion', () => {
   const state = fixture();
   state.header!.work!.color = 'warning';
   const colors: string[] = [];
@@ -242,9 +315,9 @@ test('keeps lifecycle contextual and renders available progress as one green gro
       'accent:󰓾 Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation',
     ),
   );
-  assert.ok(colors.includes('success: task 0/1'));
-  assert.ok(colors.includes('success:›'));
-  assert.ok(colors.includes('success: stps 6/16'));
+  assert.ok(colors.includes('text: task 0/1'));
+  assert.ok(colors.includes('dim:›'));
+  assert.ok(colors.includes('text: stps 6/16'));
 
   state.header!.counters.tasks = { completed: 1, total: 1 };
   state.header!.counters.steps = { completed: 16, total: 16 };
@@ -264,8 +337,8 @@ test('keeps lifecycle contextual and renders available progress as one green gro
   state.header!.counters.tasks = { completed: 0, total: 1 };
   colors.length = 0;
   renderHeaderDeck(state, 160, theme as never);
-  assert.ok(colors.includes('success: task 0/1'));
-  assert.ok(colors.includes('success:›'));
+  assert.ok(colors.includes('text: task 0/1'));
+  assert.ok(colors.includes('dim:›'));
   assert.ok(colors.includes('dim: stps —'));
 
   state.header!.counters.tasks = undefined;
@@ -273,7 +346,7 @@ test('keeps lifecycle contextual and renders available progress as one green gro
   colors.length = 0;
   renderHeaderDeck(state, 160, theme as never);
   assert.ok(colors.includes('dim: task —'));
-  assert.ok(colors.includes('success:›'));
+  assert.ok(colors.includes('dim:›'));
   assert.ok(colors.includes('success: stps 10/10'));
 });
 
@@ -422,7 +495,7 @@ test('renders unavailable optional telemetry honestly', () => {
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
   assert.match(
     lines[1] ?? '',
-    /^\( 0 ›  0 · 00:00'00\) waiting › idle 󰁕 — ⟩  task — ›  stps —$/u,
+    /^\( 0 ›  0 · 00:00'00\) waiting ⟩ idle 󰁕 —\s+ task — ›  stps —$/u,
   );
   assert.equal(lines[2], '󰓾 —');
   assert.doesNotMatch(lines.join('\n'), /next direction/u);
