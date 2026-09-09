@@ -7,13 +7,13 @@ editor widget itself.
 ## Architecture
 
 ```text
-session + Goal metadata / OpenSpec CLI / aggregate JSON state / optional argv command
-                                       │
+Pi tool lifecycle + session/Goal metadata + OpenSpec CLI + aggregate JSON state
+                                  │
                                   ▼
                         normalized immutable state
                                   │
                                   ▼
-                   pi-fancy-footer protocol-1 snapshots
+             bounded header events + pi-fancy-footer snapshots
 ```
 
 The five stable widget IDs are:
@@ -126,6 +126,15 @@ reason moves it to `aborted` and remains visible until the next turn resets it t
 Session Work. Without a selection, active turns use the explicit `OpenSpec › no focus`,
 `no OpenSpec`, or `no focus` state; `Direct response` is never presented as focus and
 Human prompt text is never copied into it.
+
+The header protocol also carries a bounded `activeRuns` aggregate. Bash is active from
+Pi's `tool_execution_start` through `tool_execution_end` and contributes only one child
+run. Subagent progress is read structurally from `pi-subagent` result details: a call is
+active only after `sawAgentStart`, before `sawAgentSettled`, and while its `exitCode`
+remains `-1`. Placeholder headline totals are never used because they include queued
+calls. The aggregate contains only child-run and subagent integers; prompts, agent names,
+PIDs, arguments, and child output are discarded. The main Pi process is intentionally
+absent.
 
 The generic outer request has no `change` or `task` arguments and therefore creates no
 durable focus side effect here. Existing specialized Taskflow calls may still acquire

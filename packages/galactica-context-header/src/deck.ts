@@ -41,6 +41,8 @@ const ANSI_ESCAPE = new RegExp(
   'gu',
 );
 const CONTROL_CHARACTER = new RegExp('[\\u0000-\\u001f\\u007f-\\u009f]', 'gu');
+const TRAILING_ANSI_ESCAPE =
+  /\u001b(?:\][\s\S]*?(?:\u0007|\u001b\\)|\[[0-?]*[ -/]*[@-~]|[@-_])\s*$/u;
 
 function safeText(value: string, maximum = 180): string {
   return Array.from(
@@ -62,6 +64,24 @@ function color(theme: Theme, name: string, text: string, bold = false): string {
 
 function fit(line: string, width: number): string {
   return truncateToWidth(line, Math.max(0, width), '');
+}
+
+function trimTrailingFormatting(line: string): string {
+  let trimmed = line.trimEnd();
+  while (TRAILING_ANSI_ESCAPE.test(trimmed)) {
+    trimmed = trimmed.replace(TRAILING_ANSI_ESCAPE, '').trimEnd();
+  }
+  return trimmed;
+}
+
+function fitWithoutDanglingSeparator(line: string, width: number): string {
+  let fitted = fit(line, width);
+  while (true) {
+    const visible = fitted.replace(ANSI_ESCAPE, '').trimEnd();
+    const separator = visible.at(-1);
+    if (separator !== '›' && separator !== '⟩') return fitted;
+    fitted = trimTrailingFormatting(fitted.slice(0, fitted.lastIndexOf(separator)));
+  }
 }
 
 const MODE_ICONS: Record<VimMode, string> = {
@@ -284,10 +304,16 @@ function compactTelemetryLeft(state: HeaderDeckState, theme: Theme): string {
   ].join(' ');
 }
 
+function activeRunsIsland(state: HeaderDeckState, theme: Theme): string {
+  const children = state.header?.counters.activeRuns?.children ?? 0;
+  const subagents = state.header?.counters.activeRuns?.subagents ?? 0;
+  const parts: string[] = [];
+  if (children > 0) parts.push(color(theme, 'accent', ` ${children}`));
+  if (subagents > 0) parts.push(color(theme, 'accent', ` ${subagents}`));
+  return parts.join(` ${minorSeparator(theme)} `);
+}
+
 function compactTelemetryRight(state: HeaderDeckState, theme: Theme): string {
-  const counters = state.header?.counters;
-  const agents = counters?.agents ?? { active: 0, total: 0 };
-  const files = counters?.files;
   const quota = state.footerTelemetry?.quotaPercent;
   const quotaColor =
     quota !== undefined && quota >= 80
@@ -303,7 +329,7 @@ function compactTelemetryRight(state: HeaderDeckState, theme: Theme): string {
         ? 'accent'
         : 'dim';
   const mcp = state.mcp ? `${state.mcp.healthy}/${state.mcp.total}` : '—';
-  return [
+  const quotaAndCost = [
     color(
       theme,
       quotaColor,
@@ -315,19 +341,8 @@ function compactTelemetryRight(state: HeaderDeckState, theme: Theme): string {
       state.footerTelemetry ? 'accent' : 'dim',
       `󰜦 ${state.footerTelemetry ? formatCost(state.footerTelemetry.totalCost) : '—'}`,
     ),
-    semanticSeparator(theme),
-    color(
-      theme,
-      agents.active > 0 ? 'accent' : 'dim',
-      ` ${agents.active}/${agents.total}`,
-    ),
-    minorSeparator(theme),
-    color(
-      theme,
-      files ? 'accent' : 'dim',
-      `󰈙 ${files ? `${files.completed}/${files.total}` : '—'}`,
-    ),
-    semanticSeparator(theme),
+  ].join(' ');
+  const resourcesAndCapabilities = [
     color(
       theme,
       resourceColor,
@@ -342,6 +357,9 @@ function compactTelemetryRight(state: HeaderDeckState, theme: Theme): string {
     minorSeparator(theme),
     color(theme, state.mcp ? 'accent' : 'dim', ` ${mcp}`),
   ].join(' ');
+  return [quotaAndCost, activeRunsIsland(state, theme), resourcesAndCapabilities]
+    .filter(Boolean)
+    .join(` ${semanticSeparator(theme)} `);
 }
 
 export function renderHeaderDeck(
@@ -416,5 +434,5 @@ export function renderHeaderDeck(
     ),
     bottom,
   ];
-  return rows.map((line) => fit(line, boundedWidth));
+  return rows.map((line) => fitWithoutDanglingSeparator(line, boundedWidth));
 }

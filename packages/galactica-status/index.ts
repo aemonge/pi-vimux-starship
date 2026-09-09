@@ -56,6 +56,7 @@ import {
   taskflowPhaseHeaderLifecycle,
   taskflowUpdateHeaderPhase,
 } from './src/publisher.ts';
+import { RuntimeRunTracker } from './src/runtime-runs.ts';
 import {
   AtomicStatusStore,
   createDebouncer,
@@ -169,6 +170,7 @@ class GalacticaStatusRuntime {
   private liveTaskflowPhase: string | undefined;
   private readonly directToolActivities = new Map<string, HeaderActivity>();
   private directToolFailed = false;
+  private readonly runtimeRuns = new RuntimeRunTracker();
   private readonly store: AtomicStatusStore;
   private readonly pi: ExtensionAPI;
   private readonly ctx: SessionContext;
@@ -515,6 +517,7 @@ class GalacticaStatusRuntime {
         fallbackTitles,
         goal,
         goalAutomaticTurnLimit: this.goalAutomaticTurnLimit,
+        activeRuns: this.runtimeRuns.snapshot(),
       }),
     );
     this.updateTitle(snapshot);
@@ -681,6 +684,18 @@ class GalacticaStatusRuntime {
     );
     this.directToolFailed = false;
     this.setLiveActivity(completion);
+  }
+
+  beginRuntimeRun(toolCallId: string, toolName: string): void {
+    if (this.runtimeRuns.begin(toolCallId, toolName)) this.publish();
+  }
+
+  updateRuntimeRun(toolCallId: string, partialResult: unknown): void {
+    if (this.runtimeRuns.update(toolCallId, partialResult)) this.publish();
+  }
+
+  finishRuntimeRun(toolCallId: string): void {
+    if (this.runtimeRuns.finish(toolCallId)) this.publish();
   }
 
   setTaskflowPhase(phase: string | undefined): void {
@@ -1013,6 +1028,10 @@ export default function galacticaStatus(pi: ExtensionAPI): void {
     runtime?.beginTurn(event.prompt);
   });
 
+  pi.on('tool_execution_start', (event) => {
+    runtime?.beginRuntimeRun(event.toolCallId, event.toolName);
+  });
+
   pi.on('tool_call', (event) => {
     if (event.toolName !== 'taskflow') {
       runtime?.beginDirectTool(
@@ -1053,12 +1072,14 @@ export default function galacticaStatus(pi: ExtensionAPI): void {
   });
 
   pi.on('tool_execution_update', (event) => {
+    runtime?.updateRuntimeRun(event.toolCallId, event.partialResult);
     if (event.toolName !== 'taskflow') return;
     const phase = taskflowUpdateHeaderPhase(event.partialResult);
     if (phase) runtime?.setTaskflowPhase(phase);
   });
 
   pi.on('tool_execution_end', (event) => {
+    runtime?.finishRuntimeRun(event.toolCallId);
     queueMicrotask(() => runtime?.syncGoalFromSession());
     if (event.toolName !== 'taskflow') {
       runtime?.finishDirectTool(event.toolCallId, event.isError);

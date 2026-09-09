@@ -33,13 +33,15 @@ The imported modules currently coordinate through:
 
 - `pi-fancy-footer:widget` — complete protocol-1 widget snapshots;
 - `pi-fancy-footer:ready` — consumer readiness and producer republish;
-- `galactica-status:header` — bounded lifecycle/focus snapshots;
+- `galactica-status:header` — bounded lifecycle, focus, and active-run snapshots;
 - `galactica-status:prompt-row` — prompt-rail telemetry;
 - `pi-vim:mode-change` — bounded editor mode events;
 - `pi-mcp-adapter/status/v1` — optional MCP availability.
 
 These channels are compatibility boundaries. Consolidation may centralize their types
-but must not silently change semantics or permit sensitive payloads.
+but must not silently change semantics or permit sensitive payloads. Active-run telemetry
+contains only bounded child and subagent counts derived from Pi lifecycle events. It
+never carries prompts, names, process identities, arguments, or child output.
 
 ## Target module shape
 

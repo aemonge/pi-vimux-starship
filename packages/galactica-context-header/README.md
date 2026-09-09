@@ -132,6 +132,12 @@ groups. In the title, lifecycle and bounded activity are blue; the major boundar
 purple; real focus and optional Task hierarchy are green; empty focus fallbacks and the
 footer runtime age/state are dim. Persistent cache-hit presentation is disabled, while
 Fancy Footer retains its internal cache accounting. Compaction count is hidden at zero.
+The compact right telemetry row inserts an active-work island only while child work is
+running. ` N` is the lifecycle-evidenced child-run count; a nonzero subagent count adds
+`›  N`. Each zero section is omitted, so idle state has no island or orphan separator.
+The renderer removes a separator exposed by final narrow-width truncation. It never
+renders the main Pi process, historical worker totals, completed-file progress, queued
+subagent placeholders, or any runtime identity and output fields.
 Quota is reduced to the most constrained provider-reported percentage with no weekly
 analysis. Cost is Pi's native estimated session cost in USD, rendered without trailing
 fractional zeros; its preceding `⟩` retains the shared purple major-boundary color while

@@ -392,19 +392,24 @@ test('parses bounded work counters without accepting impossible progress', () =>
     protocol: 1,
     counters: {
       agents: { active: 2, total: 3 },
+      activeRuns: { children: 3, subagents: 2 },
       steps: { completed: 6, total: 16 },
       files: { completed: 37, total: 53 },
     },
   });
   assert.deepEqual(parsed?.counters, {
     agents: { active: 2, total: 3 },
+    activeRuns: { children: 3, subagents: 2 },
     steps: { completed: 6, total: 16 },
     files: { completed: 37, total: 53 },
   });
 
   const invalid = gaugeModule.parseHeaderSnapshot({
     protocol: 1,
-    counters: { agents: { active: 4, total: 3 } },
+    counters: {
+      agents: { active: 4, total: 3 },
+      activeRuns: { children: 1, subagents: 2 },
+    },
   });
   assert.deepEqual(invalid?.counters, { agents: { active: 0, total: 0 } });
 });

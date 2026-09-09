@@ -1,5 +1,6 @@
 import type { SessionWorkFocus } from './active-work.ts';
 import type { GoalHeaderState } from './goal.ts';
+import type { ActiveRuntimeRuns } from './runtime-runs.ts';
 import type {
   DiagnosticsState,
   FancyFooterMessage,
@@ -520,6 +521,7 @@ export type HeaderStatusEvent = {
   blocked: boolean;
   counters: {
     agents: { active: number; total: number };
+    activeRuns?: ActiveRuntimeRuns;
     tasks?: { completed: number; total: number };
     steps?: { completed: number; total: number };
     files?: { completed: number; total: number };
@@ -914,6 +916,7 @@ export function buildHeaderStatusEvent(
     fallbackTitles?: string[];
     goal?: GoalHeaderState | null;
     goalAutomaticTurnLimit?: number;
+    activeRuns?: ActiveRuntimeRuns;
   } = {},
 ): HeaderStatusEvent {
   const diagnosticsWidget = widgets.find(
@@ -1059,6 +1062,7 @@ export function buildHeaderStatusEvent(
           ? Math.max(orchestration.activeWorkers, orchestration.totalWorkers ?? 0)
           : 0,
       },
+      ...(options.activeRuns ? { activeRuns: options.activeRuns } : {}),
       ...(options.openSpec?.hierarchy
         ? { tasks: options.openSpec.hierarchy.tasks }
         : {}),

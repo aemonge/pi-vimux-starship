@@ -282,6 +282,18 @@ test('builds a bounded diagnostics event for the prompt header', () => {
   });
 });
 
+test('publishes bounded active-run counters without runtime identities', () => {
+  const event = publisherModule.buildHeaderStatusEvent([], {
+    activeRuns: { children: 3, subagents: 2 },
+  });
+
+  assert.deepEqual(event.counters, {
+    agents: { active: 0, total: 0 },
+    activeRuns: { children: 3, subagents: 2 },
+  });
+  assert.doesNotMatch(JSON.stringify(event.counters), /prompt|pid|argument|output/u);
+});
+
 test('publishes bounded activity with an honest empty focus', () => {
   const event = publisherModule.buildHeaderStatusEvent([], {
     activity: { kind: 'planning' },

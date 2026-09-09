@@ -36,6 +36,7 @@ function fixture(): HeaderDeckState {
       blocked: false,
       counters: {
         agents: { active: 0, total: 0 },
+        activeRuns: { children: 2, subagents: 1 },
         tasks: { completed: 0, total: 1 },
         steps: { completed: 6, total: 16 },
         files: { completed: 37, total: 53 },
@@ -99,7 +100,7 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.match(lines[6] ?? '', /^󰚩 GPT-5\.6 Sol › high ⟩ 󰾆 38% › 󰎞 2\s+/u);
   assert.match(
     lines[6] ?? '',
-    / 63% › 󰜦 \$5\.16 ⟩  0\/0 › 󰈙 37\/53 ⟩  48\.2% ›  268M ›  3\/3$/u,
+    / 63% › 󰜦 \$5\.16 ⟩  2 ›  1 ⟩  48\.2% ›  268M ›  3\/3$/u,
   );
   assert.equal(lines.join('\n').includes('32K/128K'), false);
   assert.match(lines[7] ?? '', /^─ 󰆾 ─+ ‹ 󰠭 ─$/u);
@@ -292,11 +293,38 @@ test('places a supplied live styled mode icon on the bottom separator', () => {
 
 test('keeps compact telemetry islands together with one gap cell', () => {
   const left = '󰚩 GPT-5.6 Sol › high ⟩ 󰾆 38% › 󰎞 2';
-  const right = ' 63% › 󰜦 $5.16 ⟩  0/0 › 󰈙 37/53 ⟩  48.2% ›  268M ›  3/3';
+  const right = ' 63% › 󰜦 $5.16 ⟩  2 ›  1 ⟩  48.2% ›  268M ›  3/3';
   const width = visibleWidth(left) + visibleWidth(right) + 1;
 
   const lines = renderHeaderDeck(fixture(), width, plainTheme as never);
   assert.ok(lines.includes(`${left} ${right}`));
+});
+
+test('shows only nonzero active child-run and subagent sections', () => {
+  const state = fixture();
+  state.header!.counters.activeRuns = { children: 1, subagents: 0 };
+  let telemetry = renderHeaderDeck(state, 160, plainTheme as never).join('\n');
+  assert.match(telemetry, /󰜦 \$5\.16 ⟩  1 ⟩ /u);
+  assert.doesNotMatch(telemetry, /|󰈙/u);
+
+  state.header!.counters.activeRuns = { children: 3, subagents: 2 };
+  telemetry = renderHeaderDeck(state, 160, plainTheme as never).join('\n');
+  assert.match(telemetry, / 3 ›  2/u);
+
+  state.header!.counters.activeRuns = { children: 0, subagents: 0 };
+  telemetry = renderHeaderDeck(state, 160, plainTheme as never).join('\n');
+  assert.match(telemetry, /󰜦 \$5\.16 ⟩ /u);
+  assert.doesNotMatch(telemetry, /||󰈙/u);
+});
+
+test('never leaves a telemetry separator dangling at narrow widths', () => {
+  for (let width = 20; width <= 100; width += 1) {
+    const lines = renderHeaderDeck(fixture(), width, plainTheme as never);
+    assert.ok(
+      lines.every((line) => !/[›⟩]\s*$/u.test(plain(line))),
+      String(width),
+    );
+  }
 });
 
 test('preserves ANSI-safe width with a coloring theme', () => {
@@ -353,7 +381,8 @@ test('renders unavailable optional telemetry honestly', () => {
   assert.match(lines.find((line) => line.includes('')) ?? '', / task — ›  stps —/u);
   assert.match(
     lines.find((line) => line.includes('')) ?? '',
-    / 0\/0 › 󰈙 — ⟩  — ›  — ›  —/u,
+    /󰜦 — ⟩  — ›  — ›  —/u,
   );
+  assert.doesNotMatch(lines.join('\n'), /||󰈙/u);
   assert.match(lines.find((line) => line.includes('')) ?? '', /󰾆 —.* — › 󰜦 —/u);
 });

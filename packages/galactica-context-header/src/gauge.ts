@@ -92,6 +92,7 @@ export type HeaderSnapshot = {
   blocked: boolean;
   counters: {
     agents: { active: number; total: number };
+    activeRuns?: { children: number; subagents: number };
     tasks?: { completed: number; total: number };
     steps?: { completed: number; total: number };
     files?: { completed: number; total: number };
@@ -681,6 +682,27 @@ export function parseHeaderActivityPath(
   return path;
 }
 
+function boundedActiveRuns(
+  value: unknown,
+): { children: number; subagents: number } | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const candidate = value as Record<string, unknown>;
+  if (
+    !Number.isInteger(candidate.children) ||
+    !Number.isInteger(candidate.subagents) ||
+    Number(candidate.children) < 0 ||
+    Number(candidate.subagents) < 0 ||
+    Number(candidate.subagents) > Number(candidate.children) ||
+    Number(candidate.children) > 999_999
+  ) {
+    return undefined;
+  }
+  return {
+    children: Number(candidate.children),
+    subagents: Number(candidate.subagents),
+  };
+}
+
 function boundedCounterPair(
   value: unknown,
   completedKey: string,
@@ -810,6 +832,7 @@ export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
       ? (message.counters as Record<string, unknown>)
       : {};
   const agents = boundedCounterPair(rawCounters.agents, 'active');
+  const activeRuns = boundedActiveRuns(rawCounters.activeRuns);
   const tasks = boundedCounterPair(rawCounters.tasks, 'completed');
   const steps = boundedCounterPair(rawCounters.steps, 'completed');
   const files = boundedCounterPair(rawCounters.files, 'completed');
@@ -854,6 +877,7 @@ export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
       agents: agents
         ? { active: agents.completed, total: agents.total }
         : { active: 0, total: 0 },
+      ...(activeRuns ? { activeRuns } : {}),
       ...(tasks ? { tasks } : {}),
       ...(steps ? { steps } : {}),
       ...(files ? { files } : {}),

@@ -409,14 +409,18 @@ function latestWorkFooterMessage(harness: RuntimeHarness): unknown {
   return undefined;
 }
 
-function latestHeaderWork(harness: RuntimeHarness): unknown {
+function latestHeader(harness: RuntimeHarness): Record<string, unknown> | undefined {
   for (let index = harness.sharedEvents.length - 1; index >= 0; index -= 1) {
     const event = harness.sharedEvents[index];
     if (event?.channel !== 'galactica-status:header') continue;
     if (typeof event.message !== 'object' || event.message === null) return undefined;
-    return 'work' in event.message ? event.message.work : undefined;
+    return event.message as Record<string, unknown>;
   }
   return undefined;
+}
+
+function latestHeaderWork(harness: RuntimeHarness): unknown {
+  return latestHeader(harness)?.work;
 }
 
 function openSpecFooterText(message: unknown): string | undefined {
@@ -1093,6 +1097,95 @@ test('parallel direct tools stay active until completion and surface bounded rec
       activity: { kind: 'recovery' },
     });
     assert.doesNotMatch(JSON.stringify(latestHeaderWork(harness)), /private|\.md/u);
+  } finally {
+    await harness.stop();
+  }
+});
+
+test('publishes only lifecycle-evidenced active child runs and subagents', async () => {
+  const harness = new RuntimeHarness();
+  try {
+    await harness.emit('session_start', { reason: 'startup' });
+    const initialTitleCount = harness.titles.length;
+
+    await harness.emit('tool_execution_start', {
+      toolCallId: 'bash-active',
+      toolName: 'bash',
+      args: { command: 'private command' },
+    });
+    assert.deepEqual(latestHeader(harness)?.counters, {
+      agents: { active: 0, total: 0 },
+      activeRuns: { children: 1, subagents: 0 },
+    });
+
+    await harness.emit('tool_execution_start', {
+      toolCallId: 'subagent-active',
+      toolName: 'subagent',
+      args: { calls: [{ agent: 'private-agent', prompt: 'private prompt' }] },
+    });
+    assert.deepEqual(latestHeader(harness)?.counters, {
+      agents: { active: 0, total: 0 },
+      activeRuns: { children: 1, subagents: 0 },
+    });
+
+    await harness.emit('tool_execution_update', {
+      toolCallId: 'subagent-active',
+      toolName: 'subagent',
+      args: { calls: [] },
+      partialResult: {
+        content: [{ type: 'text', text: 'private child output' }],
+        details: {
+          kind: 'pi-subagent',
+          results: [
+            { exitCode: -1, agent: 'queued-agent', prompt: 'queued prompt' },
+            {
+              exitCode: -1,
+              sawAgentStart: true,
+              sawAgentSettled: false,
+              agent: 'active-agent',
+              prompt: 'active prompt',
+            },
+            {
+              exitCode: -1,
+              sawAgentStart: true,
+              agent: 'second-active-agent',
+              prompt: 'second active prompt',
+            },
+            {
+              exitCode: 0,
+              sawAgentStart: true,
+              sawAgentSettled: true,
+              agent: 'complete-agent',
+              prompt: 'complete prompt',
+            },
+          ],
+        },
+      },
+    });
+    assert.deepEqual(latestHeader(harness)?.counters, {
+      agents: { active: 0, total: 0 },
+      activeRuns: { children: 3, subagents: 2 },
+    });
+    assert.doesNotMatch(
+      JSON.stringify(latestHeader(harness)?.counters),
+      /private|prompt|output|queued-agent|active-agent|complete-agent/u,
+    );
+
+    await harness.emit('tool_execution_end', {
+      toolCallId: 'subagent-active',
+      toolName: 'subagent',
+      isError: false,
+    });
+    await harness.emit('tool_execution_end', {
+      toolCallId: 'bash-active',
+      toolName: 'bash',
+      isError: false,
+    });
+    assert.deepEqual(latestHeader(harness)?.counters, {
+      agents: { active: 0, total: 0 },
+      activeRuns: { children: 0, subagents: 0 },
+    });
+    assert.equal(harness.titles.length, initialTitleCount);
   } finally {
     await harness.stop();
   }
