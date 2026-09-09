@@ -180,20 +180,25 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Implementation started at:** 2026-09-08T15:12:54Z
 - **Public-demo repair started at:** 2026-09-09T10:16:13Z
 - **Public-presentation repair started at:** 2026-09-09T10:39:13Z
-- **Work completed at:** 2026-09-08T15:31:36Z, excluding Human-run VHS output.
-- **Assurance started at:** Approximately 2026-09-08T15:29:00Z after focused package
-  and documentation checks.
-- **Assurance completed at:** 2026-09-08T15:31:36Z
-- **Ready for validation at:** Pending Step 3.3 history verification.
-- **Actual implementation:** 18m42s across Steps 3.1–3.3 including deterministic checks;
-  Human VHS execution and wait are excluded.
-- **Observed Human wait:** Pending
-- **Estimate outcome:** Pending
+- **Work completed at:** 2026-09-09T10:42:29Z after the accepted public-presentation
+  repair; Human-run VHS output is excluded from implementation time.
+- **Assurance started at:** Approximately 2026-09-08T15:29:00Z; final repair assurance
+  resumed at 2026-09-09T10:39:13Z.
+- **Assurance completed at:** 2026-09-09T10:44:00Z after verified Step 3.6 history.
+- **Ready for validation at:** 2026-09-09T10:44:00Z
+- **Actual implementation:** Approximately 27m20s across Steps 3.1–3.6, excluding Human
+  VHS execution, Human wait, and the separate Devbox Chromium boundary.
+- **Observed Human wait:** Final accepted candidate took 3m12s from ready at
+  2026-09-09T10:44:00Z to Human `VALID` at 2026-09-09T10:47:12Z; earlier failed-candidate
+  waits remain preserved separately.
+- **Estimate outcome:** Faster than the original 55–90 minute range because package
+  filtering and clean-room loading were already well bounded; VHS presentation needed
+  two short Human-directed repairs and host execution.
 - **Final history target:** `feat(distribution): finish the private cockpit package`
 - **Current non-Git boundary:** Not applicable; the repository uses Git.
-- **Human validation:** NOT VALID on first VHS attempt — original response `has error
-  (now I can't cpy them)`, canonical outcome `NOT VALID`, recorded from captured parser
-  evidence at 2026-09-08T15:40:57Z; repaired rerun pending.
+- **Human validation:** VALID — original response `VALID`, canonical outcome `VALID`,
+  recorded at 2026-09-09T10:47:12Z after the accepted 1400×520 public GIF; prior
+  `NOT VALID` and `CHANGE` evidence remains preserved below.
 
 - [x] Step 3.1 Specify and enforce a minimal packed-artifact allowlist for runtime source,
       user documentation, licenses, package metadata, and the intentional demo assets.
@@ -301,17 +306,16 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `README.md`, `docs/development.md`, `demo/pi-vimux-starship.tape`,
     `scripts/check-package.mjs`, `test/check-package.test.ts`, this Plan/ledger, and the
     Human-reviewed final GIF.
-  - History: Expected `fix(demo): foreground the public cockpit` before final GIF
-    validation.
+  - History: `2af53fe` — `fix(demo): foreground the public cockpit`; external receipt
+    and deterministic checker verify the exact seven-path boundary.
 
 ### Human validation — Task 3
 
-- [ ] Human runs the public cockpit tape, reviews the sanitized GIF, checks the header
-      presentation and `/vimux-health`, then reports a clear outcome; preserve original
-      response, canonical outcome, and UTC. The parser and private-handoff attempts were
-      `NOT VALID`. The first direct-health candidate received canonical `CHANGE` at
-      2026-09-09T10:32:20Z — original response: “That's not showcasing all the magics
-      of the header ..... and it's showing the start `pi ....` which is obviluly not
-      needed. COlors are excelent !” Human then accepted the bounded honest presentation
-      as good enough while deferring a perfect real OpenSpec/lifecycle recording. The
-      reviewed GIF enters history only at the final `VALID` boundary.
+- [x] Human ran the public cockpit tape and validated the sanitized 1400×520 GIF,
+      header-led presentation, accepted colors, hidden launch, ephemeral title action,
+      and `/vimux-health` result — original response `VALID`, canonical outcome `VALID`,
+      recorded at 2026-09-09T10:47:12Z. Parser and private-handoff attempts remain
+      `NOT VALID`; the first direct-health candidate remains canonical `CHANGE` with
+      original response: “That's not showcasing all the magics of the header ..... and
+      it's showing the start `pi ....` which is obviluly not needed. COlors are excelent
+      !” A perfect real OpenSpec/lifecycle recording remains explicitly deferred.
