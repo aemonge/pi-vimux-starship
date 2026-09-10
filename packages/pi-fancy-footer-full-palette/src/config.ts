@@ -161,6 +161,10 @@ const footerConfigFileSchema = Type.Object(
 const validateFooterConfigFile = Compile(footerConfigFileSchema);
 let lastFooterConfigError: string | undefined;
 
+export function hasFooterConfigError(): boolean {
+  return lastFooterConfigError !== undefined;
+}
+
 type WidgetConfigBucket = "widgets" | "extensionWidgets";
 
 export interface ConfigurableWidgetMeta {

@@ -10,6 +10,7 @@ export const FANCY_FOOTER_PROTOCOL_VERSION = 1 as const;
 export const FANCY_FOOTER_WIDGET_CHANNEL = "pi-fancy-footer:widget";
 export const FANCY_FOOTER_READY_CHANNEL = "pi-fancy-footer:ready";
 export const FANCY_FOOTER_TELEMETRY_CHANNEL = "pi-vimux-starship:footer-telemetry/v1";
+export const PI_STATUS_SOURCE_CHANNEL = "pi-vimux-starship:status-source/v1";
 
 export interface FancyFooterTextContent {
   type: "text";
@@ -74,6 +75,17 @@ export interface FancyFooterTelemetryMessage {
   type: "snapshot";
   totalCost: number;
   quotaPercent?: number;
+}
+
+export interface FancyFooterStatusSourceMessage {
+  protocol: typeof FANCY_FOOTER_PROTOCOL_VERSION;
+  type: "snapshot";
+  source: "fancy-footer";
+  conditions: Array<{
+    id: string;
+    severity: "warning" | "error";
+    summary: string;
+  }>;
 }
 
 export interface FancyFooterClient {

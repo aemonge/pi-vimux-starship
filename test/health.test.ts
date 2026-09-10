@@ -24,6 +24,7 @@ const readyEvidence: VimuxHealthEvidence = {
     'galactica-status-debug',
     'galactica-status-refresh',
     'openspec-focus',
+    'pi-status',
     'vimux-health',
     'work',
   ],

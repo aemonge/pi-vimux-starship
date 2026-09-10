@@ -120,6 +120,54 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.equal(lines.join('').includes('󰒋 LSP'), false);
 });
 
+test('turns the top ladybug into distinct error and warning counts', () => {
+  const state = fixture();
+  state.piStatus = { errors: 2, warnings: 3, nativeStatusCount: 0 };
+
+  const lines = renderHeaderDeck(state, 160, plainTheme as never);
+  assert.match(lines[0] ?? '', /^─ 󰅙 2 ›  3 ⟩ \/pi-status ─+$/u);
+  assert.equal((lines[0] ?? '').split('⟩').length - 1, 1);
+  assert.doesNotMatch(lines[0] ?? '', /󰠭/u);
+
+  const colors: string[] = [];
+  renderHeaderDeck(state, 160, {
+    fg: (name: string, text: string) => {
+      colors.push(`${name}:${text}`);
+      return text;
+    },
+    bold: (text: string) => text,
+  } as never);
+  assert.ok(colors.includes('error:󰅙 2'));
+  assert.ok(colors.includes('warning: 3'));
+  assert.ok(colors.includes('dim:/pi-status'));
+});
+
+test('blends only a dim native-status count into the bottom rail', () => {
+  const state = fixture();
+  state.piStatus = { errors: 0, warnings: 0, nativeStatusCount: 3 };
+
+  const lines = renderHeaderDeck(state, 160, plainTheme as never);
+  assert.match(lines[0] ?? '', /^─ 󰠭 › ─+$/u);
+  assert.match(lines.at(-1) ?? '', /^─ 󰆾 ─+ ·3 ‹ 󰠭 ─$/u);
+
+  state.piStatus.nativeStatusCount = 0;
+  const empty = renderHeaderDeck(state, 160, plainTheme as never);
+  assert.doesNotMatch(empty.at(-1) ?? '', /·0|·3/u);
+});
+
+test('drops the status command before severity counts at narrow widths', () => {
+  const state = fixture();
+  state.piStatus = { errors: 2, warnings: 3, nativeStatusCount: 0 };
+
+  const compact = renderHeaderDeck(state, 20, plainTheme as never)[0] ?? '';
+  assert.match(compact, /^─ 󰅙 2 ›  3 /u);
+  assert.doesNotMatch(compact, /pi-status/u);
+
+  const narrow = renderHeaderDeck(state, 9, plainTheme as never)[0] ?? '';
+  assert.match(narrow, /^─ 󰅙 5/u);
+  assert.ok(visibleWidth(narrow) <= 9);
+});
+
 test('keeps activity and focus distinct on the title row', () => {
   const state = fixture();
   state.header!.work = {

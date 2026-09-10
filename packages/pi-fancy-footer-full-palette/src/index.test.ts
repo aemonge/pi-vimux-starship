@@ -6,6 +6,7 @@ import test from "node:test";
 import {
   FANCY_FOOTER_TELEMETRY_CHANNEL,
   FANCY_FOOTER_WIDGET_CHANNEL,
+  PI_STATUS_SOURCE_CHANNEL,
   parseFancyFooterTelemetry,
 } from "./api.ts";
 import fancyFooter from "./index.ts";
@@ -142,6 +143,15 @@ test("telemetry mode publishes bounded cost without installing a footer", async 
     .filter((message) => message !== null);
   assert.ok(telemetry.length > 0);
   assert.equal(telemetry[0]?.totalCost, 0.125);
+  assert.deepEqual(
+    emitted.find(({ channel }) => channel === PI_STATUS_SOURCE_CHANNEL)?.message,
+    {
+      protocol: 1,
+      type: "snapshot",
+      source: "fancy-footer",
+      conditions: [],
+    },
+  );
 
   await handlers.get("session_shutdown")?.();
 });

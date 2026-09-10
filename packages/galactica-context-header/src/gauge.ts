@@ -20,6 +20,8 @@ export const RESOURCE_SEPARATOR_WIDGET_ID = 'galactica.resource-separator';
 export const SCOPE_SEPARATOR_WIDGET_ID = 'galactica.scope-separator';
 export const PROMPT_STATUS_CHANNEL = 'galactica-status:prompt-row';
 export const FOOTER_TELEMETRY_CHANNEL = 'pi-vimux-starship:footer-telemetry/v1';
+export const PI_NATIVE_STATUS_CHANNEL = 'pi-vimux-starship:native-status/v1';
+export const PI_STATUS_SNAPSHOT_CHANNEL = 'pi-vimux-starship:pi-status/v1';
 export const VIM_MODE_CHANNEL = 'pi-vim:mode-change';
 
 const HEADER_COLORS = [
@@ -139,6 +141,12 @@ export type HeaderSnapshot = {
 export type FooterTelemetrySnapshot = {
   totalCost: number;
   quotaPercent?: number;
+};
+
+export type PiStatusSnapshot = {
+  errors: number;
+  warnings: number;
+  nativeStatusCount: number;
 };
 
 export type VimMode = 'insert' | 'normal' | 'visual' | 'visual-line' | 'ex';
@@ -776,6 +784,25 @@ export function parseFooterTelemetry(raw: unknown): FooterTelemetrySnapshot | nu
     return null;
   }
   return { totalCost: message.totalCost, quotaPercent: message.quotaPercent };
+}
+
+export function parsePiStatusSnapshot(raw: unknown): PiStatusSnapshot | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const message = raw as Record<string, unknown>;
+  if (message.protocol !== 1 || message.type !== 'snapshot') return null;
+  const counts = [message.errors, message.warnings, message.nativeStatusCount];
+  if (
+    !counts.every(
+      (value) => Number.isInteger(value) && Number(value) >= 0 && Number(value) <= 999,
+    )
+  ) {
+    return null;
+  }
+  return {
+    errors: Number(message.errors),
+    warnings: Number(message.warnings),
+    nativeStatusCount: Number(message.nativeStatusCount),
+  };
 }
 
 export function parseVimMode(raw: unknown): VimMode | null {

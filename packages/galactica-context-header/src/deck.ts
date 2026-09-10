@@ -8,6 +8,7 @@ import type {
   HeaderActivity,
   HeaderSuggestion,
   HeaderSnapshot,
+  PiStatusSnapshot,
   VimMode,
 } from './gauge.ts';
 import type { ResourceTelemetry } from './process-resources.ts';
@@ -33,6 +34,7 @@ export interface HeaderDeckState {
   compactionCount: number;
   resources?: ResourceTelemetry;
   footerTelemetry?: FooterTelemetrySnapshot;
+  piStatus?: PiStatusSnapshot;
   lsp: LspCapability | null;
   mcp: McpCapability | null;
   mode: VimMode;
@@ -438,6 +440,35 @@ function compactTelemetryRight(state: HeaderDeckState, theme: Theme): string {
   return [quotaAndCost, resourcesAndCapabilities].join(` ${semanticSeparator(theme)} `);
 }
 
+function topRailPrefix(
+  state: HeaderDeckState,
+  width: number,
+  theme: Theme,
+  lineColor: string,
+): string {
+  const errors = state.piStatus?.errors ?? 0;
+  const warnings = state.piStatus?.warnings ?? 0;
+  if (errors === 0 && warnings === 0) {
+    return `${color(theme, lineColor, '─ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' › ')}`;
+  }
+
+  const groups = [
+    errors > 0 ? color(theme, 'error', `󰅙 ${errors}`) : '',
+    warnings > 0 ? color(theme, 'warning', ` ${warnings}`) : '',
+  ].filter(Boolean);
+  const summary = groups.join(color(theme, lineColor, ' › '));
+  const full = `${color(theme, lineColor, '─ ')}${summary}${color(theme, lineColor, ' ⟩ ')}${color(theme, 'dim', '/pi-status')} `;
+  if (visibleWidth(full) < width) return full;
+
+  const compact = `${color(theme, lineColor, '─ ')}${summary} `;
+  if (visibleWidth(compact) < width) return compact;
+
+  const total = errors + warnings;
+  const severity = errors > 0 ? 'error' : 'warning';
+  const icon = errors > 0 ? '󰅙' : '';
+  return `${color(theme, lineColor, '─ ')}${color(theme, severity, `${icon} ${total}`)} `;
+}
+
 export function renderHeaderDeck(
   state: HeaderDeckState,
   width: number,
@@ -448,7 +479,7 @@ export function renderHeaderDeck(
   if (boundedWidth === 0) return [];
 
   const lineColor = 'thinkingHigh';
-  const topPrefix = `${color(theme, lineColor, '─ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' › ')}`;
+  const topPrefix = topRailPrefix(state, boundedWidth, theme, lineColor);
   const top = `${topPrefix}${color(
     theme,
     lineColor,
@@ -456,6 +487,9 @@ export function renderHeaderDeck(
   )}`;
   const modeRail = suppliedModeRail ?? fallbackModeRail(state, theme);
   const bottomPrefix = `${color(theme, lineColor, '─ ')}${modeRail.styled}${color(theme, lineColor, ' ')}`;
+  const nativeStatusCount = state.piStatus?.nativeStatusCount ?? 0;
+  const nativeStatusMarker =
+    nativeStatusCount > 0 ? ` ${color(theme, 'dim', `·${nativeStatusCount}`)}` : '';
   const bottomSuffix = `${color(theme, lineColor, ' ‹ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' ─')}`;
   const bottom = `${bottomPrefix}${color(
     theme,
@@ -463,10 +497,13 @@ export function renderHeaderDeck(
     '─'.repeat(
       Math.max(
         0,
-        boundedWidth - visibleWidth(bottomPrefix) - visibleWidth(bottomSuffix),
+        boundedWidth -
+          visibleWidth(bottomPrefix) -
+          visibleWidth(nativeStatusMarker) -
+          visibleWidth(bottomSuffix),
       ),
     ),
-  )}${bottomSuffix}`;
+  )}${nativeStatusMarker}${bottomSuffix}`;
   const divider = `\u001b[2m${color(theme, 'text', '┈'.repeat(boundedWidth))}\u001b[22m`;
   const current = lifecycle(state);
   const activityText = activityLabel(state);

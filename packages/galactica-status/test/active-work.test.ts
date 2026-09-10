@@ -634,6 +634,19 @@ test('same-focus metadata refresh failure falls back to ID-only title', async ()
       'failed same-focus metadata refresh must discard the stale task headline',
     );
     assert.doesNotMatch(harness.titles.at(-1) ?? '', new RegExp(taskTitle, 'u'));
+    const health = harness.sharedEvents
+      .filter(({ channel }) => channel === 'pi-vimux-starship:status-source/v1')
+      .at(-1)?.message as
+      { source?: string; conditions?: Array<Record<string, unknown>> } | undefined;
+    assert.equal(health?.source, 'galactica-status');
+    assert.deepEqual(
+      health?.conditions?.find(({ id }) => id === 'openspec'),
+      {
+        id: 'openspec',
+        severity: 'warning',
+        summary: 'openspec refresh failed; previous status is retained',
+      },
+    );
   } finally {
     await harness.stop();
   }

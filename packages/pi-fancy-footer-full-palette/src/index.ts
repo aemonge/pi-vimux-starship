@@ -18,6 +18,7 @@ import {
 import {
   cloneFooterConfig,
   getFooterConfigPath,
+  hasFooterConfigError,
   loadFooterConfig,
   writeFooterConfigSnapshot,
 } from "./config.ts";
@@ -27,7 +28,9 @@ import {
   FANCY_FOOTER_READY_CHANNEL,
   FANCY_FOOTER_TELEMETRY_CHANNEL,
   FANCY_FOOTER_WIDGET_CHANNEL,
+  PI_STATUS_SOURCE_CHANNEL,
   type FancyFooterReadyMessage,
+  type FancyFooterStatusSourceMessage,
   type FancyFooterTelemetryMessage,
 } from "./api.ts";
 import {
@@ -130,6 +133,35 @@ export default function (pi: ExtensionAPI, options: FancyFooterOptions = {}) {
       ...(quotaPercent === undefined ? {} : { quotaPercent }),
     };
     pi.events.emit(FANCY_FOOTER_TELEMETRY_CHANNEL, message);
+
+    const conditions: FancyFooterStatusSourceMessage["conditions"] = [];
+    if (hasFooterConfigError()) {
+      conditions.push({
+        id: "config",
+        severity: "error",
+        summary: "Footer configuration is invalid; defaults are active",
+      });
+    }
+    for (const snapshot of telemetryProviderStatuses.values()) {
+      if (!snapshot.error) continue;
+      const retained =
+        snapshot.source === "cache" &&
+        (snapshot.primary !== undefined || snapshot.secondary !== undefined);
+      conditions.push({
+        id: `provider-status.${snapshot.provider}`,
+        severity: retained ? "warning" : "error",
+        summary: retained
+          ? `${snapshot.provider} quota refresh failed; cached status is active`
+          : `${snapshot.provider} quota status is unavailable`,
+      });
+    }
+    const health: FancyFooterStatusSourceMessage = {
+      protocol: FANCY_FOOTER_PROTOCOL_VERSION,
+      type: "snapshot",
+      source: "fancy-footer",
+      conditions,
+    };
+    pi.events.emit(PI_STATUS_SOURCE_CHANNEL, health);
   };
 
   const stopTelemetryProvider = () => {

@@ -78,6 +78,23 @@ type SessionContext = ExtensionContext | ExtensionCommandContext;
 type Domain = RuntimeErrorRecord['domain'];
 type OpenSpecFocusAction = 'status' | 'set' | 'replace' | 'clear';
 
+type StatusHealthCondition = {
+  id: string;
+  severity: 'warning' | 'error';
+  summary: string;
+};
+
+const PI_STATUS_SOURCE_CHANNEL = 'pi-vimux-starship:status-source/v1';
+
+function stableStatusId(prefix: string, value: string): string {
+  let hash = 2_166_136_261;
+  for (const character of value) {
+    hash ^= character.codePointAt(0) ?? 0;
+    hash = Math.imul(hash, 16_777_619);
+  }
+  return `${prefix}.${(hash >>> 0).toString(16)}`;
+}
+
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -171,6 +188,8 @@ class GalacticaStatusRuntime {
   private readonly directToolActivities = new Map<string, HeaderActivity>();
   private directToolFailed = false;
   private readonly runtimeRuns = new RuntimeRunTracker();
+  private readonly statusHealth = new Map<Domain, StatusHealthCondition>();
+  private lastStatusHealthSignature = '';
   private readonly store: AtomicStatusStore;
   private readonly pi: ExtensionAPI;
   private readonly ctx: SessionContext;
@@ -235,9 +254,14 @@ class GalacticaStatusRuntime {
     this.launch(
       (async () => {
         this.loadedConfig = await loadConfig();
+        this.statusHealth.delete('config');
         this.store.setConfig(this.loadedConfig.path, this.loadedConfig.warnings);
         for (const warning of this.loadedConfig.warnings) {
-          this.recordError('config', warning);
+          this.store.recordError({
+            domain: 'config',
+            message: warning,
+            at: Date.now(),
+          });
         }
 
         this.resources.addInterval(() => this.publish(), 60_000);
@@ -259,12 +283,60 @@ class GalacticaStatusRuntime {
 
   private launch(promise: Promise<unknown>, domain: Domain): void {
     void promise.catch((error) => {
-      if (!this.stopped) this.recordError(domain, errorMessage(error));
+      if (this.stopped) return;
+      this.recordError(domain, errorMessage(error));
+      this.publish();
     });
   }
 
   private recordError(domain: Domain, message: string): void {
     this.store.recordError({ domain, message, at: Date.now() });
+    if (domain === 'config') {
+      this.statusHealth.set(domain, {
+        id: domain,
+        severity: 'error',
+        summary: 'Galactica status configuration could not be loaded',
+      });
+    }
+  }
+
+  private updateRefreshHealth(
+    domain: Extract<Domain, 'openspec' | 'diagnostics' | 'orchestration'>,
+    outcomes: readonly RefreshOutcome<unknown>[],
+    retained: boolean,
+  ): void {
+    if (!outcomes.some((outcome) => outcome.kind === 'error')) {
+      this.statusHealth.delete(domain);
+      return;
+    }
+    this.statusHealth.set(domain, {
+      id: domain,
+      severity: retained ? 'warning' : 'error',
+      summary: retained
+        ? `${domain} refresh failed; previous status is retained`
+        : `${domain} status is unavailable`,
+    });
+  }
+
+  private publishStatusHealth(): void {
+    const snapshot = this.store.get();
+    const conditions: StatusHealthCondition[] = [
+      ...snapshot.configWarnings.map((warning) => ({
+        id: stableStatusId('config-warning', warning),
+        severity: 'warning' as const,
+        summary: 'A Galactica status configuration value was ignored',
+      })),
+      ...this.statusHealth.values(),
+    ].sort((left, right) => left.id.localeCompare(right.id));
+    const signature = JSON.stringify(conditions);
+    if (signature === this.lastStatusHealthSignature) return;
+    this.lastStatusHealthSignature = signature;
+    this.pi.events.emit(PI_STATUS_SOURCE_CHANNEL, {
+      protocol: 1,
+      type: 'snapshot',
+      source: 'galactica-status',
+      conditions,
+    });
   }
 
   private async outcome<T>(
@@ -385,6 +457,22 @@ class GalacticaStatusRuntime {
     ) {
       return;
     }
+    const previous = this.store.get();
+    this.updateRefreshHealth(
+      'openspec',
+      [openSpecOverview, openspec],
+      this.openSpecOverview !== null || previous.openspec !== null,
+    );
+    this.updateRefreshHealth(
+      'diagnostics',
+      [diagnostics],
+      previous.diagnostics !== null,
+    );
+    this.updateRefreshHealth(
+      'orchestration',
+      [orchestration],
+      previous.orchestration !== null,
+    );
     this.openSpecProjectDetected = openSpecEnabled ? hasOpenSpecProject : undefined;
     if (openSpecOverview.kind === 'success') {
       this.openSpecOverview = openSpecOverview.value;
@@ -521,6 +609,7 @@ class GalacticaStatusRuntime {
       }),
     );
     this.updateTitle(snapshot);
+    this.publishStatusHealth();
   }
 
   private updateTitle(snapshot = this.store.get()): void {

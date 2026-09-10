@@ -34,12 +34,16 @@ import {
   parseGitBranch,
   parseGitStatus,
   parseHeaderSnapshot,
+  parsePiStatusSnapshot,
+  PI_NATIVE_STATUS_CHANNEL,
+  PI_STATUS_SNAPSHOT_CHANNEL,
   PROMPT_STATUS_CHANNEL,
   REASONING_WIDGET_ID,
   SCOPE_SEPARATOR_WIDGET_ID,
   runtimeHeaderWork,
   parseVimMode,
   VIM_MODE_CHANNEL,
+  type PiStatusSnapshot,
   type VimMode,
 } from './src/gauge.ts';
 import {
@@ -76,6 +80,7 @@ import { renderHeaderDeck } from './src/deck.ts';
 import { layoutLifecycleTitle, renderLifecycleTitleSections } from './src/title.ts';
 
 const WIDGET_KEY = 'galactica.work-identity';
+const PI_STATUS_SOURCE_CHANNEL = 'pi-vimux-starship:status-source/v1';
 const EMPTY_GIT: GitStatusSummary = {
   staged: 0,
   modified: 0,
@@ -102,13 +107,49 @@ export interface ContextHeaderOptions {
   deckSurface?: ContextHeaderDeckSurface;
 }
 
-export function installEmptyDeckFooter(ctx: ExtensionContext): () => void {
-  ctx.ui.setFooter(() => ({
-    render(): string[] {
-      return [];
-    },
-    invalidate() {},
-  }));
+export function installEmptyDeckFooter(
+  ctx: ExtensionContext,
+  publishStatuses: (statuses: Array<{ key: string; text: string }>) => void = () => {},
+  publishAvailability: (available: boolean) => void = () => {},
+): () => void {
+  ctx.ui.setFooter((_tui, _theme, footerData) => {
+    let lastSignature = '';
+    let lastAvailability: boolean | undefined;
+    return {
+      render(): string[] {
+        let statuses: Array<{ key: string; text: string }> = [];
+        try {
+          const getStatuses = (
+            footerData as {
+              getExtensionStatuses?: () => ReadonlyMap<string, string>;
+            }
+          ).getExtensionStatuses;
+          if (typeof getStatuses !== 'function') throw new Error('unavailable');
+          statuses = [...getStatuses.call(footerData)]
+            .filter(
+              (entry): entry is [string, string] =>
+                typeof entry[0] === 'string' &&
+                typeof entry[1] === 'string' &&
+                entry[1].trim() !== '',
+            )
+            .map(([key, text]) => ({ key, text }))
+            .sort((left, right) => left.key.localeCompare(right.key));
+          if (lastAvailability !== true) publishAvailability(true);
+          lastAvailability = true;
+        } catch {
+          if (lastAvailability !== false) publishAvailability(false);
+          lastAvailability = false;
+        }
+        const signature = JSON.stringify(statuses);
+        if (signature !== lastSignature) {
+          lastSignature = signature;
+          publishStatuses(statuses);
+        }
+        return [];
+      },
+      invalidate() {},
+    };
+  });
   return () => ctx.ui.setFooter(undefined);
 }
 
@@ -144,6 +185,8 @@ export default function galacticaContextHeader(
   let lspCapability: LspCapability | null = null;
   let mcpCapability: McpCapability | null = null;
   let footerTelemetry: FooterTelemetrySnapshot | undefined;
+  let piStatus: PiStatusSnapshot | undefined;
+  let nativeStatusBridgeAvailable = true;
   let vimMode: VimMode = 'insert';
   let lastCapabilitySignature = '';
 
@@ -277,6 +320,41 @@ export default function galacticaContextHeader(
     }
   };
 
+  const publishCapabilityHealth = () => {
+    const conditions: Array<{
+      id: string;
+      severity: 'warning';
+      summary: string;
+    }> = [];
+    if (!nativeStatusBridgeAvailable) {
+      conditions.push({
+        id: 'native-status-api',
+        severity: 'warning',
+        summary: 'Pi native extension statuses are unavailable',
+      });
+    }
+    if (mcpCapability && mcpCapability.healthy < mcpCapability.total) {
+      conditions.push({
+        id: 'mcp',
+        severity: 'warning',
+        summary: `${mcpCapability.total - mcpCapability.healthy} MCP servers need attention`,
+      });
+    }
+    if (lspCapability && lspCapability.healthy < lspCapability.total) {
+      conditions.push({
+        id: 'lsp',
+        severity: 'warning',
+        summary: `${lspCapability.total - lspCapability.healthy} LSP servers need attention`,
+      });
+    }
+    pi.events.emit(PI_STATUS_SOURCE_CHANNEL, {
+      protocol: 1,
+      type: 'snapshot',
+      source: 'galactica-context-header',
+      conditions,
+    });
+  };
+
   const stopReady = pi.events.on(FANCY_FOOTER_READY_CHANNEL, () => {
     publishFooter();
     publishLatestResourceFooter();
@@ -286,16 +364,24 @@ export default function galacticaContextHeader(
   const stopLspStatus = pi.events.on(LSP_STATUS_EVENT, (raw) => {
     lspCapability = parseLspCapability(raw);
     requestRender?.();
+    publishCapabilityHealth();
   });
   const stopMcpStatus = pi.events.on(MCP_STATUS_EVENT, (raw) => {
     mcpCapability = parseMcpCapability(raw);
     requestRender?.();
     publishCapabilityFooter();
+    publishCapabilityHealth();
   });
   const stopFooterTelemetry = pi.events.on(FOOTER_TELEMETRY_CHANNEL, (raw) => {
     const next = parseFooterTelemetry(raw);
     if (!next) return;
     footerTelemetry = next;
+    requestRender?.();
+  });
+  const stopPiStatus = pi.events.on(PI_STATUS_SNAPSHOT_CHANNEL, (raw) => {
+    const next = parsePiStatusSnapshot(raw);
+    if (!next) return;
+    piStatus = next;
     requestRender?.();
   });
   const stopVimMode = pi.events.on(VIM_MODE_CHANNEL, (raw) => {
@@ -416,6 +502,8 @@ export default function galacticaContextHeader(
     lspCapability = null;
     mcpCapability = null;
     footerTelemetry = undefined;
+    piStatus = undefined;
+    nativeStatusBridgeAvailable = true;
     vimMode = 'insert';
     resourceRefreshInFlight = false;
     previousResourceSample = undefined;
@@ -428,12 +516,28 @@ export default function galacticaContextHeader(
     publishPromptStatus();
     publishRuntimeFooter();
     publishCapabilityFooter();
+    publishCapabilityHealth();
     if (ctx.mode === 'tui') {
       ctx.ui.setWorkingVisible(false);
       activityAgeTimer = setInterval(refreshActivityAge, 50);
     }
     if (!ctx.hasUI) return;
-    if (deckMode) clearFooter = installEmptyDeckFooter(ctx);
+    if (deckMode) {
+      clearFooter = installEmptyDeckFooter(
+        ctx,
+        (statuses) => {
+          pi.events.emit(PI_NATIVE_STATUS_CHANNEL, {
+            protocol: 1,
+            type: 'snapshot',
+            statuses,
+          });
+        },
+        (available) => {
+          nativeStatusBridgeAvailable = available;
+          publishCapabilityHealth();
+        },
+      );
+    }
     void refreshResources();
     resourceTimer = setInterval(() => void refreshResources(), RESOURCE_REFRESH_MS);
     activeCwd = ctx.cwd;
@@ -474,6 +578,7 @@ export default function galacticaContextHeader(
           compactionCount: countCompactions(ctx.sessionManager.getBranch()),
           ...(latestResourceTelemetry ? { resources: latestResourceTelemetry } : {}),
           ...(footerTelemetry ? { footerTelemetry } : {}),
+          ...(piStatus ? { piStatus } : {}),
           lsp: lspCapability,
           mcp: mcpCapability,
           mode: vimMode,
@@ -584,6 +689,7 @@ export default function galacticaContextHeader(
     stopReady();
     stopLspStatus();
     stopMcpStatus();
+    stopPiStatus();
     stopFooterTelemetry();
     stopVimMode();
   });

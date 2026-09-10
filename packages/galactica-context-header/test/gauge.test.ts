@@ -364,7 +364,7 @@ test('hides Pi working row and wires foreground activity-age lifecycle', () => {
   assert.doesNotMatch(extensionSource, /assistantMessageEvent|text_delta/u);
 });
 
-test('accepts only bounded Footer telemetry and Vim mode events', () => {
+test('accepts only bounded Footer telemetry, Pi status, and Vim mode events', () => {
   assert.deepEqual(
     gaugeModule.parseFooterTelemetry({
       protocol: 1,
@@ -380,6 +380,27 @@ test('accepts only bounded Footer telemetry and Vim mode events', () => {
       type: 'snapshot',
       totalCost: 1,
       quotaPercent: 101,
+    }),
+    null,
+  );
+  assert.deepEqual(
+    gaugeModule.parsePiStatusSnapshot({
+      protocol: 1,
+      type: 'snapshot',
+      errors: 2,
+      warnings: 3,
+      nativeStatusCount: 4,
+      conditions: [{ private: 'ignored by the deck' }],
+    }),
+    { errors: 2, warnings: 3, nativeStatusCount: 4 },
+  );
+  assert.equal(
+    gaugeModule.parsePiStatusSnapshot({
+      protocol: 1,
+      type: 'snapshot',
+      errors: -1,
+      warnings: 0,
+      nativeStatusCount: 0,
     }),
     null,
   );
