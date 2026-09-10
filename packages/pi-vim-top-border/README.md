@@ -328,14 +328,11 @@ implemented and cancel the pending operator. Linewise counted yank (`{count}yy`,
 
 | key | action |
 |---|---|
-| `p` | Put after cursor (char-wise) / new line below (line-wise) |
-| `P` | Put before cursor (char-wise) / new line above (line-wise) |
-| `{count}p` | Put `{count}` times after cursor |
-| `{count}P` | Put `{count}` times before cursor |
+| `p` | Paste the OS clipboard at the cursor via Pi's native pipeline, then open the external editor pre-filled (save returns to the buffer, no auto-send) |
+| `P` | Paste the OS clipboard at the cursor via Pi's native pipeline and send the prompt immediately |
+| `{count}p` / `{count}P` | Count is consumed and discarded; the paste happens exactly once |
 
-Put normally reads the OS clipboard first, but uses the shadow register when the latest mirror was skipped by policy, is still pending, or failed. Paste text ending in `\n` is line-wise. Repeated puts stop at a 512 KiB payload safety cap; one register payload is always inserted whole.
-
-Cursor placement matches Vim except when the first pasted line is all whitespace, where pi-vim lands at column 0. A line-wise put (`yyp`, `yyP`, or any register ending in `\n`) lands on the **first non-blank** of the **first** pasted line, not the end of the pasted text. A char-wise put lands on the **last** inserted character.
+`p` / `P` synthesize Pi's own clipboard paste (`app.clipboard.pasteImage`), so images attach exactly as with `ctrl+v`, and large text collapses in the editor instead of flooding the prompt. An image-only paste inserts the image's temporary file path; `P` then sends that path. Normal mode still strips manual terminal pastes: only a pending `p` / `P` accepts the native payload, and any other keystroke cancels the expectation. `p` / `P` are not dot-repeatable — the native paste is a host injection, so `.` repeats the last pi-vim edit instead.
 
 ---
 
@@ -380,7 +377,7 @@ Typing done in an implicit insert session is repeatable too: the prompt opens in
 
 **The selection is not highlighted.** The footer reads ` VISUAL ` or ` V-LINE ` and the block cursor marks the moving end, but the span between the anchor and the cursor renders as ordinary text. Selection highlighting needs a render-layer change and is deferred.
 
-Line-wise selections put a trailing newline in the register, so a following `p` pastes whole lines. A count typed before `v` or `V` is discarded rather than sizing the selection (`2v` behaves as `v`).
+Line-wise selections put a trailing newline in the register and mirror it to the OS clipboard under the default policy; a following `p` pastes the clipboard through Pi's native pipeline. A count typed before `v` or `V` is discarded rather than sizing the selection (`2v` behaves as `v`).
 
 Visual-mode edits are deliberately **not** dot-repeatable: running one clears the stored repeatable command, so a later `.` does nothing instead of replaying an unrelated change. Keys with no visual-mode meaning here — `p`, `P`, `r`, `J`, `u`, `<C-r>`, `.`, `:`, `i`, `a`, `A`, `I`, `~`, `>`, `<` — are inert while a selection is live rather than falling through to their normal-mode behaviour.
 
@@ -426,7 +423,7 @@ Default-equivalent `settings.json`:
 
 ### clipboardMirror
 
-`all` mirrors unnamed writes; `yank` mirrors yanks; `never` keeps writes internal. Non-mirrored writes stay local for `p` / `P`. See [register and clipboard policy](#register-and-clipboard-policy) for the full read/write contract.
+`all` mirrors unnamed writes; `yank` mirrors yanks; `never` keeps writes internal. `p` / `P` always paste the OS clipboard through Pi's native pipeline regardless of policy. See [register and clipboard policy](#register-and-clipboard-policy) for the full read/write contract.
 
 
 ### exCommand
@@ -511,11 +508,9 @@ pi-vim does not bundle any such tool and does not care which one you use — any
 - `piVim.clipboardMirror = "yank"` mirrors yanks only; deletes and changes update only pi-vim's internal shadow.
 - `piVim.clipboardMirror = "never"` disables write mirroring while keeping internal register writes synchronous.
 - Rapid mirrored writes coalesce: only the latest pending value is guaranteed to be mirrored.
-- `p` / `P` read the OS clipboard first when no local write was skipped by policy, falling back to the shadow on read failure/timeout.
-- If policy skipped the last local write, `p` / `P` use the shadow so delete/yank → put works without touching the OS clipboard.
-- While a mirror is in flight, `p` / `P` use the shadow so immediate yank/delete → put stays ordered.
-- If the last mirror write failed or was skipped by the mirror circuit breaker, `p` / `P` use the non-empty shadow until a mirror write lands again, so put never trusts a stale OS clipboard.
-- Pi owns the terminal clipboard backends; on Wayland external state may lag while the shadow stays authoritative for immediate puts.
+- `p` / `P` paste through Pi's native clipboard pipeline (`app.clipboard.pasteImage`), exactly like `ctrl+v`: the OS clipboard is the source of truth, images attach natively, and large text collapses. The internal shadow register no longer participates in puts.
+- `p` opens the external editor pre-filled after the paste lands (save returns to the buffer); `P` sends the prompt immediately unless the paste delivered no text.
+- Pi owns the terminal clipboard backends; on Wayland external state may lag, but `p` / `P` now mirror `ctrl+v` behavior instead of compensating with the shadow register.
 
 ---
 

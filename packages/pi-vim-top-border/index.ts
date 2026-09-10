@@ -5,12 +5,7 @@ import {
   type Theme,
 } from '@earendil-works/pi-coding-agent';
 import { Key, matchesKey } from '@earendil-works/pi-tui';
-import {
-  ClipboardMirror,
-  type ClipboardReadFn,
-  readClipboardInChildProcess,
-  writeClipboardInChildProcess,
-} from './clipboard-mirror.js';
+import { ClipboardMirror, writeClipboardInChildProcess } from './clipboard-mirror.js';
 import {
   type ClipboardMirrorPolicy,
   DEFAULT_CLIPBOARD_MIRROR_POLICY,
@@ -101,6 +96,7 @@ import {
   CTRL_K,
   CTRL_R,
   CTRL_UNDERSCORE,
+  CTRL_V,
   ESC_DOWN,
   ESC_LEFT,
   ESC_RIGHT,
@@ -334,11 +330,11 @@ export class ModalEditor extends CustomEditor {
   private externalEditorActive = false;
 
   private unnamedRegister: string = '';
-  private preferRegisterForPut = false;
   private clipboardMirrorPolicy: ClipboardMirrorPolicy =
     DEFAULT_CLIPBOARD_MIRROR_POLICY;
   private readonly clipboardMirror = new ClipboardMirror(writeClipboardInChildProcess);
-  private clipboardReadFn: ClipboardReadFn = readClipboardInChildProcess;
+  private expectingNativePaste: 'editor' | 'send' | null = null;
+  private nativePasteStarted = false;
   private quitFn: () => void = () => {};
   private notifyFn: (message: string) => void = () => {};
   private modeChangeFn: (mode: Mode, prevMode: Mode) => void = () => {};
@@ -398,9 +394,6 @@ export class ModalEditor extends CustomEditor {
   setClipboardWriteTimeoutMs(timeoutMs: number): void {
     this.clipboardMirror.setTimeoutMs(timeoutMs);
   }
-  setClipboardReadFn(fn: ClipboardReadFn): void {
-    this.clipboardReadFn = fn;
-  }
   setClipboardMirrorPolicy(policy: ClipboardMirrorPolicy): void {
     this.clipboardMirrorPolicy = policy;
   }
@@ -440,7 +433,6 @@ export class ModalEditor extends CustomEditor {
   }
   setRegister(text: string): void {
     this.unnamedRegister = text;
-    this.preferRegisterForPut = false;
   }
   getMode(): Mode {
     return this.mode;
@@ -524,6 +516,7 @@ export class ModalEditor extends CustomEditor {
     const prev = this.mode;
     const next = this.externalEditorOnly && mode === 'insert' ? 'normal' : mode;
     this.mode = next;
+    if (next !== 'normal') this.cancelNativePasteExpectation();
     if (this.externalEditorOnly && mode === 'insert') {
       this.pendingExternalEditorOpen = true;
     }
@@ -598,6 +591,15 @@ export class ModalEditor extends CustomEditor {
     this.implicitInsertSuppressed = true;
     super.insertTextAtCursor(text);
     this.refreshPendingDispatchRestore(true);
+
+    // Pi's native clipboard paste (`handleClipboardPaste`) delivers its text
+    // (or the image's temp-file path) through this seam, asynchronously after
+    // p/P synthesized ctrl+v. Fire the pending follow-up once it has landed.
+    if (this.expectingNativePaste !== null) {
+      const action = this.expectingNativePaste;
+      this.cancelNativePasteExpectation();
+      this.finishNativePaste(action);
+    }
   }
 
   /**
@@ -1089,7 +1091,6 @@ export class ModalEditor extends CustomEditor {
     );
     const beforeReplay = this.captureSnapshot();
     const beforeRegister = this.unnamedRegister;
-    const beforePreferRegisterForPut = this.preferRegisterForPut;
 
     this.repeatRecording = null;
     this.repeatReplayFailed = false;
@@ -1114,7 +1115,6 @@ export class ModalEditor extends CustomEditor {
         this.restoreSnapshot(beforeReplay);
       });
       this.unnamedRegister = beforeRegister;
-      this.preferRegisterForPut = beforePreferRegisterForPut;
       this.repeatReplayFailed = false;
       this.discardUndoWindow();
       return;
@@ -1197,12 +1197,57 @@ export class ModalEditor extends CustomEditor {
     this.pendingGCount = '';
     this.pendingReplace = false;
     this.clearPendingExCommand();
+    this.cancelNativePasteExpectation();
   }
 
   private endBracketedPasteInExCommand(): void {
     this.acceptingBracketedPasteInExCommand = false;
     this.pendingEscWhileAcceptingBracketedPasteInExCommand = false;
     this.discardingPasteAfterNewlineInExCommand = false;
+  }
+
+  private cancelNativePasteExpectation(): void {
+    this.expectingNativePaste = null;
+    this.nativePasteStarted = false;
+  }
+
+  /**
+   * Accept the bracketed-paste payload delivered by Pi's native clipboard
+   * paste (`app.clipboard.pasteImage`, triggered through a synthesized
+   * ctrl+v). Chunks are forwarded verbatim to the built-in editor so paste
+   * insertion and large-content collapse behave exactly as in insert mode;
+   * only the start/end markers are tracked so the pending p/P follow-up
+   * fires once the payload has fully landed. Returns null when the chunk
+   * was consumed, or the chunk itself when no paste arrived, canceling the
+   * expectation and letting normal-mode handling continue.
+   */
+  private acceptNativePasteChunk(data: string): string | null {
+    if (!this.nativePasteStarted) {
+      if (!data.includes(BRACKETED_PASTE_START)) return data;
+      this.nativePasteStarted = true;
+    }
+
+    super.handleInput(data);
+
+    if (data.includes(BRACKETED_PASTE_END)) {
+      const action = this.expectingNativePaste;
+      this.cancelNativePasteExpectation();
+      if (action !== null) this.finishNativePaste(action);
+    }
+    return null;
+  }
+
+  private finishNativePaste(action: 'editor' | 'send'): void {
+    if (action === 'send') {
+      // An empty clipboard delivers nothing through insertTextAtCursor, so an
+      // empty prompt is never submitted; an image pastes as a file path.
+      if (this.getText() !== '') super.handleInput('\r');
+      return;
+    }
+    // The paste lands from an async clipboard continuation with no
+    // handleInput on the stack, so the deferred-open flush would never run;
+    // open directly. Guarded against double-open and a missing editor fn.
+    this.openExternalEditor();
   }
 
   private retainDiscardedExPasteTailState(tail: string): void {
@@ -1354,6 +1399,13 @@ export class ModalEditor extends CustomEditor {
       if (normalized === null) return;
       data = normalized;
     } else if (this.mode !== 'insert') {
+      if (this.expectingNativePaste !== null) {
+        const remaining = this.acceptNativePasteChunk(data);
+        if (remaining === null) return;
+        data = remaining;
+        this.cancelNativePasteExpectation();
+      }
+
       if (this.discardingBracketedPasteInNormalMode) {
         if (isEscapeLikeInput(data)) {
           if (this.pendingEscWhileDiscardingBracketedPasteInNormalMode) {
@@ -2548,13 +2600,13 @@ export class ModalEditor extends CustomEditor {
       return;
     }
 
-    if (data === 'p') {
-      this.putAfter();
-      return;
-    }
-
-    if (data === 'P') {
-      this.putBefore();
+    if (data === 'p' || data === 'P') {
+      // Native clipboard paste: counts are consumed and discarded so `3p`
+      // pastes once without leaking the count into later motions.
+      this.takeTotalCount(1);
+      this.expectingNativePaste = data === 'p' ? 'editor' : 'send';
+      this.nativePasteStarted = false;
+      super.handleInput(CTRL_V);
       return;
     }
 
@@ -3290,7 +3342,6 @@ export class ModalEditor extends CustomEditor {
   ): void {
     this.unnamedRegister = text;
     const shouldMirror = text !== '' && this.shouldMirrorRegisterWrite(source);
-    this.preferRegisterForPut = text !== '' && !shouldMirror;
     if (!shouldMirror) return;
 
     this.clipboardMirror.mirror(text);
@@ -3883,27 +3934,6 @@ export class ModalEditor extends CustomEditor {
     );
   }
 
-  private static readonly PUT_SIZE_LIMIT = 512 * 1024; // 512 KB safety cap
-
-  private getPasteRegisterText(): string {
-    // A failed or skipped mirror leaves the OS clipboard stale relative to
-    // the register, so the register must win until a mirror lands again.
-    if (
-      this.preferRegisterForPut ||
-      this.clipboardMirror.hasPendingWrite() ||
-      (this.unnamedRegister !== '' && this.clipboardMirror.lastWriteFailed())
-    ) {
-      return this.unnamedRegister;
-    }
-
-    try {
-      const clipboardText = this.clipboardReadFn();
-      return clipboardText ?? this.unnamedRegister;
-    } catch {
-      return this.unnamedRegister;
-    }
-  }
-
   private moveCursorToPreviousGraphemeStart(): void {
     const cursor = this.getCursor();
     const line = this.getLines()[cursor.line] ?? '';
@@ -3918,80 +3948,6 @@ export class ModalEditor extends CustomEditor {
     const { line } = this.getCurrentLineAndCol();
     const graphemes = getLineGraphemes(line);
     this.moveCursorToCol(graphemes[graphemes.length - 1]?.start ?? 0);
-  }
-
-  private putAfter(): void {
-    const count = this.takeTotalCount(1);
-    const text = this.getPasteRegisterText();
-    if (!text) return;
-    const safeCount = Math.min(
-      count,
-      Math.max(1, Math.floor(ModalEditor.PUT_SIZE_LIMIT / text.length)),
-    );
-
-    if (text.endsWith('\n')) {
-      const content = text.slice(0, -1);
-      const targetLine = this.getCursor().line + 1;
-      for (let i = 0; i < safeCount; i++) {
-        super.handleInput(CTRL_E);
-        super.handleInput(NEWLINE);
-        for (const char of content) {
-          super.handleInput(char === '\n' ? NEWLINE : char);
-        }
-      }
-      // Vim: line-wise `p` leaves the cursor on the first non-blank of the
-      // first inserted line (one line below the original cursor). An
-      // all-whitespace first line lands at col 0, sharing the `^` divergence.
-      this.moveCursorToLineStart(targetLine);
-      this.moveCursorToFirstNonWhitespace();
-      return;
-    }
-
-    if (!this.isCursorAtOrPastEol()) {
-      super.handleInput(ESC_RIGHT);
-    }
-    for (let i = 0; i < safeCount; i++) {
-      for (const char of text) {
-        super.handleInput(char === '\n' ? NEWLINE : char);
-      }
-    }
-    this.moveCursorToPreviousGraphemeStart();
-  }
-
-  private putBefore(): void {
-    const count = this.takeTotalCount(1);
-    const text = this.getPasteRegisterText();
-    if (!text) return;
-    const safeCount = Math.min(
-      count,
-      Math.max(1, Math.floor(ModalEditor.PUT_SIZE_LIMIT / text.length)),
-    );
-
-    if (text.endsWith('\n')) {
-      const content = text.slice(0, -1);
-      const targetLine = this.getCursor().line;
-      for (let i = 0; i < safeCount; i++) {
-        super.handleInput(CTRL_A);
-        super.handleInput(NEWLINE);
-        super.handleInput(ESC_UP);
-        for (const char of content) {
-          super.handleInput(char === '\n' ? NEWLINE : char);
-        }
-      }
-      // Vim: line-wise `P` leaves the cursor on the first non-blank of the
-      // first inserted line (the cursor's original line, since `P` inserts
-      // above). All-whitespace first line lands at col 0 (`^` divergence).
-      this.moveCursorToLineStart(targetLine);
-      this.moveCursorToFirstNonWhitespace();
-      return;
-    }
-
-    for (let i = 0; i < safeCount; i++) {
-      for (const char of text) {
-        super.handleInput(char === '\n' ? NEWLINE : char);
-      }
-    }
-    this.moveCursorToPreviousGraphemeStart();
   }
 
   private deleteRange(col: number, targetCol: number, inclusive: boolean): void {
