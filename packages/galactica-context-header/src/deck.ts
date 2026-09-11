@@ -480,16 +480,28 @@ export function renderHeaderDeck(
 
   const lineColor = 'thinkingHigh';
   const topPrefix = topRailPrefix(state, boundedWidth, theme, lineColor);
+  const nativeStatusCount = state.piStatus?.nativeStatusCount ?? 0;
+  const nativeStatusMarker =
+    nativeStatusCount > 0 ? ` ${color(theme, 'dim', `${nativeStatusCount} 👣`)} ` : '';
+  const markerFits =
+    nativeStatusMarker === '' ||
+    visibleWidth(topPrefix) + visibleWidth(nativeStatusMarker) + 1 <= boundedWidth;
+  const fittedMarker = markerFits ? nativeStatusMarker : '';
   const top = `${topPrefix}${color(
     theme,
     lineColor,
-    '─'.repeat(Math.max(0, boundedWidth - visibleWidth(topPrefix))),
-  )}`;
+    '─'.repeat(
+      Math.max(
+        0,
+        boundedWidth - visibleWidth(topPrefix) - visibleWidth(fittedMarker) - 1,
+      ),
+    ),
+  )}${fittedMarker}${color(theme, lineColor, '─')}`;
   const modeRail = suppliedModeRail ?? fallbackModeRail(state, theme);
+  const inserting = suppliedModeRail
+    ? suppliedModeRail.plain === MODE_ICONS.insert
+    : state.mode === 'insert';
   const bottomPrefix = `${color(theme, lineColor, '─ ')}${modeRail.styled}${color(theme, lineColor, ' ')}`;
-  const nativeStatusCount = state.piStatus?.nativeStatusCount ?? 0;
-  const nativeStatusMarker =
-    nativeStatusCount > 0 ? ` ${color(theme, 'dim', `·${nativeStatusCount}`)}` : '';
   const bottomSuffix = `${color(theme, lineColor, ' ‹ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' ─')}`;
   const bottom = `${bottomPrefix}${color(
     theme,
@@ -497,13 +509,10 @@ export function renderHeaderDeck(
     '─'.repeat(
       Math.max(
         0,
-        boundedWidth -
-          visibleWidth(bottomPrefix) -
-          visibleWidth(nativeStatusMarker) -
-          visibleWidth(bottomSuffix),
+        boundedWidth - visibleWidth(bottomPrefix) - visibleWidth(bottomSuffix),
       ),
     ),
-  )}${nativeStatusMarker}${bottomSuffix}`;
+  )}${bottomSuffix}`;
   const divider = `\u001b[2m${color(theme, 'text', '┈'.repeat(boundedWidth))}\u001b[22m`;
   const current = lifecycle(state);
   const activityText = activityLabel(state);
@@ -543,7 +552,7 @@ export function renderHeaderDeck(
       compactTelemetryRight(state, theme),
       boundedWidth,
     ),
-    bottom,
+    ...(inserting ? [] : [bottom]),
   ];
   return rows.map((line) => fitWithoutDanglingSeparator(line, boundedWidth));
 }

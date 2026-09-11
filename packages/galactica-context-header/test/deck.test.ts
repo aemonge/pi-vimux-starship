@@ -113,7 +113,8 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.match(lines[6] ?? '', /^󰚩 GPT-5\.6 Sol › high ⟩ 󰾆 38% › 󰎞 2\s+/u);
   assert.match(lines[6] ?? '', / 63% › 󰜦 \$5\.16 ⟩  48\.2% ›  268M ›  3\/3$/u);
   assert.equal(lines.join('\n').includes('32K/128K'), false);
-  assert.match(lines[7] ?? '', /^─ 󰆾 ─+ ‹ 󰠭 ─$/u);
+  assert.match(lines[7] ?? '', /^─ /u);
+  assert.match(lines[7] ?? '', /‹ 󰠭 ─$/u);
   assert.ok(lines.every((line) => line.length > 0));
   assert.ok(lines.every((line) => !line.startsWith('│') && !line.endsWith('│')));
   assert.equal(lines.join('').split('󰠭').length - 1, 2);
@@ -142,17 +143,69 @@ test('turns the top ladybug into distinct error and warning counts', () => {
   assert.ok(colors.includes('dim:/pi-status'));
 });
 
-test('blends only a dim native-status count into the bottom rail', () => {
+test('moves the dim native-status count to the top rail right edge', () => {
   const state = fixture();
   state.piStatus = { errors: 0, warnings: 0, nativeStatusCount: 3 };
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.match(lines[0] ?? '', /^─ 󰠭 › ─+$/u);
-  assert.match(lines.at(-1) ?? '', /^─ 󰆾 ─+ ·3 ‹ 󰠭 ─$/u);
+  assert.match(lines[0] ?? '', /^─ 󰠭 › ─+ 3 👣 ─$/u);
+  assert.equal(lines.join('').includes('·3'), false);
+  assert.doesNotMatch(lines.at(-1) ?? '', /👣/u);
+  assert.match(lines.at(-1) ?? '', /‹ 󰠭 ─$/u);
+
+  const ansiTheme = {
+    fg: (_semanticColor: string, text: string) => `\u001b[35m${text}\u001b[0m`,
+    bold: (text: string) => `\u001b[1m${text}\u001b[22m`,
+  };
+  const wrapped = renderHeaderDeck(state, 59, ansiTheme as never);
+  assert.ok(wrapped.every((line) => visibleWidth(line) <= 59));
+  assert.match(plain(wrapped[0] ?? ''), /3 👣 ─$/u);
 
   state.piStatus.nativeStatusCount = 0;
   const empty = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.doesNotMatch(empty.at(-1) ?? '', /·0|·3/u);
+  assert.doesNotMatch(empty[0] ?? '', /👣|·0/u);
+
+  state.piStatus.nativeStatusCount = 3;
+  const narrow = renderHeaderDeck(state, 9, plainTheme as never);
+  assert.doesNotMatch(narrow[0] ?? '', /👣/u);
+  assert.ok(visibleWidth(narrow[0] ?? '') <= 9);
+});
+
+test('hides the bottom rail while inserting', () => {
+  const state = fixture();
+  state.mode = 'insert';
+
+  const hidden = renderHeaderDeck(state, 160, plainTheme as never);
+  assert.equal(hidden.length, 7);
+  assert.doesNotMatch(hidden.join('\n'), /‹ 󰠭/u);
+
+  const suppliedHidden = renderHeaderDeck(state, 160, plainTheme as never, {
+    plain: '󰏫',
+    styled: '󰏫',
+  });
+  assert.equal(suppliedHidden.length, 7);
+  assert.doesNotMatch(suppliedHidden.join('\n'), /‹ 󰠭/u);
+
+  state.mode = 'normal';
+  const visible = renderHeaderDeck(state, 160, plainTheme as never);
+  assert.equal(visible.length, 8);
+  assert.match(visible.at(-1) ?? '', /‹ 󰠭 ─$/u);
+});
+
+test('places a supplied live styled mode icon on the bottom separator', () => {
+  const renderWithModeRail = renderHeaderDeck as unknown as (
+    state: HeaderDeckState,
+    width: number,
+    theme: typeof plainTheme,
+    modeRail: { plain: string; styled: string },
+  ) => string[];
+  const modeRail = { plain: 'VIS', styled: '\u001b[35mVIS\u001b[0m' };
+
+  const lines = renderWithModeRail(fixture(), 80, plainTheme, modeRail);
+  const bottom = lines.at(-1) ?? '';
+
+  assert.match(plain(bottom), /^─ VIS ─+ ‹ 󰠭 ─$/u);
+  assert.equal(bottom.includes(modeRail.styled), true);
 });
 
 test('drops the status command before severity counts at narrow widths', () => {
@@ -421,26 +474,6 @@ test('uses prompt-line color for rules and major separators with violet ladybugs
   );
 });
 
-test('places a supplied live styled mode icon on the bottom separator', () => {
-  const renderWithModeRail = renderHeaderDeck as unknown as (
-    state: HeaderDeckState,
-    width: number,
-    theme: typeof plainTheme,
-    modeRail: { plain: string; styled: string },
-  ) => string[];
-  const modeRail = {
-    plain: '󰒅',
-    styled: '\u001b[35m󰒅\u001b[0m',
-  };
-
-  const lines = renderWithModeRail(fixture(), 80, plainTheme, modeRail);
-  const bottom = lines.at(-1) ?? '';
-
-  assert.match(plain(bottom), /^─ 󰒅 ─+ ‹ 󰠭 ─$/u);
-  assert.equal(bottom.includes(modeRail.styled), true);
-  assert.equal(lines.join('').split('󰒅').length - 1, 1);
-});
-
 test('keeps compact telemetry islands together with one gap cell', () => {
   const left = '󰚩 GPT-5.6 Sol › high ⟩ 󰾆 38% › 󰎞 2';
   const right = ' 63% › 󰜦 $5.16 ⟩  48.2% ›  268M ›  3/3';
@@ -517,7 +550,6 @@ test('preserves width and essential deck structure through responsive collapse',
       String(width),
     );
     assert.match(lines[0] ?? '', /󰠭/u, String(width));
-    assert.match(lines.at(-1) ?? '', /󰠭/u, String(width));
     assert.equal(lines.join('').split('󰠭').length - 1, 2, String(width));
     if (width >= 79) {
       assert.match(lines.join('\n'), /00:07'00/u, String(width));
