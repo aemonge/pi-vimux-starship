@@ -184,6 +184,10 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Actual implementation:** about 11m40s total (9m20s Step 2.1, 2m30s Step 2.2);
   Human wait excluded; below the 35–60 minute range because both seams were already
   Human-validated and the only friction was glyph-byte anchoring, not design.
+- **Human validation:** VALID at 2026-09-14T14:25:12Z; original response: `VALID`, sent
+  together with the next-direction request for icon styling.
+- **Observed Human wait:** About 10 minutes from ready-for-validation; excluded from
+  implementation.
 
 - [x] Step 2.1 Extend footer telemetry with both quota windows and paint compact
       percent-first deck tiles with severity color and the chosen countdown mode.
@@ -233,7 +237,12 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 
 ### Human validation
 
-- [ ] Human runs the deck on a GLM-family model, sees live `5h` and `7d` percent tiles
+- [x] Human runs the deck on a GLM-family model, sees live `5h` and `7d` percent tiles
       with the chosen countdown behavior, confirms one-window and non-GLM degradation,
       then reports a clear outcome; preserve the original response, canonical outcome,
       and UTC.
+  - Evidence 2026-09-14T14:25:12Z — original response: `VALID`; canonical outcome:
+    VALID. Live footer line shown with the request: `62% 5h › 12% 7d › 󰜦 $2.64`-shaped
+    tiles painting both windows in the deck dialect.
+  - Estimate refinement: comparable deck-paint slices over validated seams should start
+    at 10–25 minutes; retain a glyph/rendering uncertainty premium.
