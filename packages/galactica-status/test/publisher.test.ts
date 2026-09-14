@@ -325,6 +325,32 @@ test('publishes explicit selection and controlled next-action suggestions', () =
   assert.doesNotMatch(JSON.stringify([selected, validation]), /prompt|command|path/u);
 });
 
+test('subject selection fills the focus row beneath every higher source', () => {
+  const subject = { state: 'set', title: 'Session subject' } as const;
+
+  const idle = publisherModule.buildHeaderStatusEvent([], { subject });
+  assert.deepEqual(idle.selection, {
+    source: 'subject',
+    titles: ['Session subject'],
+    color: 'accent',
+  });
+
+  const beneathWork = publisherModule.buildHeaderStatusEvent([], {
+    subject,
+    workFocus: { state: 'active', intent: 'Ephemeral work' },
+  });
+  assert.equal(beneathWork.selection?.source, 'session-work');
+
+  const beneathOpenSpec = publisherModule.buildHeaderStatusEvent([], {
+    subject,
+    openSpec,
+    focusedTaskId: '3.8',
+  });
+  assert.equal(beneathOpenSpec.selection?.source, 'openspec');
+
+  assert.doesNotMatch(JSON.stringify([idle, beneathWork]), /prompt|command/u);
+});
+
 test('publishes bounded active-run counters without runtime identities', () => {
   const event = publisherModule.buildHeaderStatusEvent([], {
     activeRuns: { children: 3, subagents: 2 },

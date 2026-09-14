@@ -1,4 +1,4 @@
-import type { SessionWorkFocus } from './active-work.ts';
+import type { SessionSubject, SessionWorkFocus } from './active-work.ts';
 import type { GoalHeaderState } from './goal.ts';
 import type { ActiveRuntimeRuns } from './runtime-runs.ts';
 import type {
@@ -501,7 +501,12 @@ export const HEADER_LIFECYCLES = [
 
 export type HeaderLifecycle = (typeof HEADER_LIFECYCLES)[number];
 
-export const HEADER_SELECTION_SOURCES = ['openspec', 'goal', 'session-work'] as const;
+export const HEADER_SELECTION_SOURCES = [
+  'openspec',
+  'goal',
+  'session-work',
+  'subject',
+] as const;
 
 export type HeaderSelection = {
   source: (typeof HEADER_SELECTION_SOURCES)[number];
@@ -578,6 +583,7 @@ function headerSelection(options: {
   focusedTaskId?: string;
   goal?: GoalHeaderState | null;
   workFocus?: SessionWorkFocus;
+  subject?: SessionSubject;
 }): HeaderSelection | null {
   if (options.openSpec) {
     return {
@@ -598,6 +604,13 @@ function headerSelection(options: {
       source: 'session-work',
       titles: [normalizeInline(options.workFocus.intent)],
       color: options.workFocus.state === 'validation' ? 'warning' : 'accent',
+    };
+  }
+  if (options.subject && options.subject.state === 'set') {
+    return {
+      source: 'subject',
+      titles: [normalizeInline(options.subject.title)],
+      color: 'accent',
     };
   }
   return null;
@@ -999,6 +1012,7 @@ export function buildHeaderStatusEvent(
     openSpec?: OpenSpecState | null;
     focusedTaskId?: string;
     workFocus?: SessionWorkFocus;
+    subject?: SessionSubject;
     orchestration?: OrchestrationState | null;
     lifecycle?: HeaderLifecycle;
     activity?: HeaderActivity;
