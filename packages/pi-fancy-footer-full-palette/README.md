@@ -208,6 +208,10 @@ This keeps the right group complete while retaining a visible left/right split.
   `TIME_LIMIT` allowance is not rendered. Without a key, offline, or on error the
   provider fails soft and the quota widget stays hidden.
 
+  The telemetry channel also publishes the model-relevant quota windows (`5h` and
+  `7d` with used percent and reset deadline) alongside the collapsed single percent,
+  so deck surfaces can paint both windows as separate tiles.
+
 ## 🧩 Extension widgets
 
 Other pi extensions can contribute fancy-footer widgets.

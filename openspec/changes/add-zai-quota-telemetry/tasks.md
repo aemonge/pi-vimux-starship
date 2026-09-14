@@ -178,6 +178,12 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   footer behavior; fixed by Human on 2026-09-14.
 - **Final history target:** `feat(deck): paint z.ai quota windows`
 - **Implementation started at:** 2026-09-14T14:03:10Z
+- **Work completed at:** 2026-09-14T14:14:50Z
+- **Assurance completed at:** 2026-09-14T14:14:50Z — full offline `npm run check` inside
+  Step 2.2
+- **Actual implementation:** about 11m40s total (9m20s Step 2.1, 2m30s Step 2.2);
+  Human wait excluded; below the 35–60 minute range because both seams were already
+  Human-validated and the only friction was glyph-byte anchoring, not design.
 
 - [x] Step 2.1 Extend footer telemetry with both quota windows and paint compact
       percent-first deck tiles with severity color and the chosen countdown mode.
@@ -206,9 +212,19 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     provider reset times, one-window and no-window degradation, and focused tests in
     both packages.
 
-- [-] Step 2.2 Document the deck quota tiles and run complete offline assurance while
+- [x] Step 2.2 Document the deck quota tiles and run complete offline assurance while
       refreshing the source-integrity manifest.
-  - Started: 2026-09-14T14:13:20Z
+  - Started: 2026-09-14T14:13:20Z; Completed: 2026-09-14T14:14:50Z.
+  - Timing: 1m30s implementation/check time; below estimate because documentation was a
+    two-paragraph addition and the full gate passed on the first run.
+  - Check: full `npm run check` PASS — baseline integrity (95 current, 87 imported),
+    offline package load, format, lint, TypeScript, tooling and component tests,
+    composition probe (1 extension, 8 commands, 3 tools), and OpenSpec (5 changes).
+  - Paths: `packages/galactica-context-header/README.md`,
+    `packages/pi-fancy-footer-full-palette/README.md`, this ledger, and
+    `baseline/source.sha256`.
+  - History: `step(deck): document quota window tiles`; verified independently after
+    commit.
   - Estimate: 15–25 minutes; uncertainty is documenting the countdown mode boundary
     without overpromising provider reset-time fidelity.
   - Covers: package and root documentation updates, `check:baseline` before the manifest
