@@ -7,7 +7,10 @@ import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-a
 import galacticaStatus from '../index.ts';
 import {
   formatActiveWorkTitle,
+  NO_SESSION_SUBJECT,
+  restoreSessionSubject,
   restoreSessionWorkFocus,
+  sessionSubject,
   sessionWorkFocus,
   taskflowRunFocus,
 } from '../src/active-work.ts';
@@ -1695,6 +1698,80 @@ test('session work normalization rejects empty intent and bounds hostile metadat
   assert.equal(Array.from(focus.intent).length, 160);
   assert.ok(focus.intent.endsWith('…'));
   assert.doesNotMatch(focus.intent, /FORBIDDEN-SUFFIX/u);
+});
+
+test('session subject normalization rejects empty titles and bounds hostile metadata', () => {
+  assert.equal(sessionSubject('set', '   '), undefined);
+  assert.equal(sessionSubject('unknown', 'title'), undefined);
+  assert.equal(sessionSubject('clear'), NO_SESSION_SUBJECT);
+  const subject = sessionSubject(
+    'set',
+    `  Subject\n\u0007 ${'🧪'.repeat(500)} FORBIDDEN-SUFFIX  `,
+  );
+  assert.equal(subject?.state, 'set');
+  if (subject?.state !== 'set') assert.fail('expected set subject');
+  assert.doesNotMatch(subject.title, /[\u0000-\u001f\u007f]/u);
+  assert.equal(Array.from(subject.title).length, 120);
+  assert.ok(subject.title.endsWith('…'));
+  assert.doesNotMatch(subject.title, /FORBIDDEN-SUFFIX/u);
+});
+
+test('restoreSessionSubject prefers the latest valid subject entry', () => {
+  const entries = [
+    {
+      type: 'custom',
+      customType: 'galactica-status.session-subject.v1',
+      data: { state: 'set', title: 'First subject' },
+    },
+    {
+      type: 'custom',
+      customType: 'galactica-status.session-work.v1',
+      data: { state: 'active', intent: 'Work' },
+    },
+    {
+      type: 'custom',
+      customType: 'galactica-status.session-subject.v1',
+      data: { state: 'set', title: 'Latest subject' },
+    },
+    {
+      type: 'custom',
+      customType: 'galactica-status.session-subject.v1',
+      data: { state: 'invalid' },
+    },
+  ];
+  assert.deepEqual(restoreSessionSubject(entries), {
+    state: 'set',
+    title: 'Latest subject',
+  });
+  assert.deepEqual(restoreSessionSubject([]), NO_SESSION_SUBJECT);
+});
+
+test('subject titles fill the fallback before session name and yield to work', () => {
+  const common = {
+    focus: { mode: 'none' } as const,
+    projectRoot: '/repos/repository-choice',
+    cwd: '/work/cwd-choice',
+    sessionName: 'Fallback session',
+  };
+  const subject = { state: 'set', title: 'Session subject' } as const;
+
+  assert.equal(formatActiveWorkTitle({ ...common, subject }), 'π  Session subject');
+  assert.equal(
+    formatActiveWorkTitle({
+      ...common,
+      subject,
+      workFocus: { state: 'active', intent: 'Ephemeral work' },
+    }),
+    'π  Ephemeral work',
+  );
+  assert.equal(
+    formatActiveWorkTitle({
+      ...common,
+      subject,
+      focus: { mode: 'task', change, taskId },
+    }),
+    `π  ${change} › ${taskId}`,
+  );
 });
 
 test('openspec_focus shares safeguarded branch transitions with the slash command', async () => {

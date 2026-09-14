@@ -3,6 +3,7 @@ import type { GoalHeaderState } from './goal.ts';
 
 export const OPEN_SPEC_FOCUS_ENTRY_TYPE = 'galactica-status.openspec-focus.v1';
 export const SESSION_WORK_FOCUS_ENTRY_TYPE = 'galactica-status.session-work.v1';
+export const SESSION_SUBJECT_ENTRY_TYPE = 'galactica-status.session-subject.v1';
 
 export type TaskOpenSpecFocus = {
   mode: 'task';
@@ -19,10 +20,15 @@ export type SessionWorkFocus =
 
 export const NO_SESSION_WORK_FOCUS: SessionWorkFocus = { state: 'clear' };
 
+export type SessionSubject = { state: 'clear' } | { state: 'set'; title: string };
+
+export const NO_SESSION_SUBJECT: SessionSubject = { state: 'clear' };
+
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f-\u009f]/gu;
 const MAX_TITLE_POINTS = 180;
 const MAX_TASK_TITLE_POINTS = 72;
 const MAX_WORK_INTENT_POINTS = 160;
+const MAX_SUBJECT_POINTS = 120;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -80,6 +86,25 @@ export function parseSessionWorkFocus(value: unknown): SessionWorkFocus | undefi
   return sessionWorkFocus(value.state, value.intent);
 }
 
+export function sessionSubject(
+  state: unknown,
+  title?: unknown,
+): SessionSubject | undefined {
+  if (state === 'clear') return NO_SESSION_SUBJECT;
+  if (state !== 'set') return undefined;
+  const normalizedTitle = explicitId(title);
+  if (!normalizedTitle) return undefined;
+  return {
+    state,
+    title: shorten(normalizedTitle, MAX_SUBJECT_POINTS),
+  };
+}
+
+export function parseSessionSubject(value: unknown): SessionSubject | undefined {
+  if (!isRecord(value)) return undefined;
+  return sessionSubject(value.state, value.title);
+}
+
 export function restoreOpenSpecFocus(entries: readonly unknown[]): OpenSpecFocus {
   for (let index = entries.length - 1; index >= 0; index -= 1) {
     const entry = entries[index];
@@ -112,6 +137,22 @@ export function restoreSessionWorkFocus(entries: readonly unknown[]): SessionWor
   return NO_SESSION_WORK_FOCUS;
 }
 
+export function restoreSessionSubject(entries: readonly unknown[]): SessionSubject {
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (
+      !isRecord(entry) ||
+      entry.type !== 'custom' ||
+      entry.customType !== SESSION_SUBJECT_ENTRY_TYPE
+    ) {
+      continue;
+    }
+    const subject = parseSessionSubject(entry.data);
+    if (subject) return subject;
+  }
+  return NO_SESSION_SUBJECT;
+}
+
 export function taskflowRunFocus(input: unknown): TaskOpenSpecFocus | undefined {
   if (!isRecord(input) || input.action !== 'run' || !isRecord(input.args)) {
     return undefined;
@@ -142,10 +183,21 @@ export function sameSessionWorkFocus(
   );
 }
 
+export function sameSessionSubject(
+  left: SessionSubject,
+  right: SessionSubject,
+): boolean {
+  if (left.state !== right.state) return false;
+  return (
+    left.state === 'clear' || (right.state === 'set' && left.title === right.title)
+  );
+}
+
 export function formatActiveWorkTitle(options: {
   focus: OpenSpecFocus;
   workFocus?: SessionWorkFocus;
   goal?: GoalHeaderState | null;
+  subject?: SessionSubject;
   taskTitle?: string;
   sessionName?: string;
   projectRoot?: string;
@@ -169,6 +221,8 @@ export function formatActiveWorkTitle(options: {
       options.workFocus.state === 'validation'
         ? `Validate › ${options.workFocus.intent}`
         : options.workFocus.intent;
+  } else if (options.subject && options.subject.state === 'set') {
+    detail = options.subject.title;
   } else {
     detail =
       normalizeTitlePart(options.sessionName ?? '') ||
