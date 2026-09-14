@@ -199,27 +199,27 @@ function wrapFocus(text: string, width: number, maximumLines: number): string[] 
   return lines.slice(0, maximumLines);
 }
 
-function selectionLines(
+function elevatedSelectionLines(
   state: HeaderDeckState,
   width: number,
-  maximumLines: number,
   theme: Theme,
 ): string[] {
-  const prefix = '󰓾 ';
+  const prefix = `${color(theme, 'customMessageLabel', '󰠭')} ${semanticSeparator(theme)} `;
   const indent = ' '.repeat(visibleWidth(prefix));
   const selection = state.header?.selection;
   const titles = (selection?.titles ?? [])
     .map((value) => safeText(value))
     .filter(Boolean);
   if (!selection || titles.length === 0) {
-    return [color(theme, 'dim', `${prefix}—`)];
+    return [`${prefix}${color(theme, 'dim', '—')}`];
   }
   const contentWidth = Math.max(1, width - visibleWidth(prefix));
   const selectionColor = ['accent', 'success'].includes(selection.color)
     ? 'accent'
     : selection.color;
-  return wrapFocus(titles.join(' › '), contentWidth, maximumLines).map((line, index) =>
-    color(theme, selectionColor, `${index === 0 ? prefix : indent}${line}`),
+  return wrapFocus(titles.join(' › '), contentWidth, 2).map(
+    (line, index) =>
+      `${index === 0 ? prefix : indent}${color(theme, selectionColor, line)}`,
   );
 }
 
@@ -229,6 +229,9 @@ function semanticSeparator(theme: Theme): string {
 
 function minorSeparator(theme: Theme, semanticColor = 'accent'): string {
   return color(theme, semanticColor, '›');
+}
+function loud(theme: Theme, name: string, text: string): string {
+  return `\u001b[7m${color(theme, name, text, true)}\u001b[27m`;
 }
 
 function alignedRows(left: string, right: string, width: number): string[] {
@@ -448,13 +451,11 @@ function topRailPrefix(
 ): string {
   const errors = state.piStatus?.errors ?? 0;
   const warnings = state.piStatus?.warnings ?? 0;
-  if (errors === 0 && warnings === 0) {
-    return `${color(theme, lineColor, '─ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' › ')}`;
-  }
+  if (errors === 0 && warnings === 0) return '';
 
   const groups = [
-    errors > 0 ? color(theme, 'error', `󰅙 ${errors}`) : '',
-    warnings > 0 ? color(theme, 'warning', ` ${warnings}`) : '',
+    errors > 0 ? loud(theme, 'error', `󰅙 ${errors}`) : '',
+    warnings > 0 ? loud(theme, 'warning', ` ${warnings}`) : '',
   ].filter(Boolean);
   const summary = groups.join(color(theme, lineColor, ' › '));
   const full = `${color(theme, lineColor, '─ ')}${summary}${color(theme, lineColor, ' ⟩ ')}${color(theme, 'dim', '/pi-status')} `;
@@ -466,7 +467,7 @@ function topRailPrefix(
   const total = errors + warnings;
   const severity = errors > 0 ? 'error' : 'warning';
   const icon = errors > 0 ? '󰅙' : '';
-  return `${color(theme, lineColor, '─ ')}${color(theme, severity, `${icon} ${total}`)} `;
+  return `${color(theme, lineColor, '─ ')}${loud(theme, severity, `${icon} ${total}`)} `;
 }
 
 export function renderHeaderDeck(
@@ -481,28 +482,19 @@ export function renderHeaderDeck(
   const lineColor = 'thinkingHigh';
   const topPrefix = topRailPrefix(state, boundedWidth, theme, lineColor);
   const nativeStatusCount = state.piStatus?.nativeStatusCount ?? 0;
-  const nativeStatusMarker =
-    nativeStatusCount > 0 ? ` ${color(theme, 'dim', `${nativeStatusCount} 👣`)} ` : '';
-  const markerFits =
-    nativeStatusMarker === '' ||
-    visibleWidth(topPrefix) + visibleWidth(nativeStatusMarker) + 1 <= boundedWidth;
-  const fittedMarker = markerFits ? nativeStatusMarker : '';
   const top = `${topPrefix}${color(
     theme,
     lineColor,
-    '─'.repeat(
-      Math.max(
-        0,
-        boundedWidth - visibleWidth(topPrefix) - visibleWidth(fittedMarker) - 1,
-      ),
-    ),
-  )}${fittedMarker}${color(theme, lineColor, '─')}`;
+    '─'.repeat(Math.max(0, boundedWidth - visibleWidth(topPrefix))),
+  )}`;
   const modeRail = suppliedModeRail ?? fallbackModeRail(state, theme);
   const inserting = suppliedModeRail
     ? suppliedModeRail.plain === MODE_ICONS.insert
     : state.mode === 'insert';
   const bottomPrefix = `${color(theme, lineColor, '─ ')}${modeRail.styled}${color(theme, lineColor, ' ')}`;
-  const bottomSuffix = `${color(theme, lineColor, ' ‹ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' ─')}`;
+  const countText =
+    nativeStatusCount > 0 ? `${color(theme, 'dim', `${nativeStatusCount}`)} ` : '';
+  const bottomSuffix = `${color(theme, lineColor, ' ')}${countText}${color(theme, lineColor, '‹ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' ─')}`;
   const bottom = `${bottomPrefix}${color(
     theme,
     lineColor,
@@ -538,12 +530,12 @@ export function renderHeaderDeck(
     suggestionLine(state, theme, recovering),
   ].join(' ');
   const status = alignedSingleRow(statusLeft, progressLine(state, theme), boundedWidth);
-  const focusLines = selectionLines(state, boundedWidth, 2, theme);
+  const focusLines = elevatedSelectionLines(state, boundedWidth, theme);
 
   const rows = [
+    ...focusLines,
     top,
     status,
-    ...focusLines,
     divider,
     ...alignedRows(projectLeft(state, theme), gitRight(state, theme), boundedWidth),
     divider,

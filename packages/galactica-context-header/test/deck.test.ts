@@ -92,16 +92,16 @@ test('renders the approved rich wide header without side borders or spacer rows'
   const lines = renderHeaderDeck(fixture(), 160, plainTheme as never);
 
   assert.equal(lines.length, 8);
-  assert.match(lines[0] ?? '', /^─ 󰠭 › ─+$/u);
+  assert.equal(
+    lines[0],
+    `󰠭 ⟩ Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation`,
+  );
+  assert.match(lines[1] ?? '', /^─+$/u);
   assert.match(
-    lines[1] ?? '',
+    lines[2] ?? '',
     /^\( 2 ›  1 · 00:07'00\) waiting ⟩ idle 󰁕 Human validation\s+ task 0\/1 ›  stps 6\/16$/u,
   );
-  assert.doesNotMatch(lines[1] ?? '', /Human validation ⟩  task/u);
-  assert.equal(
-    lines[2],
-    '󰓾 Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation',
-  );
+  assert.doesNotMatch(lines[2] ?? '', /Human validation ⟩  task/u);
   assert.equal(plain(lines[3] ?? ''), '┈'.repeat(160));
   assert.equal(plain(lines[5] ?? ''), '┈'.repeat(160));
   assert.match(lines[3] ?? '', /^\u001b\[2m/u);
@@ -126,9 +126,11 @@ test('turns the top ladybug into distinct error and warning counts', () => {
   state.piStatus = { errors: 2, warnings: 3, nativeStatusCount: 0 };
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.match(lines[0] ?? '', /^─ 󰅙 2 ›  3 ⟩ \/pi-status ─+$/u);
-  assert.equal((lines[0] ?? '').split('⟩').length - 1, 1);
-  assert.doesNotMatch(lines[0] ?? '', /󰠭/u);
+  const alert = lines.find((line) => plain(line).startsWith('─ 󰅙')) ?? '';
+  assert.match(plain(alert), /^─ 󰅙 2 ›  3 ⟩ \/pi-status ─+$/u);
+  assert.equal(alert.split('⟩').length - 1, 1);
+  assert.doesNotMatch(alert, /󰠭/u);
+  assert.ok(alert.includes('\u001b[7m'));
 
   const colors: string[] = [];
   renderHeaderDeck(state, 160, {
@@ -143,15 +145,15 @@ test('turns the top ladybug into distinct error and warning counts', () => {
   assert.ok(colors.includes('dim:/pi-status'));
 });
 
-test('moves the dim native-status count to the top rail right edge', () => {
+test('keeps the native-status count on the footer attribution only', () => {
   const state = fixture();
   state.piStatus = { errors: 0, warnings: 0, nativeStatusCount: 3 };
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.match(lines[0] ?? '', /^─ 󰠭 › ─+ 3 👣 ─$/u);
+  assert.match(lines[1] ?? '', /^─+$/u);
   assert.equal(lines.join('').includes('·3'), false);
   assert.doesNotMatch(lines.at(-1) ?? '', /👣/u);
-  assert.match(lines.at(-1) ?? '', /‹ 󰠭 ─$/u);
+  assert.match(lines.at(-1) ?? '', /3 ‹ 󰠭 ─$/u);
 
   const ansiTheme = {
     fg: (_semanticColor: string, text: string) => `\u001b[35m${text}\u001b[0m`,
@@ -159,16 +161,19 @@ test('moves the dim native-status count to the top rail right edge', () => {
   };
   const wrapped = renderHeaderDeck(state, 59, ansiTheme as never);
   assert.ok(wrapped.every((line) => visibleWidth(line) <= 59));
-  assert.match(plain(wrapped[0] ?? ''), /3 👣 ─$/u);
+  const wrappedTop = wrapped.find((line) => /^─+$/u.test(plain(line))) ?? '';
+  assert.match(plain(wrappedTop), /^─+$/u);
 
   state.piStatus.nativeStatusCount = 0;
   const empty = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.doesNotMatch(empty[0] ?? '', /👣|·0/u);
+  assert.doesNotMatch(empty[1] ?? '', /👣|·0/u);
+  assert.match(empty.at(-1) ?? '', / ‹ 󰠭 ─$/u);
 
   state.piStatus.nativeStatusCount = 3;
-  const narrow = renderHeaderDeck(state, 9, plainTheme as never);
-  assert.doesNotMatch(narrow[0] ?? '', /👣/u);
-  assert.ok(visibleWidth(narrow[0] ?? '') <= 9);
+  const narrow = renderHeaderDeck(state, 5, plainTheme as never);
+  const narrowTop = narrow.find((line) => /^─+$/u.test(plain(line))) ?? '';
+  assert.doesNotMatch(narrowTop, /👣/u);
+  assert.ok(visibleWidth(narrowTop) <= 5);
 });
 
 test('hides the bottom rail while inserting', () => {
@@ -212,12 +217,18 @@ test('drops the status command before severity counts at narrow widths', () => {
   const state = fixture();
   state.piStatus = { errors: 2, warnings: 3, nativeStatusCount: 0 };
 
-  const compact = renderHeaderDeck(state, 20, plainTheme as never)[0] ?? '';
-  assert.match(compact, /^─ 󰅙 2 ›  3 /u);
+  const compact =
+    renderHeaderDeck(state, 20, plainTheme as never).find((line) =>
+      plain(line).startsWith('─ 󰅙'),
+    ) ?? '';
+  assert.match(plain(compact), /^─ 󰅙 2 ›  3 /u);
   assert.doesNotMatch(compact, /pi-status/u);
 
-  const narrow = renderHeaderDeck(state, 9, plainTheme as never)[0] ?? '';
-  assert.match(narrow, /^─ 󰅙 5/u);
+  const narrow =
+    renderHeaderDeck(state, 9, plainTheme as never).find((line) =>
+      plain(line).startsWith('─ 󰅙'),
+    ) ?? '';
+  assert.match(plain(narrow), /^─ 󰅙 5/u);
   assert.ok(visibleWidth(narrow) <= 9);
 });
 
@@ -238,10 +249,10 @@ test('keeps activity and focus distinct on the title row', () => {
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
   assert.match(
-    lines[1] ?? '',
+    lines[2] ?? '',
     /^\( 2 ›  1 · 00:07'00\) assuring ⟩ verify 󰁕 validate result\s+ task/u,
   );
-  assert.equal(lines[2], '󰓾 Plan title › Current task');
+  assert.equal(lines[0], `󰠭 ⟩ Plan title › Current task`);
   assert.equal(lines.join('\n').split('Running checks').length - 1, 0);
 });
 
@@ -257,17 +268,17 @@ test('gives the complete selected scope a bounded full-width focus canvas', () =
   };
 
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.doesNotMatch(wide[1] ?? '', /Parent Plan title/u);
-  assert.equal(wide[2], `󰓾 Parent Plan title › ${expected}`);
+  assert.doesNotMatch(wide[2] ?? '', /Parent Plan title/u);
+  assert.equal(wide[0], `󰠭 ⟩ Parent Plan title › ${expected}`);
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
   assert.match(narrow[0] ?? '', /󰠭/u);
-  assert.match(narrow[1] ?? '', /^\( 2 ›  1 · 00:07'00\) waiting ⟩ idle/u);
-  const dividerIndex = narrow.findIndex((line) => plain(line) === '┈'.repeat(79));
-  const focus = narrow.slice(dividerIndex - 2, dividerIndex);
+  const status = narrow.find((line) => plain(line).startsWith('(')) ?? '';
+  assert.match(status, /^\( 2 ›  1 · 00:07'00\) waiting ⟩ idle/u);
+  const focus = narrow.slice(0, 2);
   assert.equal(focus.length, 2);
   assert.equal(
-    focus.join(' ').replace(/󰓾 |  /gu, ''),
+    focus.join(' ').replace(/󰠭 ⟩ |    /gu, ''),
     `Parent Plan title › ${expected}`,
   );
 });
@@ -282,12 +293,12 @@ test('keeps a single selected title on the focus row only', () => {
   };
 
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.doesNotMatch(wide[1] ?? '', /One focused work title/u);
-  assert.equal(wide[2], '󰓾 One focused work title');
+  assert.doesNotMatch(wide[2] ?? '', /One focused work title/u);
+  assert.equal(wide[0], `󰠭 ⟩ One focused work title`);
   assert.equal(wide.join('\n').split('One focused work title').length - 1, 1);
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
-  assert.equal(plain(narrow[2] ?? ''), '󰓾 One focused work title');
+  assert.equal(plain(narrow[0] ?? ''), `󰠭 ⟩ One focused work title`);
 });
 
 test('renders the subject selection on the focus row instead of an em dash', () => {
@@ -300,11 +311,11 @@ test('renders the subject selection on the focus row instead of an em dash', () 
   };
 
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.equal(wide[2], '󰓾 Session subject');
-  assert.doesNotMatch(wide.join('\n'), /󰓾 —/u);
+  assert.equal(wide[0], `󰠭 ⟩ Session subject`);
+  assert.doesNotMatch(wide.join('\n'), /󰠭 ⟩ —/u);
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
-  assert.notEqual(plain(narrow[2] ?? ''), '󰓾 —');
+  assert.notEqual(plain(narrow[0] ?? ''), `󰠭 ⟩ —`);
 });
 
 test('bolds only current control and status anchors', () => {
@@ -327,7 +338,7 @@ test('bolds only current control and status anchors', () => {
     "( 2 ›  1 · 00:07'00)",
     'idle',
     'Human validation',
-    '󰓾 Read-only preflight for the interrupted one-line Review ledger fix',
+    'Read-only preflight for the interrupted one-line Review ledger fix',
     'before further OpenSpec validation and implementation',
     ' stps 6/16',
     ' ~/galactica',
@@ -367,7 +378,7 @@ test('uses a bold blue lifecycle with neutral activity and green direction', () 
   assert.ok(colors.includes('accent:assuring'));
   assert.ok(colors.includes('text:verify'));
   assert.ok(colors.includes('success:󰁕 validate result'));
-  assert.ok(colors.includes('accent:󰓾 Plan title › Current task'));
+  assert.ok(colors.includes('accent:Plan title › Current task'));
   assert.equal(colors.includes('accent:verify'), false);
   assert.equal(colors.includes('accent:󰁕 validate result'), false);
 });
@@ -402,7 +413,7 @@ test('colors recovery activity and direction blue while only lifecycle stays bol
 
   const lines = renderHeaderDeck(state, 160, theme as never);
 
-  assert.match(lines[1] ?? '', /working ⟩ recovering 󰁕 complete scope\s+ task/u);
+  assert.match(lines[2] ?? '', /working ⟩ recovering 󰁕 complete scope\s+ task/u);
   assert.ok(colors.includes('accent:recovering'));
   assert.ok(colors.includes('accent:󰁕 complete scope'));
   assert.ok(bolded.includes('working'));
@@ -430,7 +441,7 @@ test('keeps lifecycle contextual and colors progress by completion', () => {
   assert.ok(colors.includes('warning:󰁕 Human validation'));
   assert.ok(
     colors.includes(
-      'accent:󰓾 Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation',
+      'accent:Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation',
     ),
   );
   assert.ok(colors.includes('text: task 0/1'));
@@ -513,7 +524,7 @@ test('keeps child-run and subagent counters visible and changes only their color
 
   state.header!.counters.activeRuns = { children: 0, subagents: 0 };
   let lines = renderHeaderDeck(state, 160, theme as never);
-  assert.match(lines[1] ?? '', /^\( 0 ›  0 · 00:07'00\)/u);
+  assert.match(lines[2] ?? '', /^\( 0 ›  0 · 00:07'00\)/u);
   assert.ok(colors.includes('dim: 0'));
   assert.ok(colors.includes('dim: 0'));
   assert.doesNotMatch(lines[6] ?? '', /||󰈙/u);
@@ -521,14 +532,14 @@ test('keeps child-run and subagent counters visible and changes only their color
   colors.length = 0;
   state.header!.counters.activeRuns = { children: 1, subagents: 0 };
   lines = renderHeaderDeck(state, 160, theme as never);
-  assert.match(lines[1] ?? '', /^\( 1 ›  0 · 00:07'00\)/u);
+  assert.match(lines[2] ?? '', /^\( 1 ›  0 · 00:07'00\)/u);
   assert.ok(colors.includes('accent: 1'));
   assert.ok(colors.includes('dim: 0'));
 
   colors.length = 0;
   state.header!.counters.activeRuns = { children: 3, subagents: 2 };
   lines = renderHeaderDeck(state, 160, theme as never);
-  assert.match(lines[1] ?? '', /^\( 3 ›  2 · 00:07'00\)/u);
+  assert.match(lines[2] ?? '', /^\( 3 ›  2 · 00:07'00\)/u);
   assert.ok(colors.includes('accent: 3'));
   assert.ok(colors.includes('accent: 2'));
 });
@@ -591,10 +602,10 @@ test('renders unavailable optional telemetry honestly', () => {
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
   assert.match(
-    lines[1] ?? '',
+    lines[2] ?? '',
     /^\( 0 ›  0 · 00:00'00\) waiting ⟩ idle 󰁕 —\s+ task — ›  stps —$/u,
   );
-  assert.equal(lines[2], '󰓾 —');
+  assert.equal(plain(lines[0] ?? ''), `󰠭 ⟩ —`);
   assert.doesNotMatch(lines.join('\n'), /next direction/u);
   assert.match(lines.find((line) => line.includes('')) ?? '', / \(no Git\) ⟩ —/u);
   assert.doesNotMatch(lines.join('\n'), /clean/u);
