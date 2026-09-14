@@ -847,23 +847,17 @@ export function formatDeckCountdown(resetAt: number, nowMs = Date.now()): string
   }
   const remainingMs = resetAt * 1000 - nowMs;
   if (remainingMs <= 0) return '';
+  // Clock-style H:MM like the provider's own web UI: the coding window always
+  // fits inside a day, and longer horizons read better as whole days.
   const minuteMs = 60_000;
   const hourMs = 60 * minuteMs;
   const dayMs = 24 * hourMs;
   if (remainingMs >= dayMs) {
-    const days = Math.floor(remainingMs / dayMs);
-    const hours = Math.floor((remainingMs % dayMs) / hourMs);
-    return `~${days}d${hours > 0 ? `${hours}h` : ''}`;
+    return `${Math.floor(remainingMs / dayMs)}d`;
   }
-  if (remainingMs >= hourMs) {
-    const hours = Math.floor(remainingMs / hourMs);
-    const minutes = Math.floor((remainingMs % hourMs) / minuteMs);
-    return `~${hours}h${minutes > 0 ? `${minutes}m` : ''}`;
-  }
-  if (remainingMs >= minuteMs) {
-    return `~${Math.floor(remainingMs / minuteMs)}m`;
-  }
-  return '~now';
+  const hours = Math.floor(remainingMs / hourMs);
+  const minutes = Math.floor((remainingMs % hourMs) / minuteMs);
+  return `${hours}:${String(minutes).padStart(2, '0')}`;
 }
 
 export function parsePiStatusSnapshot(raw: unknown): PiStatusSnapshot | null {

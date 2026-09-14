@@ -652,7 +652,7 @@ test('paints icon-native quota tiles in cost, calendar, flame order', () => {
   assert.ok(costAt >= 0 && calendarAt > costAt, 'calendar follows cost');
   assert.ok(flameAt > calendarAt, 'flame tile closes the group');
   assert.ok(
-    telemetryLine.includes(`${FLAME_ICON} 82% › ${CLOCK_ICON} ~1h30m`),
+    telemetryLine.includes(`${FLAME_ICON} 82% › ${CLOCK_ICON} 1:30`),
     'coding tile carries clock countdown',
   );
 });
@@ -677,7 +677,7 @@ test('classifies minute and day labels and always counts down the coding window'
 
   assert.ok(telemetryLine.includes(`${CAL_ICON} 40%`), 'day label is calendar');
   assert.ok(
-    telemetryLine.includes(`${FLAME_ICON} 52% › ${CLOCK_ICON} ~45m`),
+    telemetryLine.includes(`${FLAME_ICON} 52% › ${CLOCK_ICON} 0:45`),
     'cool coding window still counts down',
   );
 });
@@ -695,7 +695,7 @@ test('coding window without reset time paints flame without clock', () => {
 
   const tail = telemetryLine.slice(telemetryLine.indexOf(FLAME_ICON));
   assert.ok(tail.startsWith(`${FLAME_ICON} 62%`));
-  assert.ok(!tail.includes(CLOCK_ICON) && !tail.includes('~'));
+  assert.ok(!tail.includes(CLOCK_ICON) && !tail.includes(':'));
 });
 
 test('weekly-only telemetry paints the calendar tile alone', () => {

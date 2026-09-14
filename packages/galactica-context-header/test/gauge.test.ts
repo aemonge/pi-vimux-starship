@@ -879,9 +879,10 @@ test('formats hot-window countdowns from reset deadlines', () => {
   const nowMs = Date.parse('2026-09-14T13:00:00Z');
   const resetAt = (offsetMs: number) => Math.floor((nowMs + offsetMs) / 1000);
 
-  assert.equal(gaugeModule.formatDeckCountdown(resetAt(90 * 60_000), nowMs), '~1h30m');
-  assert.equal(gaugeModule.formatDeckCountdown(resetAt(45 * 60_000), nowMs), '~45m');
-  assert.equal(gaugeModule.formatDeckCountdown(resetAt(6 * 86_400_000), nowMs), '~6d');
+  assert.equal(gaugeModule.formatDeckCountdown(resetAt(90 * 60_000), nowMs), '1:30');
+  assert.equal(gaugeModule.formatDeckCountdown(resetAt(45 * 60_000), nowMs), '0:45');
+  assert.equal(gaugeModule.formatDeckCountdown(resetAt(30_000), nowMs), '0:00');
+  assert.equal(gaugeModule.formatDeckCountdown(resetAt(6 * 86_400_000), nowMs), '6d');
   assert.equal(gaugeModule.formatDeckCountdown(resetAt(-10_000), nowMs), '');
   assert.equal(gaugeModule.formatDeckCountdown(Number.NaN, nowMs), '');
 });

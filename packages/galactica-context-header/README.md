@@ -195,7 +195,7 @@ unavailable `/proc` falls back honestly to current-process CPU and RSS. Sampling
 smoothing, publication, timers, and resource widgets are session-scoped and cleaned up
 on shutdown. The local Fancy Footer fork owns cache, quota, and session-cost collection.
 When the footer reports quota windows, the compact telemetry row paints icon-native
-tiles in cost, long-window, coding-window order — `󰜦 $5.21 ⟩ 󰃰 12% ⟩ 󰈸 62% › 󰅐 ~1h45m`.
+tiles in cost, long-window, coding-window order — `󰜦 $5.21 ⟩ 󰃰 12% ⟩ 󰈸 62% › 󰅐 1:45`.
 The flame is the coding window's permanent icon and always carries the clock
 countdown; 80% used turns a tile's accent color into a warning. Without windows the
 slot degrades to the single footer-reported percent, and without telemetry it stays a
