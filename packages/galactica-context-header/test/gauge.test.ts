@@ -447,6 +447,22 @@ test('parses bounded work counters without accepting impossible progress', () =>
   assert.deepEqual(invalid?.counters, { agents: { active: 0, total: 0 } });
 });
 
+test('parses the subject selection source beneath the explicit sources', () => {
+  const parsed = gaugeModule.parseHeaderSnapshot({
+    protocol: 1,
+    selection: {
+      source: 'subject',
+      titles: ['Session subject'],
+      color: 'accent',
+    },
+  });
+  assert.deepEqual(parsed?.selection, {
+    source: 'subject',
+    titles: ['Session subject'],
+    color: 'accent',
+  });
+});
+
 test('rejects malformed selection and suggestion without borrowing work placeholders', () => {
   const parsed = gaugeModule.parseHeaderSnapshot({
     protocol: 1,

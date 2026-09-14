@@ -290,6 +290,23 @@ test('keeps a single selected title on the focus row only', () => {
   assert.equal(plain(narrow[2] ?? ''), '󰓾 One focused work title');
 });
 
+test('renders the subject selection on the focus row instead of an em dash', () => {
+  const state = fixture();
+  state.header!.work = null;
+  state.header!.selection = {
+    source: 'subject',
+    titles: ['Session subject'],
+    color: 'accent',
+  };
+
+  const wide = renderHeaderDeck(state, 160, plainTheme as never);
+  assert.equal(wide[2], '󰓾 Session subject');
+  assert.doesNotMatch(wide.join('\n'), /󰓾 —/u);
+
+  const narrow = renderHeaderDeck(state, 79, plainTheme as never);
+  assert.notEqual(plain(narrow[2] ?? ''), '󰓾 —');
+});
+
 test('bolds only current control and status anchors', () => {
   const bolded: string[] = [];
   const theme = {

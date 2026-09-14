@@ -90,6 +90,7 @@ export const HEADER_SELECTION_SOURCES = [
   'openspec',
   'goal',
   'session-work',
+  'subject',
   'legacy',
 ] as const;
 
