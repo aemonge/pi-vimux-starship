@@ -11,6 +11,7 @@ import {
   isProviderStatusRelevantToModel,
   normalizeClaudeUsageResponse,
   normalizeCodexUsageResponse,
+  normalizeZaiQuotaResponse,
   parseCodexRateLimitHeaders,
   projectProviderStatusForModel,
   providerStatusColor,
@@ -1651,4 +1652,273 @@ test("normalizeCodexUsageResponse derives window labels from window seconds", ()
 
   assert.equal(snapshot?.primary?.label, "5h");
   assert.equal(snapshot?.secondary?.label, "1d");
+});
+
+const zaiNow = new Date("2026-09-14T13:00:00Z");
+const zaiQuotaResponse = {
+  code: 200,
+  msg: "Operation successful",
+  success: true,
+  data: {
+    level: "max",
+    limits: [
+      {
+        type: "CREDIT_LIMIT",
+        usage: 140_000,
+        currentValue: 13_096,
+        percentage: 9,
+        nextResetTime: 1_789_984_038_973,
+      },
+      {
+        type: "CREDIT_LIMIT",
+        usage: 28_000,
+        currentValue: 13_096,
+        percentage: 46,
+        nextResetTime: 1_789_397_375_340,
+      },
+    ],
+  },
+};
+
+test("normalizeZaiQuotaResponse maps and resets-orders the credit windows", () => {
+  const snapshot = normalizeZaiQuotaResponse(zaiQuotaResponse, zaiNow);
+
+  assert.equal(snapshot?.provider, "zai");
+  assert.deepEqual(snapshot?.primary, {
+    label: "5h",
+    usedPercent: 46,
+    leftPercent: 54,
+    resetAt: 1_789_397_375,
+  });
+  assert.deepEqual(snapshot?.secondary, {
+    label: "7d",
+    usedPercent: 9,
+    leftPercent: 91,
+    resetAt: 1_789_984_039,
+  });
+  assert.equal(snapshot?.state, "warning");
+  assert.equal(snapshot?.url, "https://api.z.ai/api/monitor/usage/quota/limit");
+});
+
+test("normalizeZaiQuotaResponse derives percent from usage and clamps beyond 100", () => {
+  const snapshot = normalizeZaiQuotaResponse(
+    {
+      success: true,
+      data: {
+        limits: [{ type: "CREDIT_LIMIT", usage: 100, currentValue: 250 }],
+      },
+    },
+    zaiNow,
+  );
+
+  assert.equal(snapshot?.primary?.usedPercent, 100);
+  assert.equal(snapshot?.primary?.leftPercent, 0);
+  assert.equal(snapshot?.state, "error");
+});
+
+test("normalizeZaiQuotaResponse skips the monthly TIME_LIMIT allowance", () => {
+  const snapshot = normalizeZaiQuotaResponse(
+    {
+      success: true,
+      data: {
+        limits: [
+          {
+            type: "TIME_LIMIT",
+            percentage: 5,
+            nextResetTime: Date.now() + 20 * 86_400_000,
+          },
+          {
+            type: "CREDIT_LIMIT",
+            percentage: 30,
+            nextResetTime: Date.now() + 3_600_000,
+          },
+        ],
+      },
+    },
+    new Date(),
+  );
+
+  assert.equal(snapshot?.primary?.usedPercent, 30);
+  assert.equal(snapshot?.secondary, undefined);
+});
+
+test("normalizeZaiQuotaResponse rejects malformed payloads", () => {
+  assert.equal(normalizeZaiQuotaResponse(undefined, zaiNow), undefined);
+  assert.equal(normalizeZaiQuotaResponse({}, zaiNow), undefined);
+  assert.equal(
+    normalizeZaiQuotaResponse({ success: true, data: {} }, zaiNow),
+    undefined,
+  );
+  assert.equal(
+    normalizeZaiQuotaResponse({ data: { limits: "nope" } }, zaiNow),
+    undefined,
+  );
+  assert.equal(
+    normalizeZaiQuotaResponse(
+      { success: true, data: { limits: [{}, { type: "CREDIT_LIMIT" }] } },
+      zaiNow,
+    ),
+    undefined,
+  );
+});
+
+test("isProviderStatusRelevantToModel gates zai snapshots to GLM-family models", () => {
+  assert.equal(isProviderStatusRelevantToModel("zai", "zai/glm-5.3"), true);
+  assert.equal(isProviderStatusRelevantToModel("zai", { id: "GLM-4.6" }), true);
+  assert.equal(isProviderStatusRelevantToModel("zai", "chatglm-4"), true);
+  assert.equal(isProviderStatusRelevantToModel("zai", "zhipu/glm-5.3"), true);
+  assert.equal(isProviderStatusRelevantToModel("zai", "gpt-5.2-codex"), false);
+  assert.equal(
+    isProviderStatusRelevantToModel("zai", { provider: "anthropic" }),
+    false,
+  );
+  assert.equal(isProviderStatusRelevantToModel("zai", undefined), false);
+});
+
+let zaiCapturedAuthorization: string | undefined;
+
+test("collectProviderStatus resolves the zai env key reference and maps quota windows", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "pi-fancy-footer-test-"));
+  t.after(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const previousHome = process.env.HOME;
+  const previousXdgCacheHome = process.env.XDG_CACHE_HOME;
+  const previousFetch = globalThis.fetch;
+  const previousKey = process.env.ZAI_PROBE_TEST_KEY;
+  process.env.HOME = dir;
+  process.env.XDG_CACHE_HOME = join(dir, "cache");
+  process.env.ZAI_PROBE_TEST_KEY = "literal-test-key";
+  globalThis.fetch = async (_input, init) => {
+    const headers = (init?.headers ?? {}) as Record<string, string>;
+    zaiCapturedAuthorization = headers.authorization;
+    return new Response(
+      JSON.stringify({
+        code: 200,
+        success: true,
+        data: {
+          limits: [
+            {
+              type: "CREDIT_LIMIT",
+              percentage: 46,
+              nextResetTime: Date.now() + 2 * 3_600_000,
+            },
+            {
+              type: "CREDIT_LIMIT",
+              percentage: 9,
+              nextResetTime: Date.now() + 6 * 86_400_000,
+            },
+          ],
+        },
+      }),
+    );
+  };
+  t.after(() => {
+    if (previousHome === undefined) delete process.env.HOME;
+    else process.env.HOME = previousHome;
+    if (previousXdgCacheHome === undefined) delete process.env.XDG_CACHE_HOME;
+    else process.env.XDG_CACHE_HOME = previousXdgCacheHome;
+    globalThis.fetch = previousFetch;
+    if (previousKey === undefined) delete process.env.ZAI_PROBE_TEST_KEY;
+    else process.env.ZAI_PROBE_TEST_KEY = previousKey;
+  });
+
+  await mkdir(join(dir, ".pi", "agent"), { recursive: true });
+  await writeFile(
+    join(dir, ".pi", "agent", "auth.json"),
+    JSON.stringify({
+      zai: { key: "${ZAI_PROBE_TEST_KEY}", type: "api_key" },
+    }),
+    { mode: 0o600 },
+  );
+
+  const [snapshot] = await collectProviderStatus({} as never, {
+    ...providerStatusConfig,
+    providers: ["zai"],
+    cacheTtlMs: 1,
+  });
+
+  assert.equal(zaiCapturedAuthorization, "Bearer literal-test-key");
+  assert.equal(snapshot?.provider, "zai");
+  assert.equal(snapshot?.primary?.label, "5h");
+  assert.equal(snapshot?.primary?.usedPercent, 46);
+  assert.equal(snapshot?.secondary?.label, "7d");
+});
+
+test("collectProviderStatus fails soft when the zai env reference is unset", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "pi-fancy-footer-test-"));
+  t.after(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const previousHome = process.env.HOME;
+  const previousXdgCacheHome = process.env.XDG_CACHE_HOME;
+  process.env.HOME = dir;
+  process.env.XDG_CACHE_HOME = join(dir, "cache");
+  t.after(() => {
+    if (previousHome === undefined) delete process.env.HOME;
+    else process.env.HOME = previousHome;
+    if (previousXdgCacheHome === undefined) delete process.env.XDG_CACHE_HOME;
+    else process.env.XDG_CACHE_HOME = previousXdgCacheHome;
+  });
+
+  await mkdir(join(dir, ".pi", "agent"), { recursive: true });
+  await writeFile(
+    join(dir, ".pi", "agent", "auth.json"),
+    JSON.stringify({ zai: { key: "${ZAI_DEFINITELY_UNSET_FOR_TEST}" } }),
+    { mode: 0o600 },
+  );
+
+  const [snapshot] = await collectProviderStatus({} as never, {
+    ...providerStatusConfig,
+    providers: ["zai"],
+    cacheTtlMs: 1,
+  });
+
+  assert.equal(snapshot?.state, "unavailable");
+  assert.match(
+    snapshot?.error ?? "",
+    /unset environment variable ZAI_DEFINITELY_UNSET_FOR_TEST/,
+  );
+});
+
+test("collectProviderStatus surfaces the zai error envelope as unavailable", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "pi-fancy-footer-test-"));
+  t.after(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const previousHome = process.env.HOME;
+  const previousXdgCacheHome = process.env.XDG_CACHE_HOME;
+  const previousFetch = globalThis.fetch;
+  process.env.HOME = dir;
+  process.env.XDG_CACHE_HOME = join(dir, "cache");
+  globalThis.fetch = async () =>
+    new Response(
+      JSON.stringify({ code: 401, msg: "token expired or incorrect", success: false }),
+    );
+  t.after(() => {
+    if (previousHome === undefined) delete process.env.HOME;
+    else process.env.HOME = previousHome;
+    if (previousXdgCacheHome === undefined) delete process.env.XDG_CACHE_HOME;
+    else process.env.XDG_CACHE_HOME = previousXdgCacheHome;
+    globalThis.fetch = previousFetch;
+  });
+
+  await mkdir(join(dir, ".pi", "agent"), { recursive: true });
+  await writeFile(
+    join(dir, ".pi", "agent", "auth.json"),
+    JSON.stringify({ zai: { key: "literal-test-key" } }),
+    { mode: 0o600 },
+  );
+
+  const [snapshot] = await collectProviderStatus({} as never, {
+    ...providerStatusConfig,
+    providers: ["zai"],
+    cacheTtlMs: 1,
+  });
+
+  assert.equal(snapshot?.state, "unavailable");
+  assert.match(snapshot?.error ?? "", /token expired or incorrect/);
 });

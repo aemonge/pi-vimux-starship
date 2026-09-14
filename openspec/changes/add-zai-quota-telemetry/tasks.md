@@ -31,11 +31,31 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Refinement trigger:** Stop and revise if the endpoint needs an auth scheme beyond a
   raw or Bearer API key or token windows lack usable percentages.
 - **Final history target:** `feat(footer): collect z.ai GLM quota`
+- **Implementation confirmed at:** 2026-09-14T13:28:13Z; probe authorized and
+  countdown mode `hot-only` fixed by Human at 2026-09-14T13:29Z.
+- **Implementation started at:** 2026-09-14T13:36:39Z
 
-- [ ] Step 1.1 Probe the z.ai monitor quota endpoint once with the stored key and record
+- [x] Step 1.1 Probe the z.ai monitor quota endpoint once with the stored key and record
       a sanitized fixture.
   - Estimate: 5–10 minutes; uncertainty is which Authorization form the endpoint accepts
     and the exact `limits[]` field names, percentage scale, and reset-time format.
+  - Started: 2026-09-14T13:30:00Z; Completed: 2026-09-14T13:33:35Z.
+  - Timing: about 3 minutes, including two attempts rejected because pi auth stores an
+    env reference rather than a literal key.
+  - Evidence: `Bearer <key>` accepted with the real key resolved from `ZAI_API_KEY`;
+    raw form untested because Bearer succeeded. pi auth shape is root
+    `zai: { key: "${ZAI_API_KEY}", type: "api_key" }`, so the resolver must expand
+    `${ENV}` references at runtime. The endpoint answers HTTP 200 even for auth
+    errors; success lives in body `success`/`code`/`msg`. Sanitized live fixture:
+    `{ code: 200, success: true, data: { level: "max", limits: [
+    { type: "CREDIT_LIMIT", usage: 28000, currentValue: 13096, percentage: 46,
+    nextResetTime: 1789397375340 },
+    { type: "CREDIT_LIMIT", usage: 140000, currentValue: 13096, percentage: 9,
+    nextResetTime: 1789984038973 } ] } }`.
+  - Findings: no TOKENS_LIMIT on this plan; CREDIT_LIMIT pairs with reset ordering as
+    the stable discriminator (nearest reset is the 5h window, next is weekly). Percent
+    scale 0–100; `nextResetTime` is a ms epoch. No credentials in the fixture.
+  - Fallback: not needed.
   - Boundary: one authorized read-only GET to
     `https://api.z.ai/api/monitor/usage/quota/limit` using the existing `zai` entry in
     pi auth; try `Bearer` first, then raw, on 401. No other requests, no writes, no key
@@ -45,8 +65,21 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     documented monitor shape with bounded tolerance, flag the gap, and let Human
     validation judge live behavior.
 
-- [ ] Step 1.2 Implement the `zai` provider-status source with normalizer, GLM model
+- [x] Step 1.2 Implement the `zai` provider-status source with normalizer, GLM model
       relevance, and config constants, covered by focused tests.
+  - Started: 2026-09-14T13:36:39Z; Completed: 2026-09-14T13:40:16Z.
+  - Timing: 3m37s implementation/check time; below estimate because the probed fixture
+    removed the response-shape uncertainty and existing seams accepted the source
+    without repair.
+  - Check: GREEN — footer suite 167/167 including 7 new focused tests (fixture mapping
+    with reset ordering, percent derivation with clamping, TIME_LIMIT exclusion,
+    malformed payload rejection, GLM relevance matrix, env-reference auth with Bearer
+    header capture, unset-env and error-envelope fail-soft); Prettier PASS; ESLint
+    PASS on all edited files.
+  - Paths: `packages/pi-fancy-footer-full-palette/src/{provider-status.ts,
+    provider-status.test.ts, shared.ts, config.test.ts}`, this ledger, and
+    `baseline/source.sha256`.
+  - History: `step(footer): add zai quota source`; verified independently after commit.
   - Estimate: 30–45 minutes; uncertainty is mapping the probed field names and scale
     into windows while keeping unknown-source relevance defaulting to relevant.
   - Covers: `ZAI_SOURCE` (id `zai`, label `GLM`, authoritative full-list behavior, no
@@ -101,8 +134,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   after offline assurance.
 - **Refinement trigger:** Stop and revise if window paint would break the telemetry
   protocol for existing consumers or require Pi core changes.
-- **Countdown mode:** Fixed by Human before implementation — hot-only (at or above 75%
-  used, matching footer behavior), always on the `5h` tile, or none.
+- **Countdown mode:** `hot-only` — countdown paints at or above 75% used, matching
+  footer behavior; fixed by Human on 2026-09-14.
 - **Final history target:** `feat(deck): paint z.ai quota windows`
 
 - [ ] Step 2.1 Extend footer telemetry with both quota windows and paint compact

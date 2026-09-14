@@ -27,6 +27,8 @@ const CLAUDE_CLIENT_ID = "https://claude.ai/oauth/claude-code-client-metadata";
 const CLAUDE_TOKEN_URL = "https://platform.claude.com/v1/oauth/token";
 const CLAUDE_PRIMARY_WINDOW_LABEL = "5h";
 const CLAUDE_SECONDARY_WINDOW_LABEL = "7d";
+export const ZAI_QUOTA_ENDPOINT = "https://api.z.ai/api/monitor/usage/quota/limit";
+const ZAI_PROVIDER_ID = "zai";
 
 type HeaderLike = Record<string, string | number | boolean | undefined | null>;
 
@@ -59,9 +61,19 @@ const ANTHROPIC_SOURCE: ProviderStatusSource = {
   parseHeaders: () => undefined,
 };
 
+const ZAI_SOURCE: ProviderStatusSource = {
+  id: ZAI_PROVIDER_ID,
+  label: "GLM",
+  usageUrl: ZAI_QUOTA_ENDPOINT,
+  preserveMissingWindows: false,
+  fetch: fetchZaiProviderStatus,
+  parseHeaders: () => undefined,
+};
+
 export const PROVIDER_STATUS_SOURCES: readonly ProviderStatusSource[] = [
   CODEX_SOURCE,
   ANTHROPIC_SOURCE,
+  ZAI_SOURCE,
 ];
 
 type ModelLike = {
@@ -100,9 +112,23 @@ function looksLikeAnthropicModel(value: string): boolean {
   );
 }
 
+function looksLikeZaiModel(value: string): boolean {
+  if (!value) return false;
+
+  const normalized = value.replace(/[/_:\s]+/g, "-");
+  return (
+    normalized.includes("zai") ||
+    normalized.includes("zhipu") ||
+    normalized.includes("bigmodel") ||
+    normalized.includes("chatglm") ||
+    /(^|-)glm(?:[0-9.-]|$)/.test(normalized)
+  );
+}
+
 function looksLikeProviderModel(providerId: string, value: string): boolean {
   if (providerId === CODEX_SOURCE.id) return looksLikeOpenAIModel(value);
   if (providerId === ANTHROPIC_SOURCE.id) return looksLikeAnthropicModel(value);
+  if (providerId === ZAI_SOURCE.id) return looksLikeZaiModel(value);
   return true;
 }
 
@@ -110,7 +136,11 @@ export function isProviderStatusRelevantToModel(
   providerId: string,
   model: ModelLike | string | undefined,
 ): boolean {
-  if (providerId !== CODEX_SOURCE.id && providerId !== ANTHROPIC_SOURCE.id) {
+  if (
+    providerId !== CODEX_SOURCE.id &&
+    providerId !== ANTHROPIC_SOURCE.id &&
+    providerId !== ZAI_SOURCE.id
+  ) {
     return true;
   }
 
@@ -697,6 +727,78 @@ function claudeLimitWindowLabel(group: string | undefined): string | undefined {
   return undefined;
 }
 
+export function normalizeZaiQuotaResponse(
+  value: unknown,
+  now = new Date(),
+): ProviderStatusSnapshot | undefined {
+  const envelope = objectValue(value);
+  const data = objectValue(envelope?.data) ?? envelope;
+  const limits = Array.isArray(data?.limits) ? data.limits : undefined;
+  if (!limits) return undefined;
+
+  const windows: ProviderStatusWindow[] = [];
+  for (const entry of limits) {
+    const limit = objectValue(entry);
+    if (!limit) continue;
+
+    const type = stringValue(limit.type) ?? "";
+    // TIME_LIMIT is the monthly MCP allowance. The deck renders two windows and the
+    // token/credit pair is the pair that gates coding sessions.
+    if (type.includes("TIME")) continue;
+
+    const usedPercent = zaiLimitPercent(limit);
+    if (usedPercent === undefined) continue;
+
+    const resetAt = normalizeResetAt(numberValue(limit.nextResetTime));
+    windows.push(
+      windowFromUsedPercent(
+        zaiWindowLabel(type, resetAt, now),
+        usedPercent,
+        resetAt,
+        now,
+      ),
+    );
+  }
+
+  // z.ai reports neither window ordering nor explicit durations: each limit carries
+  // only a reset deadline. The nearest reset is the short coding window and the next
+  // one the weekly cap, so windows sort by reset time before the two slots are filled.
+  windows.sort((a, b) => (a.resetAt ?? Infinity) - (b.resetAt ?? Infinity));
+  const [primary, secondary] = windows;
+  if (!primary) return undefined;
+
+  return {
+    provider: ZAI_PROVIDER_ID,
+    source: "api",
+    fetchedAt: now.toISOString(),
+    state: computeProviderStatusState(primary, secondary),
+    primary,
+    ...(secondary ? { secondary } : {}),
+    url: ZAI_QUOTA_ENDPOINT,
+  };
+}
+
+function zaiLimitPercent(limit: Record<string, unknown>): number | undefined {
+  const percent = numberValue(limit.percentage);
+  if (percent !== undefined) return percent;
+  const usage = numberValue(limit.usage);
+  const current = numberValue(limit.currentValue);
+  if (usage !== undefined && usage > 0 && current !== undefined) {
+    return (current / usage) * 100;
+  }
+  return undefined;
+}
+
+function zaiWindowLabel(type: string, resetAt: number | undefined, now: Date): string {
+  if (type.includes("TOKENS") || type.includes("SESSION")) return "5h";
+  if (type.includes("WEEK")) return "7d";
+  if (resetAt === undefined) return "5h";
+  const days = Math.max(0, (resetAt * 1000 - now.getTime()) / 86_400_000);
+  if (days <= 2) return "5h";
+  if (days <= 15) return "7d";
+  return `${Math.max(1, Math.round(days))}d`;
+}
+
 export function isProviderStatusFresh(
   snapshot: ProviderStatusSnapshot | undefined,
   maxAgeMs: number,
@@ -783,6 +885,72 @@ async function fetchClaudeProviderStatus(
   }
 
   throw new Error("Claude usage request failed after auth refresh");
+}
+
+async function fetchZaiProviderStatus(
+  _pi: ExtensionAPI,
+): Promise<ProviderStatusSnapshot> {
+  const apiKey = await resolveZaiApiKey();
+  const response = await fetch(ZAI_QUOTA_ENDPOINT, {
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+      accept: "application/json",
+      "user-agent": "pi-fancy-footer",
+    },
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(
+      `z.ai quota request failed (${response.status}): ${text.slice(0, 500)}`,
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    throw new Error("z.ai quota response was not valid JSON");
+  }
+  // z.ai answers auth and plan errors with HTTP 200 and an error envelope, so
+  // success is decided by the body, not the status code.
+  const envelope = objectValue(body);
+  if (!envelope || envelope.success !== true) {
+    const code = numberValue(envelope?.code);
+    const message = stringValue(envelope?.msg) ?? "unknown error";
+    throw new Error(`z.ai quota request rejected (${code ?? "no code"}): ${message}`);
+  }
+
+  const parsed = normalizeZaiQuotaResponse(body);
+  if (!parsed) throw new Error("z.ai quota response did not contain quota data");
+  return parsed;
+}
+
+// pi stores the z.ai credential as a static API key, either literal or as a
+// `${ENV_VAR}` reference resolved from the process environment at runtime.
+function expandZaiKeyReference(key: string): string {
+  const reference = /^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$/.exec(key.trim());
+  if (!reference) return key.trim();
+  const fromEnv = process.env[reference[1]]?.trim();
+  if (fromEnv) return fromEnv;
+  throw new Error(`z.ai API key references unset environment variable ${reference[1]}`);
+}
+
+async function resolveZaiApiKey(): Promise<string> {
+  let key: string | undefined;
+  try {
+    const raw = JSON.parse(
+      await readFile(homePath(".pi/agent/auth.json"), "utf8"),
+    ) as unknown;
+    key = stringValue(objectValue(objectValue(raw)?.zai)?.key);
+  } catch {
+    key = undefined;
+  }
+  if (!key) {
+    throw new Error(
+      "No usable z.ai API key found. Store a literal key or ${ENV} reference via pi auth first.",
+    );
+  }
+  return expandZaiKeyReference(key);
 }
 
 async function resolveCodexAuth(): Promise<AuthCredentials> {

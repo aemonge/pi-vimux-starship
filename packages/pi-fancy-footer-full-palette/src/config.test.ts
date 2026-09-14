@@ -19,7 +19,7 @@ test("footerConfigValidationErrors accepts a valid config", () => {
     footerConfigValidationErrors({
       gaugeStyle: "bars",
       gaugeWidth: 8,
-      providerStatus: { providers: ["openai-codex", "anthropic"] },
+      providerStatus: { providers: ["openai-codex", "anthropic", "zai"] },
       widgets: { "context-bar": { row: 0 } },
     }),
     [],

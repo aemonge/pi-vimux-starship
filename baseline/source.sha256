@@ -48,7 +48,7 @@ e254177ac580b9a32d8f58f490934a1b79ef5b1ab529052e59ca4e99a855a366  packages/pi-fa
 1f94919a404b9c90ce271a0d898468916994a738f3701389236267db91ed27c4  packages/pi-fancy-footer-full-palette/src/api.test.ts
 f9c450afc263f58b3be830993c1671ce6bf88b65395a888871aedea85045f078  packages/pi-fancy-footer-full-palette/src/api.ts
 1e407d0b5574d5123cc03a22767f998b60f4c8ab749f33124c970f1ef9017fe6  packages/pi-fancy-footer-full-palette/src/config-editor.ts
-1641ce5be8f55a1ae5e82246317bf273e25060d97c09d09645679438f8874438  packages/pi-fancy-footer-full-palette/src/config.test.ts
+01ff7cf6c670e99e884dd93293add22c38d23dbd14cc88370b4d86bd2fa5dbbd  packages/pi-fancy-footer-full-palette/src/config.test.ts
 e58327cd337a8efc76cd0889830828038ebf519417821ed3bbcba489a69c25c9  packages/pi-fancy-footer-full-palette/src/config.ts
 d6a38197a1d289deed9cfc68bd305f27386ce7124870422131939a7bb9602820  packages/pi-fancy-footer-full-palette/src/data-widgets.test.ts
 f968a2be6384f4f59161f21d887bd7e3ddf3ee6c7ab9ef94fed5bd536910afe0  packages/pi-fancy-footer-full-palette/src/data-widgets.ts
@@ -58,12 +58,12 @@ c499ae81a1d3c2331ab66a41420e40738215d76abdcf008d4397c033e289c6e9  packages/pi-fa
 14f7bef9719298fb8f99d07467828dd60a2d47a5e6e2e26ea6b21eaddb5ceb6c  packages/pi-fancy-footer-full-palette/src/index.ts
 e7ef9feab67d30ce8a1efc4cf11aa30001f6585192f08caaca84b2d727b67115  packages/pi-fancy-footer-full-palette/src/layout.test.ts
 0111b55d6906adaa6776635729d93084fe660f1e597e37d92a40987d39eea6f7  packages/pi-fancy-footer-full-palette/src/layout.ts
-43935fbde74a78d0cb0f9977705941c082c81fc6b181acff610efdb3d10ee954  packages/pi-fancy-footer-full-palette/src/provider-status.test.ts
-2af4aec0e356567e99a85050f4e570d7f11db994119d358015775b6645d66e28  packages/pi-fancy-footer-full-palette/src/provider-status.ts
+875e76314dd3b3146aabaeadad1d48177f057bd75595144bfbd617a7a5c2b865  packages/pi-fancy-footer-full-palette/src/provider-status.test.ts
+f1ef9e607164f00643ccd2941908e4dfffd0e99b782099d6ebbf41ec9c151ca0  packages/pi-fancy-footer-full-palette/src/provider-status.ts
 2ee115fb813901ad5f7655e6fcb719aa282ed1cff3663382910d5341551ece54  packages/pi-fancy-footer-full-palette/src/render.test.ts
 9cc29a4a212ad7e18b8bd733e4deb89ea11e2dc6e71441e2c44a4ff8762360c2  packages/pi-fancy-footer-full-palette/src/render.ts
 e4a54acdbb493296bff1c17f194427be8dad00303575ae86ebe88efa1cc121bd  packages/pi-fancy-footer-full-palette/src/shared.test.ts
-b7f67b6360fbf05d87b400603e11afddc2481ba7bb9f8ec76f9af8bf85e0c79b  packages/pi-fancy-footer-full-palette/src/shared.ts
+203847cdd5598363daa6d77b3056e418048b7510bf8b76e537e98cd94622f37a  packages/pi-fancy-footer-full-palette/src/shared.ts
 33d089f7e63fcb08998c38180e74eca12988ef3dbaf739a707728fd79be9c3dc  packages/pi-fancy-footer-full-palette/tsconfig.json
 76fc20c368a2e29a7be8ca461f8addfaa7427b3453ef10398a22153fbcb5bc02  packages/pi-vim-top-border/LICENSE
 d820df210695e26f85c7107d7c96cc34f5021472f6d27e5b9144f6946a593f68  packages/pi-vim-top-border/LOCAL-CHANGES.md
