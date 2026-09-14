@@ -43,7 +43,7 @@ e3b55af5a7d96e0b8e57d4312875c40ba9b93a6c464ae35143af670690b5bed8  packages/galac
 8c964455c415fe626f4941ff20ca7f0f03a55512bb13dac45aaf6fc8a77de10e  packages/galactica-status/tsconfig.json
 9fcddd10626b93b18af5a0b6c1732e50a3d5757742e30c7a67976eb5fd6f3bd8  packages/pi-fancy-footer-full-palette/LICENSE
 e254177ac580b9a32d8f58f490934a1b79ef5b1ab529052e59ca4e99a855a366  packages/pi-fancy-footer-full-palette/LOCAL-CHANGES.md
-2c7ef032ad4b140535a8d7a010980bb1a5fe5aa5820b0bd15363b0de26240444  packages/pi-fancy-footer-full-palette/README.md
+de9d68ff631e32d6e3620cb4890282825c1989e4d0a60970742e0901c1362af7  packages/pi-fancy-footer-full-palette/README.md
 0110e1f18e288891fc045f0c3d45034b97b2a3887cc9c130b95e7279ae266c93  packages/pi-fancy-footer-full-palette/package.json
 1f94919a404b9c90ce271a0d898468916994a738f3701389236267db91ed27c4  packages/pi-fancy-footer-full-palette/src/api.test.ts
 f9c450afc263f58b3be830993c1671ce6bf88b65395a888871aedea85045f078  packages/pi-fancy-footer-full-palette/src/api.ts

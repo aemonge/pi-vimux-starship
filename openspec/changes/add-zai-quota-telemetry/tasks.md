@@ -34,6 +34,13 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Implementation confirmed at:** 2026-09-14T13:28:13Z; probe authorized and
   countdown mode `hot-only` fixed by Human at 2026-09-14T13:29Z.
 - **Implementation started at:** 2026-09-14T13:36:39Z
+- **Work completed at:** 2026-09-14T13:46:01Z
+- **Assurance completed at:** 2026-09-14T13:46:01Z — full offline `npm run check` inside
+  Step 1.3
+- **Actual implementation:** about 11m30s total (3m probe evidence, 3m37s Step 1.2,
+  4m52s Step 1.3); Human wait excluded; far below the 50–80 minute range because the
+  probed fixture removed the shape unknown and every seam accepted the change without
+  repair.
 
 - [x] Step 1.1 Probe the z.ai monitor quota endpoint once with the stored key and record
       a sanitized fixture.
@@ -93,8 +100,25 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     percentage clamping, GLM/non-GLM relevance matrix, missing key fail-soft, fetch and
     cache behavior through the existing harness, and config defaults.
 
-- [ ] Step 1.3 Run complete offline assurance for the collection slice while refreshing
+- [x] Step 1.3 Run complete offline assurance for the collection slice while refreshing
       the source-integrity manifest.
+  - Started: 2026-09-14T13:41:09Z; Completed: 2026-09-14T13:46:01Z.
+  - Timing: 4m52s implementation/check time; within estimate. One full-check rerun was
+    needed because the README landed after the first manifest refresh.
+  - Pre-existing defect repaired: `npm run check` failed on clean `main` inputs because
+    `test/local-load-probe.test.ts` still expected only `openspec_focus` and
+    `work_focus` while `galactica-status` unconditionally registers the Human-validated
+    `subject` tool from commits newer than the assertion's last update. Bounded repair:
+    the expected list now includes `subject`; disclosed here and committed separately.
+  - Check: full `npm run check` PASS — baseline integrity (95 current, 87 imported),
+    offline package load, format, lint, TypeScript, tooling and component tests,
+    composition probe (1 extension, 8 commands, 3 tools), and OpenSpec (5 changes).
+    Focused footer suite 167/167 with the seven new zai tests.
+  - Paths: `packages/pi-fancy-footer-full-palette/README.md`,
+    `test/local-load-probe.test.ts`, this ledger, and `baseline/source.sha256`.
+  - History: `fix(probe): expect the session subject tool` for the pre-existing repair
+    and `step(footer): document zai quota telemetry` for this Step; both verified
+    independently after commit.
   - Estimate: 15–25 minutes; uncertainty is documentation wording that keeps the deck
     paint promise honest before Task 2 lands.
   - Covers: `check:baseline` before the manifest refresh,

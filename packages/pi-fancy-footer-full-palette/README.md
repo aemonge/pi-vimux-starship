@@ -23,7 +23,7 @@ pi install npm:pi-fancy-footer
 ## 📊 What it shows
 
 - Active model + thinking level, plus the model's provider (hidden by default)
-- Provider quota status for OpenAI Codex and Claude models
+- Provider quota status for OpenAI Codex, Claude, and z.ai GLM models
 - A mini gauge of used context, which can optionally grow into a full-width bar, plus an
   optional context-capacity widget (hidden by default)
 - Total session cost with compact trailing-zero-free USD formatting
@@ -85,7 +85,7 @@ Create `~/.pi/agent/fancy-footer.json`:
     "providerStatus": {
         "refreshMs": 60000,
         "cacheTtlMs": 60000,
-        "providers": ["openai-codex", "anthropic"],
+        "providers": ["openai-codex", "anthropic", "zai"],
         "display": "gauge",
         "showCredits": false,
         "showReset": "all",
@@ -146,7 +146,7 @@ Top-level settings:
 - `providerStatus`:
     - `refreshMs` - provider status refresh interval in milliseconds
     - `cacheTtlMs` - cache freshness window in milliseconds
-    - `providers` - supported provider adapters (`openai-codex`, `anthropic`)
+    - `providers` - supported provider adapters (`openai-codex`, `anthropic`, `zai`)
     - `display` - render quota windows as a mini `gauge` (default) or plain `text`
     - `showCredits` - include a provider-specific credit balance when available
     - `showReset` - control which relative reset countdowns are eligible:
@@ -196,6 +196,17 @@ groups. `fill: "none"` widgets pad to `minWidth`, keeping following columns stab
 content changes. When a row can fit at declared minimum widths, `fill: "grow"` widgets
 yield down to `minWidth` with an ANSI-safe `...` before fixed telemetry is truncated.
 This keeps the right group complete while retaining a visible left/right split.
+
+### Provider quota sources
+
+- `openai-codex` and `anthropic` read OAuth credentials from Pi's auth file (or
+  `~/.codex/auth.json` for Codex) and refresh them automatically.
+- `zai` reads a static API key from Pi's auth file (`zai.key`). The value may be a
+  literal key or a `${ENV_VAR}` reference resolved from the environment at runtime.
+  Quota comes from the z.ai monitor endpoint: the token or credit limit with the
+  nearest reset paints as the `5h` window and the next one as `7d`; the monthly
+  `TIME_LIMIT` allowance is not rendered. Without a key, offline, or on error the
+  provider fails soft and the quota widget stays hidden.
 
 ## 🧩 Extension widgets
 
