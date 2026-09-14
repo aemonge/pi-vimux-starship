@@ -41,6 +41,12 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   4m52s Step 1.3); Human wait excluded; far below the 50–80 minute range because the
   probed fixture removed the shape unknown and every seam accepted the change without
   repair.
+- **Human validation:** VALID at 2026-09-14T14:00:48Z; original response: “I can see
+  it !!! but not as expected ... not the d and p we talked” — the concern names the
+  Task 2 two-window tile paint, which the confirmed brief explicitly deferred; Task 1's
+  scoped visible effect was the single-percent slot losing its dash.
+- **Observed Human wait:** About 15 minutes from ready-for-validation, including a
+  Human-side config fix; excluded from implementation.
 
 - [x] Step 1.1 Probe the z.ai monitor quota endpoint once with the stored key and record
       a sanitized fixture.
@@ -127,10 +133,20 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 
 ### Human validation
 
-- [ ] Human runs the cockpit on a GLM-family model and confirms the deck's quota slot
+- [x] Human runs the cockpit on a GLM-family model and confirms the deck's quota slot
       shows a live z.ai percent instead of `—`, and that it returns to `—` on non-GLM
       models, then reports a clear outcome; preserve the original response, canonical
       outcome, and UTC.
+  - Evidence 2026-09-14T14:00:48Z — original response: “Relaoded .... I can see it !!!
+    but not as expected ... not the d and p we talked” with the live footer line
+    showing `52%` in the quota slot; canonical outcome: VALID. The “not as expected”
+    concern targets the Task 2 two-window tiles, deferred by the confirmed brief.
+  - Root cause of the initial `—`: `~/.pi/agent/fancy-footer.json` carried an explicit
+    empty `providers: []` that had disabled every provider source; Human set all three
+    provider ids themselves and reloaded. Non-GLM hiding not re-tested live; covered by
+    the focused relevance matrix.
+  - Estimate refinement: comparable provider-source slices should start at 20–35
+    minutes, retaining a live-TUI uncertainty premium.
 
 ## Task 2 — Paint both z.ai quota windows as compact deck tiles
 
