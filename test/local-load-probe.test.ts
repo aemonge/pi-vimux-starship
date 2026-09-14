@@ -16,7 +16,7 @@ const EXPECTED_COMMANDS = [
   'vimux-health',
   'work',
 ];
-const EXPECTED_TOOLS = ['openspec_focus', 'work_focus'];
+const EXPECTED_TOOLS = ['openspec_focus', 'subject', 'work_focus'];
 
 test('external-only deck composition suppresses the native prompt surface', () => {
   assert.equal(COCKPIT_SURFACES.vim, 'external-editor-only');
