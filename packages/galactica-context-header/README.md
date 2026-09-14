@@ -194,11 +194,12 @@ pages once per process. Individual status-read failures fall back to that proces
 unavailable `/proc` falls back honestly to current-process CPU and RSS. Sampling,
 smoothing, publication, timers, and resource widgets are session-scoped and cleaned up
 on shutdown. The local Fancy Footer fork owns cache, quota, and session-cost collection.
-When the footer reports quota windows, the compact telemetry row paints one
-percent-first tile per window — `52% 5h › 12% 7d` — before the cost tile; a window at
-or above 75% used also shows its reset countdown, and 80% used turns the tile's accent
-color into a warning. Without windows the slot degrades to the single footer-reported
-percent, and without telemetry it stays a dim dash.
+When the footer reports quota windows, the compact telemetry row paints icon-native
+tiles in cost, long-window, coding-window order — `󰜦 $5.21 ⟩ 󰃰 12% ⟩ 󰈸 62% › 󰅐 ~1h45m`.
+The flame is the coding window's permanent icon and always carries the clock
+countdown; 80% used turns a tile's accent color into a warning. Without windows the
+slot degrades to the single footer-reported percent, and without telemetry it stays a
+dim dash.
 Unavailable temperature and unsupported environment claims are hidden; environment
 classification defaults honestly to `host` unless an explicit supported marker exists.
 

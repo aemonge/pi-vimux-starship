@@ -410,15 +410,7 @@ function compactTelemetryRight(
         ? 'accent'
         : 'dim';
   const mcp = state.mcp ? `${state.mcp.healthy}/${state.mcp.total}` : '—';
-  const quotaAndCost = [
-    deckQuotaTiles(state, theme, nowMs),
-    minorSeparator(theme),
-    color(
-      theme,
-      state.footerTelemetry ? 'accent' : 'dim',
-      `󰜦 ${state.footerTelemetry ? formatCost(state.footerTelemetry.totalCost) : '—'}`,
-    ),
-  ].join(' ');
+  const quotaAndCost = quotaAndCostTiles(state, theme, nowMs);
   const resourcesAndCapabilities = [
     color(
       theme,
@@ -437,8 +429,18 @@ function compactTelemetryRight(
   return [quotaAndCost, resourcesAndCapabilities].join(` ${semanticSeparator(theme)} `);
 }
 
-function deckQuotaTiles(state: HeaderDeckState, theme: Theme, nowMs: number): string {
+function quotaAndCostTiles(
+  state: HeaderDeckState,
+  theme: Theme,
+  nowMs: number,
+): string {
   const telemetry = state.footerTelemetry;
+  const costTile = color(
+    theme,
+    telemetry ? 'accent' : 'dim',
+    `󰜦 ${telemetry ? formatCost(telemetry.totalCost) : '—'}`,
+  );
+
   const windows = telemetry?.quotaWindows ?? [];
   if (windows.length === 0) {
     const quota = telemetry?.quotaPercent;
@@ -448,27 +450,43 @@ function deckQuotaTiles(state: HeaderDeckState, theme: Theme, nowMs: number): st
         : quota === undefined
           ? 'dim'
           : 'accent';
-    return color(
-      theme,
-      quotaColor,
-      ` ${quota === undefined ? '—' : formatDeckPercent(quota)}`,
-    );
-  }
-  // Hot-only countdown: once a window is at least three-quarters spent, its tile
-  // also says when the provider resets it. Cooler windows stay compact.
-  return windows
-    .map((window) => {
-      const countdown =
-        window.resetAt !== undefined && window.percent >= 75
-          ? ` ${formatDeckCountdown(window.resetAt, nowMs)}`
-          : '';
-      return color(
+    return [
+      color(
         theme,
-        window.percent >= 80 ? 'warning' : 'accent',
-        `${formatDeckPercent(window.percent)} ${window.label}${countdown}`,
-      );
-    })
-    .join(` ${minorSeparator(theme)} `);
+        quotaColor,
+        ` ${quota === undefined ? '—' : formatDeckPercent(quota)}`,
+      ),
+      minorSeparator(theme),
+      costTile,
+    ].join(' ');
+  }
+
+  // Icons carry window identity: minute/hour windows are the coding window and
+  // wear the permanent flame with its reset countdown; day windows are the long
+  // window on the calendar. Telemetry lists windows shortest-first, so the
+  // first of each class is the tightest one.
+  const coding = windows.find((window) => /^[\d.]+[mh]$/u.test(window.label));
+  const calendar = windows.find((window) => /^[\d.]+d$/u.test(window.label));
+  const calendarTile = calendar
+    ? color(
+        theme,
+        calendar.percent >= 80 ? 'warning' : 'accent',
+        `󰃰 ${formatDeckPercent(calendar.percent)}`,
+      )
+    : undefined;
+  const codingTile = coding
+    ? color(
+        theme,
+        coding.percent >= 80 ? 'warning' : 'accent',
+        coding.resetAt !== undefined
+          ? `󰈸 ${formatDeckPercent(coding.percent)} › 󰅐 ${formatDeckCountdown(coding.resetAt, nowMs)}`
+          : `󰈸 ${formatDeckPercent(coding.percent)}`,
+      )
+    : undefined;
+
+  return [costTile, calendarTile, codingTile]
+    .filter((part): part is string => part !== undefined)
+    .join(` ${semanticSeparator(theme)} `);
 }
 
 function topRailPrefix(

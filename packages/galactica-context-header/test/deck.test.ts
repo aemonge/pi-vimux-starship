@@ -620,7 +620,11 @@ test('renders unavailable optional telemetry honestly', () => {
   assert.match(lines.find((line) => line.includes('')) ?? '', /󰾆 —.* — › 󰜦 —/u);
 });
 
-test('renders both quota windows as compact tiles with hot-only countdown', () => {
+const CAL_ICON = '󰃰';
+const FLAME_ICON = '󰈸';
+const CLOCK_ICON = '󰅐';
+
+test('paints icon-native quota tiles in cost, calendar, flame order', () => {
   const state = fixture();
   state.footerTelemetry = {
     totalCost: 5.16,
@@ -638,20 +642,81 @@ test('renders both quota windows as compact tiles with hot-only countdown', () =
     ],
   };
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  const telemetryLine = plain(lines.find((line) => line.includes('$5.16')) ?? '');
+  const telemetryLine = plain(
+    lines.find((line: string) => line.includes('$5.16')) ?? '',
+  );
 
-  assert.match(telemetryLine, /82% 5h ~1h30m › 12% 7d › ..\$5\.16/u);
+  const costAt = telemetryLine.indexOf('$5.16');
+  const calendarAt = telemetryLine.indexOf(`${CAL_ICON} 12%`);
+  const flameAt = telemetryLine.indexOf(`${FLAME_ICON} 82%`);
+  assert.ok(costAt >= 0 && calendarAt > costAt, 'calendar follows cost');
+  assert.ok(flameAt > calendarAt, 'flame tile closes the group');
+  assert.ok(
+    telemetryLine.includes(`${FLAME_ICON} 82% › ${CLOCK_ICON} ~1h30m`),
+    'coding tile carries clock countdown',
+  );
 });
 
-test('renders a single cool quota window tile without countdown', () => {
+test('classifies minute and day labels and always counts down the coding window', () => {
   const state = fixture();
   state.footerTelemetry = {
     totalCost: 5.16,
-    quotaWindows: [{ label: '5h', percent: 52 }],
+    quotaWindows: [
+      {
+        label: '90m',
+        percent: 52,
+        resetAt: Math.floor(Date.now() / 1000) + 45 * 60 + 10,
+      },
+      { label: '30d', percent: 40 },
+    ],
   };
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  const telemetryLine = plain(lines.find((line) => line.includes('$5.16')) ?? '');
+  const telemetryLine = plain(
+    lines.find((line: string) => line.includes('$5.16')) ?? '',
+  );
 
-  assert.match(telemetryLine, /52% 5h › ..\$5\.16/u);
-  assert.doesNotMatch(telemetryLine, /~/u);
+  assert.ok(telemetryLine.includes(`${CAL_ICON} 40%`), 'day label is calendar');
+  assert.ok(
+    telemetryLine.includes(`${FLAME_ICON} 52% › ${CLOCK_ICON} ~45m`),
+    'cool coding window still counts down',
+  );
+});
+
+test('coding window without reset time paints flame without clock', () => {
+  const state = fixture();
+  state.footerTelemetry = {
+    totalCost: 5.16,
+    quotaWindows: [{ label: '5h', percent: 62 }],
+  };
+  const lines = renderHeaderDeck(state, 160, plainTheme as never);
+  const telemetryLine = plain(
+    lines.find((line: string) => line.includes('$5.16')) ?? '',
+  );
+
+  const tail = telemetryLine.slice(telemetryLine.indexOf(FLAME_ICON));
+  assert.ok(tail.startsWith(`${FLAME_ICON} 62%`));
+  assert.ok(!tail.includes(CLOCK_ICON) && !tail.includes('~'));
+});
+
+test('weekly-only telemetry paints the calendar tile alone', () => {
+  const state = fixture();
+  state.footerTelemetry = {
+    totalCost: 5.16,
+    quotaWindows: [
+      {
+        label: '7d',
+        percent: 33,
+        resetAt: Math.floor(Date.now() / 1000) + 5 * 86_400,
+      },
+    ],
+  };
+  const lines = renderHeaderDeck(state, 160, plainTheme as never);
+  const telemetryLine = plain(
+    lines.find((line: string) => line.includes('$5.16')) ?? '',
+  );
+
+  const tail = telemetryLine.slice(telemetryLine.indexOf(CAL_ICON));
+  assert.ok(tail.startsWith(`${CAL_ICON} 33%`));
+  assert.ok(!tail.includes(FLAME_ICON));
+  assert.ok(!tail.includes(CLOCK_ICON), 'calendar never carries a countdown');
 });
