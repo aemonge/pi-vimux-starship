@@ -139,9 +139,16 @@ export type HeaderSnapshot = {
   }>;
 };
 
+export type FooterQuotaWindow = {
+  label: string;
+  percent: number;
+  resetAt?: number;
+};
+
 export type FooterTelemetrySnapshot = {
   totalCost: number;
   quotaPercent?: number;
+  quotaWindows?: FooterQuotaWindow[];
 };
 
 export type PiStatusSnapshot = {
@@ -775,16 +782,88 @@ export function parseFooterTelemetry(raw: unknown): FooterTelemetrySnapshot | nu
   ) {
     return null;
   }
-  if (message.quotaPercent === undefined) return { totalCost: message.totalCost };
   if (
-    typeof message.quotaPercent !== 'number' ||
-    !Number.isFinite(message.quotaPercent) ||
-    message.quotaPercent < 0 ||
-    message.quotaPercent > 100
+    message.quotaPercent !== undefined &&
+    (typeof message.quotaPercent !== 'number' ||
+      !Number.isFinite(message.quotaPercent) ||
+      message.quotaPercent < 0 ||
+      message.quotaPercent > 100)
   ) {
     return null;
   }
-  return { totalCost: message.totalCost, quotaPercent: message.quotaPercent };
+  const quotaWindows =
+    message.quotaWindows === undefined
+      ? undefined
+      : parseFooterQuotaWindows(message.quotaWindows);
+  if (message.quotaWindows !== undefined && quotaWindows === undefined) {
+    return null;
+  }
+  return {
+    totalCost: message.totalCost,
+    ...(message.quotaPercent !== undefined
+      ? { quotaPercent: message.quotaPercent }
+      : {}),
+    ...(quotaWindows !== undefined ? { quotaWindows } : {}),
+  };
+}
+
+function parseFooterQuotaWindows(value: unknown): FooterQuotaWindow[] | undefined {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 2) {
+    return undefined;
+  }
+  const windows: FooterQuotaWindow[] = [];
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      return undefined;
+    }
+    const limit = entry as Record<string, unknown>;
+    if (
+      typeof limit.label !== 'string' ||
+      limit.label.length === 0 ||
+      limit.label.length > 8
+    ) {
+      return undefined;
+    }
+    const percent = Number(limit.percent);
+    if (!Number.isFinite(percent) || percent < 0 || percent > 100) {
+      return undefined;
+    }
+    const resetAt = limit.resetAt === undefined ? undefined : Number(limit.resetAt);
+    if (resetAt !== undefined && (!Number.isFinite(resetAt) || resetAt <= 0)) {
+      return undefined;
+    }
+    windows.push({
+      label: limit.label,
+      percent,
+      ...(resetAt !== undefined ? { resetAt } : {}),
+    });
+  }
+  return windows;
+}
+
+export function formatDeckCountdown(resetAt: number, nowMs = Date.now()): string {
+  if (!Number.isFinite(resetAt) || !Number.isFinite(nowMs) || resetAt <= 0) {
+    return '';
+  }
+  const remainingMs = resetAt * 1000 - nowMs;
+  if (remainingMs <= 0) return '';
+  const minuteMs = 60_000;
+  const hourMs = 60 * minuteMs;
+  const dayMs = 24 * hourMs;
+  if (remainingMs >= dayMs) {
+    const days = Math.floor(remainingMs / dayMs);
+    const hours = Math.floor((remainingMs % dayMs) / hourMs);
+    return `~${days}d${hours > 0 ? `${hours}h` : ''}`;
+  }
+  if (remainingMs >= hourMs) {
+    const hours = Math.floor(remainingMs / hourMs);
+    const minutes = Math.floor((remainingMs % hourMs) / minuteMs);
+    return `~${hours}h${minutes > 0 ? `${minutes}m` : ''}`;
+  }
+  if (remainingMs >= minuteMs) {
+    return `~${Math.floor(remainingMs / minuteMs)}m`;
+  }
+  return '~now';
 }
 
 export function parsePiStatusSnapshot(raw: unknown): PiStatusSnapshot | null {

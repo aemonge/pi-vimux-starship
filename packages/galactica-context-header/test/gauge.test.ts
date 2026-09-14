@@ -374,6 +374,42 @@ test('accepts only bounded Footer telemetry, Pi status, and Vim mode events', ()
     }),
     { totalCost: 5.16, quotaPercent: 63 },
   );
+  assert.deepEqual(
+    gaugeModule.parseFooterTelemetry({
+      protocol: 1,
+      type: 'snapshot',
+      totalCost: 5.16,
+      quotaWindows: [
+        { label: '5h', percent: 52, resetAt: 1_789_397_375 },
+        { label: '7d', percent: 9 },
+      ],
+    }),
+    {
+      totalCost: 5.16,
+      quotaWindows: [
+        { label: '5h', percent: 52, resetAt: 1_789_397_375 },
+        { label: '7d', percent: 9 },
+      ],
+    },
+  );
+  assert.equal(
+    gaugeModule.parseFooterTelemetry({
+      protocol: 1,
+      type: 'snapshot',
+      totalCost: 1,
+      quotaWindows: [{ label: '5h', percent: 101 }],
+    }),
+    null,
+  );
+  assert.equal(
+    gaugeModule.parseFooterTelemetry({
+      protocol: 1,
+      type: 'snapshot',
+      totalCost: 1,
+      quotaWindows: [],
+    }),
+    null,
+  );
   assert.equal(
     gaugeModule.parseFooterTelemetry({
       protocol: 1,
@@ -837,4 +873,15 @@ test('centers the working directory between context and runtime metadata', () =>
     beforeRight: 27,
   });
   assert.equal(headerColumnLayout?.(50, 15, 18, 24), null);
+});
+
+test('formats hot-window countdowns from reset deadlines', () => {
+  const nowMs = Date.parse('2026-09-14T13:00:00Z');
+  const resetAt = (offsetMs: number) => Math.floor((nowMs + offsetMs) / 1000);
+
+  assert.equal(gaugeModule.formatDeckCountdown(resetAt(90 * 60_000), nowMs), '~1h30m');
+  assert.equal(gaugeModule.formatDeckCountdown(resetAt(45 * 60_000), nowMs), '~45m');
+  assert.equal(gaugeModule.formatDeckCountdown(resetAt(6 * 86_400_000), nowMs), '~6d');
+  assert.equal(gaugeModule.formatDeckCountdown(resetAt(-10_000), nowMs), '');
+  assert.equal(gaugeModule.formatDeckCountdown(Number.NaN, nowMs), '');
 });

@@ -5,6 +5,7 @@ import {
   createFancyFooterClient,
   FANCY_FOOTER_READY_CHANNEL,
   FANCY_FOOTER_WIDGET_CHANNEL,
+  parseFancyFooterTelemetry,
 } from "./api.ts";
 
 class TestBus {
@@ -68,4 +69,53 @@ test("typed client filters ready messages and unsubscribes", () => {
   unsubscribe();
   bus.emit(FANCY_FOOTER_READY_CHANNEL, { protocol: 1, version: "ignored" });
   assert.deepEqual(versions, ["2.0.0"]);
+});
+
+test("parseFancyFooterTelemetry accepts quota windows additively", () => {
+  const message = {
+    protocol: 1,
+    type: "snapshot" as const,
+    totalCost: 2.64,
+    quotaPercent: 52,
+    quotaWindows: [
+      { label: "5h", percent: 52, resetAt: 1_789_397_375 },
+      { label: "7d", percent: 9 },
+    ],
+  };
+
+  assert.deepEqual(parseFancyFooterTelemetry(message), message);
+  assert.deepEqual(
+    parseFancyFooterTelemetry({ protocol: 1, type: "snapshot", totalCost: 2.64 }),
+    { protocol: 1, type: "snapshot", totalCost: 2.64 },
+  );
+});
+
+test("parseFancyFooterTelemetry rejects malformed quota windows", () => {
+  assert.equal(
+    parseFancyFooterTelemetry({
+      protocol: 1,
+      type: "snapshot",
+      totalCost: 1,
+      quotaWindows: [{ label: "5h", percent: 101 }],
+    }),
+    null,
+  );
+  assert.equal(
+    parseFancyFooterTelemetry({
+      protocol: 1,
+      type: "snapshot",
+      totalCost: 1,
+      quotaWindows: [],
+    }),
+    null,
+  );
+  assert.equal(
+    parseFancyFooterTelemetry({
+      protocol: 1,
+      type: "snapshot",
+      totalCost: 1,
+      quotaWindows: [{ label: "5h", percent: 10, resetAt: -5 }],
+    }),
+    null,
+  );
 });

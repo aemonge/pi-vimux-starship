@@ -12,6 +12,7 @@ import type {
   VimMode,
 } from './gauge.ts';
 import type { ResourceTelemetry } from './process-resources.ts';
+import { formatDeckCountdown } from './gauge.ts';
 
 export interface HeaderDeckModeRail {
   plain: string;
@@ -396,14 +397,11 @@ function compactTelemetryLeft(state: HeaderDeckState, theme: Theme): string {
   ].join(' ');
 }
 
-function compactTelemetryRight(state: HeaderDeckState, theme: Theme): string {
-  const quota = state.footerTelemetry?.quotaPercent;
-  const quotaColor =
-    quota !== undefined && quota >= 80
-      ? 'warning'
-      : quota === undefined
-        ? 'dim'
-        : 'accent';
+function compactTelemetryRight(
+  state: HeaderDeckState,
+  theme: Theme,
+  nowMs = Date.now(),
+): string {
   const resources = state.resources;
   const resourceColor =
     resources?.cpuWarning || resources?.memoryWarning
@@ -413,11 +411,7 @@ function compactTelemetryRight(state: HeaderDeckState, theme: Theme): string {
         : 'dim';
   const mcp = state.mcp ? `${state.mcp.healthy}/${state.mcp.total}` : '—';
   const quotaAndCost = [
-    color(
-      theme,
-      quotaColor,
-      ` ${quota === undefined ? '—' : formatDeckPercent(quota)}`,
-    ),
+    deckQuotaTiles(state, theme, nowMs),
     minorSeparator(theme),
     color(
       theme,
@@ -441,6 +435,40 @@ function compactTelemetryRight(state: HeaderDeckState, theme: Theme): string {
     color(theme, state.mcp ? 'accent' : 'dim', ` ${mcp}`),
   ].join(' ');
   return [quotaAndCost, resourcesAndCapabilities].join(` ${semanticSeparator(theme)} `);
+}
+
+function deckQuotaTiles(state: HeaderDeckState, theme: Theme, nowMs: number): string {
+  const telemetry = state.footerTelemetry;
+  const windows = telemetry?.quotaWindows ?? [];
+  if (windows.length === 0) {
+    const quota = telemetry?.quotaPercent;
+    const quotaColor =
+      quota !== undefined && quota >= 80
+        ? 'warning'
+        : quota === undefined
+          ? 'dim'
+          : 'accent';
+    return color(
+      theme,
+      quotaColor,
+      ` ${quota === undefined ? '—' : formatDeckPercent(quota)}`,
+    );
+  }
+  // Hot-only countdown: once a window is at least three-quarters spent, its tile
+  // also says when the provider resets it. Cooler windows stay compact.
+  return windows
+    .map((window) => {
+      const countdown =
+        window.resetAt !== undefined && window.percent >= 75
+          ? ` ${formatDeckCountdown(window.resetAt, nowMs)}`
+          : '';
+      return color(
+        theme,
+        window.percent >= 80 ? 'warning' : 'accent',
+        `${formatDeckPercent(window.percent)} ${window.label}${countdown}`,
+      );
+    })
+    .join(` ${minorSeparator(theme)} `);
 }
 
 function topRailPrefix(

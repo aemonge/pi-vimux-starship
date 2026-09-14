@@ -619,3 +619,39 @@ test('renders unavailable optional telemetry honestly', () => {
   assert.doesNotMatch(lines.join('\n'), /󰈙/u);
   assert.match(lines.find((line) => line.includes('')) ?? '', /󰾆 —.* — › 󰜦 —/u);
 });
+
+test('renders both quota windows as compact tiles with hot-only countdown', () => {
+  const state = fixture();
+  state.footerTelemetry = {
+    totalCost: 5.16,
+    quotaWindows: [
+      {
+        label: '5h',
+        percent: 82,
+        resetAt: Math.floor(Date.now() / 1000) + 90 * 60 + 30,
+      },
+      {
+        label: '7d',
+        percent: 12,
+        resetAt: Math.floor(Date.now() / 1000) + 6 * 86_400,
+      },
+    ],
+  };
+  const lines = renderHeaderDeck(state, 160, plainTheme as never);
+  const telemetryLine = plain(lines.find((line) => line.includes('$5.16')) ?? '');
+
+  assert.match(telemetryLine, /82% 5h ~1h30m › 12% 7d › ..\$5\.16/u);
+});
+
+test('renders a single cool quota window tile without countdown', () => {
+  const state = fixture();
+  state.footerTelemetry = {
+    totalCost: 5.16,
+    quotaWindows: [{ label: '5h', percent: 52 }],
+  };
+  const lines = renderHeaderDeck(state, 160, plainTheme as never);
+  const telemetryLine = plain(lines.find((line) => line.includes('$5.16')) ?? '');
+
+  assert.match(telemetryLine, /52% 5h › ..\$5\.16/u);
+  assert.doesNotMatch(telemetryLine, /~/u);
+});

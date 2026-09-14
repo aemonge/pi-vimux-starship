@@ -44,6 +44,7 @@ import {
   collectProviderStatus,
   isProviderStatusRelevantToModel,
   projectProviderStatusForModel,
+  providerStatusQuotaWindows,
   updateProviderStatusFromHeaders,
 } from "./provider-status.ts";
 
@@ -126,11 +127,16 @@ export default function (pi: ExtensionAPI, options: FancyFooterOptions = {}) {
     if (!telemetryContext) return;
     const totalCost = collectSessionUsageMetrics(telemetryContext).totalCost;
     const quotaPercent = telemetryQuotaPercent();
+    const quotaWindows = providerStatusQuotaWindows(
+      telemetryProviderStatuses.values(),
+      telemetryContext?.model,
+    );
     const message: FancyFooterTelemetryMessage = {
       protocol: FANCY_FOOTER_PROTOCOL_VERSION,
       type: "snapshot",
       totalCost,
       ...(quotaPercent === undefined ? {} : { quotaPercent }),
+      ...(quotaWindows.length > 0 ? { quotaWindows } : {}),
     };
     pi.events.emit(FANCY_FOOTER_TELEMETRY_CHANNEL, message);
 

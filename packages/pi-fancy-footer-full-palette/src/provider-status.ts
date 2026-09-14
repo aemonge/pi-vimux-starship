@@ -225,6 +225,43 @@ export function projectProviderStatusForModel(
   };
 }
 
+export interface ProviderStatusQuotaWindow {
+  label: string;
+  percent: number;
+  resetAt?: number;
+}
+
+/**
+ * Collapses relevant provider snapshots into the deck's quota window list: the
+ * primary and secondary windows of every model-relevant snapshot, ordered
+ * shortest-window-first and pessimistic across providers — when two providers
+ * report the same label, the one with less headroom wins, mirroring the footer's
+ * never-promise-more-headroom rule.
+ */
+export function providerStatusQuotaWindows(
+  snapshots: Iterable<ProviderStatusSnapshot>,
+  model: ModelLike | string | undefined,
+): ProviderStatusQuotaWindow[] {
+  const byLabel = new Map<string, ProviderStatusQuotaWindow>();
+  for (const snapshot of snapshots) {
+    if (!isProviderStatusRelevantToModel(snapshot.provider, model)) continue;
+    const projected = projectProviderStatusForModel(snapshot, model);
+    for (const window of [projected.primary, projected.secondary]) {
+      if (!window || window.usageUnknown) continue;
+      const next: ProviderStatusQuotaWindow = {
+        label: window.label,
+        percent: window.usedPercent,
+        ...(window.resetAt !== undefined ? { resetAt: window.resetAt } : {}),
+      };
+      const existing = byLabel.get(window.label);
+      if (!existing || next.percent > existing.percent) {
+        byLabel.set(window.label, next);
+      }
+    }
+  }
+  return Array.from(byLabel.values()).slice(0, 2);
+}
+
 function applyScopedWindow(
   window: ProviderStatusWindow | undefined,
   scoped: readonly ProviderStatusScopedWindow[],

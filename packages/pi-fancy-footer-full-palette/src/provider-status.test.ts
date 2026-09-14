@@ -12,6 +12,7 @@ import {
   normalizeClaudeUsageResponse,
   normalizeCodexUsageResponse,
   normalizeZaiQuotaResponse,
+  providerStatusQuotaWindows,
   parseCodexRateLimitHeaders,
   projectProviderStatusForModel,
   providerStatusColor,
@@ -1921,4 +1922,56 @@ test("collectProviderStatus surfaces the zai error envelope as unavailable", asy
 
   assert.equal(snapshot?.state, "unavailable");
   assert.match(snapshot?.error ?? "", /token expired or incorrect/);
+});
+
+test("providerStatusQuotaWindows returns ordered windows for relevant snapshots", () => {
+  const snapshot = normalizeZaiQuotaResponse(zaiQuotaResponse, zaiNow);
+  assert.ok(snapshot);
+
+  assert.deepEqual(providerStatusQuotaWindows([snapshot], "zai/glm-5.3"), [
+    { label: "5h", percent: 46, resetAt: 1_789_397_375 },
+    { label: "7d", percent: 9, resetAt: 1_789_984_039 },
+  ]);
+  assert.deepEqual(providerStatusQuotaWindows([snapshot], "claude-fable-5"), []);
+});
+
+test("providerStatusQuotaWindows collapses duplicate labels pessimistically", () => {
+  const first = {
+    provider: "zai",
+    source: "api" as const,
+    fetchedAt: zaiNow.toISOString(),
+    state: "ok" as const,
+    primary: { label: "5h", usedPercent: 40, leftPercent: 60 },
+    secondary: { label: "7d", usedPercent: 10, leftPercent: 90 },
+  };
+  const second = {
+    provider: "zai",
+    source: "cache" as const,
+    fetchedAt: zaiNow.toISOString(),
+    state: "ok" as const,
+    primary: { label: "5h", usedPercent: 70, leftPercent: 30 },
+    secondary: { label: "30d", usedPercent: 5, leftPercent: 95 },
+  };
+
+  assert.deepEqual(providerStatusQuotaWindows([first, second], "glm-5.3"), [
+    { label: "5h", percent: 70 },
+    { label: "7d", percent: 10 },
+  ]);
+});
+
+test("providerStatusQuotaWindows skips unknown-usage windows", () => {
+  const snapshot = {
+    provider: "zai",
+    source: "api" as const,
+    fetchedAt: zaiNow.toISOString(),
+    state: "unavailable" as const,
+    primary: {
+      label: "5h",
+      usedPercent: 0,
+      leftPercent: 100,
+      usageUnknown: true as const,
+    },
+  };
+
+  assert.deepEqual(providerStatusQuotaWindows([snapshot], "glm-5.3"), []);
 });

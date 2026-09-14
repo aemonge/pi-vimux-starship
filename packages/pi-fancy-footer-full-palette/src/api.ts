@@ -70,11 +70,18 @@ export interface FancyFooterReadyMessage {
   version: string;
 }
 
+export interface FancyFooterQuotaWindow {
+  label: string;
+  percent: number;
+  resetAt?: number;
+}
+
 export interface FancyFooterTelemetryMessage {
   protocol: typeof FANCY_FOOTER_PROTOCOL_VERSION;
   type: "snapshot";
   totalCost: number;
   quotaPercent?: number;
+  quotaWindows?: FancyFooterQuotaWindow[];
 }
 
 export interface FancyFooterStatusSourceMessage {
@@ -107,19 +114,53 @@ export function parseFancyFooterTelemetry(
   if (value.type !== "snapshot") return null;
   const totalCost = Number(value.totalCost);
   if (!Number.isFinite(totalCost) || totalCost < 0) return null;
-  if (value.quotaPercent === undefined) {
-    return { protocol: FANCY_FOOTER_PROTOCOL_VERSION, type: "snapshot", totalCost };
-  }
-  const quotaPercent = Number(value.quotaPercent);
-  if (!Number.isFinite(quotaPercent) || quotaPercent < 0 || quotaPercent > 100) {
+  if (
+    value.quotaPercent !== undefined &&
+    (!Number.isFinite(Number(value.quotaPercent)) ||
+      Number(value.quotaPercent) < 0 ||
+      Number(value.quotaPercent) > 100)
+  ) {
     return null;
   }
+  const quotaWindows =
+    value.quotaWindows === undefined
+      ? undefined
+      : parseFancyFooterQuotaWindows(value.quotaWindows);
+  if (value.quotaWindows !== undefined && quotaWindows === undefined) return null;
+
   return {
     protocol: FANCY_FOOTER_PROTOCOL_VERSION,
     type: "snapshot",
     totalCost,
-    quotaPercent,
+    ...(value.quotaPercent !== undefined
+      ? { quotaPercent: Number(value.quotaPercent) }
+      : {}),
+    ...(quotaWindows !== undefined ? { quotaWindows } : {}),
   };
+}
+
+function parseFancyFooterQuotaWindows(
+  value: unknown,
+): FancyFooterQuotaWindow[] | undefined {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 2) {
+    return undefined;
+  }
+  const windows: FancyFooterQuotaWindow[] = [];
+  for (const entry of value) {
+    if (!isRecord(entry)) return undefined;
+    const { label } = entry;
+    if (typeof label !== "string" || label.length === 0 || label.length > 8) {
+      return undefined;
+    }
+    const percent = Number(entry.percent);
+    if (!Number.isFinite(percent) || percent < 0 || percent > 100) return undefined;
+    const resetAt = entry.resetAt === undefined ? undefined : Number(entry.resetAt);
+    if (resetAt !== undefined && (!Number.isFinite(resetAt) || resetAt <= 0)) {
+      return undefined;
+    }
+    windows.push({ label, percent, ...(resetAt !== undefined ? { resetAt } : {}) });
+  }
+  return windows;
 }
 
 /** Create a typed client over the same import-free event-bus protocol. */

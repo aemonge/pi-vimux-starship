@@ -177,9 +177,26 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Countdown mode:** `hot-only` — countdown paints at or above 75% used, matching
   footer behavior; fixed by Human on 2026-09-14.
 - **Final history target:** `feat(deck): paint z.ai quota windows`
+- **Implementation started at:** 2026-09-14T14:03:10Z
 
-- [ ] Step 2.1 Extend footer telemetry with both quota windows and paint compact
+- [x] Step 2.1 Extend footer telemetry with both quota windows and paint compact
       percent-first deck tiles with severity color and the chosen countdown mode.
+  - Started: 2026-09-14T14:03:10Z; Completed: 2026-09-14T14:12:30Z.
+  - Timing: about 9m20s implementation/check time; within the 20–35 minute estimate.
+    Two friction points: Nerd Font glyph bytes in `deck.ts` anchors defeated text
+    matching (patched through a byte-precise script), and the first render showed the
+    tile separator without its surrounding spaces, corrected against the deck dialect.
+  - Check: GREEN — header 101/101 including telemetry window parsing, hot-countdown
+    formatting, and two-window/single-window tile rendering; footer 172/172 including
+    additive telemetry windows parsing, malformed rejection, window collapse ordering,
+    pessimistic same-label merge, and unknown-usage skip; Prettier PASS; ESLint PASS.
+  - Paths: `packages/pi-fancy-footer-full-palette/src/{api.ts, api.test.ts, index.ts,
+    provider-status.ts, provider-status.test.ts}`,
+    `packages/galactica-context-header/src/{deck.ts, gauge.ts}`,
+    `packages/galactica-context-header/test/{deck.test.ts, gauge.test.ts}`, this
+    ledger, and `baseline/source.sha256`.
+  - History: `step(deck): publish and paint quota windows`; verified independently
+    after commit.
   - Estimate: 20–35 minutes; uncertainty is keeping the telemetry extension additive
     and strictly parsed while the deck degrades cleanly to `—`.
   - Covers: window list (label, used percent, optional reset time) in the telemetry
@@ -189,8 +206,9 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     provider reset times, one-window and no-window degradation, and focused tests in
     both packages.
 
-- [ ] Step 2.2 Document the deck quota tiles and run complete offline assurance while
+- [-] Step 2.2 Document the deck quota tiles and run complete offline assurance while
       refreshing the source-integrity manifest.
+  - Started: 2026-09-14T14:13:20Z
   - Estimate: 15–25 minutes; uncertainty is documenting the countdown mode boundary
     without overpromising provider reset-time fidelity.
   - Covers: package and root documentation updates, `check:baseline` before the manifest
