@@ -2,37 +2,35 @@
 
 Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 
-## Task 1 — Show z.ai GLM quota windows in the footer deck
+## Task 1 — Collect z.ai GLM quota in the footer package
 
-- **Value:** The footer deck reports live z.ai GLM quota windows for the provider the
-  Human actually drives, using the stored `zai` key, while failing soft exactly like the
-  existing Codex and Anthropic sources.
+- **Value:** The footer collects, caches, and maps live z.ai GLM quota windows using the
+  stored `zai` key, so the deck's existing quota slot immediately shows a real percent
+  instead of `—` on GLM models.
 - **Method source:** predefined
 - **Method name:** Happy-path
-- **Method contract:** Deliver the smallest complete z.ai quota slice — authorized live
-  probe, source implementation with focused coverage, wiring and offline assurance —
-  before only Task-required hardening; excludes repair work and RED/GREEN scaffolding.
+- **Method contract:** Deliver the smallest complete z.ai collection slice — authorized
+  live probe, source implementation with focused coverage, offline assurance — before
+  only Task-required hardening; excludes repair work and RED/GREEN scaffolding.
 - **Execution source:** native-direct
 - **Execution name:** Sequential z.ai source integration
-- **Execution reason:** One package owns the entire seam — source fetch, normalize,
-  relevance, config constants, and tests — so direct sequencing best protects the shared
-  model-relevance guard, the cache contract, and the two existing provider sources.
+- **Execution reason:** One package owns the fetch, normalize, relevance, config, and
+  test seams, so direct sequencing best protects the shared relevance guard and the
+  cache contract.
 - **Execution outline:** Probe the monitor endpoint once with the stored key, implement
-  the `zai` source with focused tests against the sanitized fixture, then wire config
-  defaults, document, and run complete offline assurance.
+  the `zai` source with focused tests against the sanitized fixture, then run complete
+  offline assurance.
 - **Estimate basis:** The existing Codex and Anthropic sources, their test harness, and
   the shared relevance/cache seams are Human-validated; the endpoint's exact response
-  fields, percentage scale, and Authorization form are the remaining unknowns, settled
-  by the probe Step.
-- **Estimated implementation:** 45–80 minutes; Human wait excluded.
+  fields, percentage scale, and Authorization form are settled by the probe Step.
+- **Estimated implementation:** 50–80 minutes; Human wait excluded.
 - **Estimate confidence:** Low because no comparable provider-source addition has been
   Human-validated under calibration yet.
-- **Human-wait estimate:** Separate and unbounded; Human validates live GLM gauges once
+- **Human-wait estimate:** Separate and unbounded; Human validates live collection once
   after offline assurance.
 - **Refinement trigger:** Stop and revise if the endpoint needs an auth scheme beyond a
-  raw or Bearer API key, token windows lack usable percentages, or wiring would require
-  Pi core changes or a new dependency.
-- **Final history target:** `feat(footer): show z.ai GLM quota telemetry`
+  raw or Bearer API key or token windows lack usable percentages.
+- **Final history target:** `feat(footer): collect z.ai GLM quota`
 
 - [ ] Step 1.1 Probe the z.ai monitor quota endpoint once with the stored key and record
       a sanitized fixture.
@@ -54,25 +52,81 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Covers: `ZAI_SOURCE` (id `zai`, label `GLM`, authoritative full-list behavior, no
     header parsing), static-key auth read from pi auth with a friendly missing-key
     error, `normalizeZaiQuotaResponse` mapping TOKENS_LIMIT to the primary `5h` window
-    and the weekly limit to the secondary `7d` window with clamped percentages and reset
-    times, tolerant envelope handling, TIME_LIMIT exclusion, source registration, the
-    `looksLikeZaiModel` relevance branch, and `zai` in the known provider ids and
+    and the weekly limit to the secondary `7d` window with clamped percentages and
+    reset times, tolerant envelope handling, TIME_LIMIT exclusion, source registration,
+    the `looksLikeZaiModel` relevance branch, and `zai` in the known provider ids and
     default config.
   - Tests: fixture mapping, malformed and missing fields, unknown limit types ignored,
     percentage clamping, GLM/non-GLM relevance matrix, missing key fail-soft, fetch and
     cache behavior through the existing harness, and config defaults.
 
-- [ ] Step 1.3 Document the zai quota telemetry and run complete offline assurance while
-      refreshing the source-integrity manifest.
-  - Estimate: 15–25 minutes; uncertainty is wording the new provider in package and root
-    documentation without overpromising live behavior.
-  - Covers: README and architecture documentation updates, `check:baseline` before the
-    manifest refresh, `scripts/check-baseline.mjs --write` plus rerun, and the full
-    offline check through OpenSpec validation.
+- [ ] Step 1.3 Run complete offline assurance for the collection slice while refreshing
+      the source-integrity manifest.
+  - Estimate: 15–25 minutes; uncertainty is documentation wording that keeps the deck
+    paint promise honest before Task 2 lands.
+  - Covers: `check:baseline` before the manifest refresh,
+    `scripts/check-baseline.mjs --write` plus rerun, focused and full offline checks
+    through OpenSpec validation, and package documentation for the new provider.
 
 ### Human validation
 
-- [ ] Human runs the deck on a GLM-family model, sees live 5h and 7d gauges with reset
-      countdowns, confirms they disappear on a non-GLM model and with the provider
-      disabled in config, then reports a clear outcome; preserve the original response,
-      canonical outcome, and UTC.
+- [ ] Human runs the cockpit on a GLM-family model and confirms the deck's quota slot
+      shows a live z.ai percent instead of `—`, and that it returns to `—` on non-GLM
+      models, then reports a clear outcome; preserve the original response, canonical
+      outcome, and UTC.
+
+## Task 2 — Paint both z.ai quota windows as compact deck tiles
+
+- **Value:** The deck's quota slot shows both live windows in the deck dialect —
+  percent-first `5h` and `7d` tiles with severity color and the Human-chosen reset
+  countdown — instead of one collapsed percent.
+- **Method source:** predefined
+- **Method name:** Happy-path
+- **Method contract:** Deliver the smallest complete paint slice — additive telemetry
+  windows, compact deck tiles, chosen countdown mode, offline assurance — before only
+  Task-required hardening; excludes repair work and RED/GREEN scaffolding.
+- **Execution source:** native-direct
+- **Execution name:** Sequential deck quota paint
+- **Execution reason:** The telemetry protocol joins two packages, so direct sequencing
+  best protects backward compatibility for older footer and header builds.
+- **Execution outline:** Extend the telemetry message and parser with both windows,
+  paint compact percent-first tiles with severity and countdown in the deck slot, then
+  document and assure offline.
+- **Estimate basis:** The telemetry protocol, strict parser, and deck quota paint are
+  Human-validated seams with focused tests on both sides.
+- **Estimated implementation:** 35–60 minutes; Human wait excluded.
+- **Estimate confidence:** Low until the first comparable deck-paint slice is
+  Human-validated under calibration.
+- **Human-wait estimate:** Separate and unbounded; Human validates the live paint once
+  after offline assurance.
+- **Refinement trigger:** Stop and revise if window paint would break the telemetry
+  protocol for existing consumers or require Pi core changes.
+- **Countdown mode:** Fixed by Human before implementation — hot-only (at or above 75%
+  used, matching footer behavior), always on the `5h` tile, or none.
+- **Final history target:** `feat(deck): paint z.ai quota windows`
+
+- [ ] Step 2.1 Extend footer telemetry with both quota windows and paint compact
+      percent-first deck tiles with severity color and the chosen countdown mode.
+  - Estimate: 20–35 minutes; uncertainty is keeping the telemetry extension additive
+    and strictly parsed while the deck degrades cleanly to `—`.
+  - Covers: window list (label, used percent, optional reset time) in the telemetry
+    message and `FooterTelemetrySnapshot`, strict optional parsing that tolerates older
+    messages, deck quota-slot tiles `NN% 5h ‣ NN% 7d` before the cost tile, per-window
+    severity color at the existing warning threshold, the chosen countdown mode from
+    provider reset times, one-window and no-window degradation, and focused tests in
+    both packages.
+
+- [ ] Step 2.2 Document the deck quota tiles and run complete offline assurance while
+      refreshing the source-integrity manifest.
+  - Estimate: 15–25 minutes; uncertainty is documenting the countdown mode boundary
+    without overpromising provider reset-time fidelity.
+  - Covers: package and root documentation updates, `check:baseline` before the manifest
+    refresh, `scripts/check-baseline.mjs --write` plus rerun, and the full offline check
+    through OpenSpec validation.
+
+### Human validation
+
+- [ ] Human runs the deck on a GLM-family model, sees live `5h` and `7d` percent tiles
+      with the chosen countdown behavior, confirms one-window and non-GLM degradation,
+      then reports a clear outcome; preserve the original response, canonical outcome,
+      and UTC.
