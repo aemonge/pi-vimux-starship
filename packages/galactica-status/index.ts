@@ -10,15 +10,21 @@ import { Type } from 'typebox';
 import {
   formatActiveWorkTitle,
   NO_OPEN_SPEC_FOCUS,
+  NO_SESSION_SUBJECT,
   NO_SESSION_WORK_FOCUS,
   OPEN_SPEC_FOCUS_ENTRY_TYPE,
   type OpenSpecFocus,
   restoreOpenSpecFocus,
+  restoreSessionSubject,
   restoreSessionWorkFocus,
   sameOpenSpecFocus,
+  sameSessionSubject,
   sameSessionWorkFocus,
+  SESSION_SUBJECT_ENTRY_TYPE,
   SESSION_WORK_FOCUS_ENTRY_TYPE,
+  type SessionSubject,
   type SessionWorkFocus,
+  sessionSubject,
   sessionWorkFocus,
   taskflowRunFocus,
   taskFocus,
@@ -174,6 +180,7 @@ class GalacticaStatusRuntime {
   private openSpecProjectDetected: boolean | undefined;
   private focus: OpenSpecFocus;
   private workFocus: SessionWorkFocus;
+  private subject: SessionSubject;
   private goal: GoalHeaderState | null;
   private goalProjectionSuppressed = false;
   private goalAutomaticTurnLimit: number | undefined;
@@ -201,6 +208,7 @@ class GalacticaStatusRuntime {
     publisher: FancyFooterPublisher,
     focus: OpenSpecFocus,
     workFocus: SessionWorkFocus,
+    subject: SessionSubject,
     goal: GoalHeaderState | null,
     sessionName: string | undefined,
   ) {
@@ -209,6 +217,7 @@ class GalacticaStatusRuntime {
     this.publisher = publisher;
     this.focus = focus;
     this.workFocus = workFocus;
+    this.subject = subject;
     this.goal = goal;
     this.sessionName = sessionName;
     this.liveLifecycle = goal
@@ -598,6 +607,7 @@ class GalacticaStatusRuntime {
         openSpec: focusedOpenSpec,
         focusedTaskId: this.focus.mode === 'task' ? this.focus.taskId : undefined,
         workFocus: visibleWorkFocus,
+        subject: this.subject,
         orchestration: snapshot.orchestration,
         lifecycle: this.liveLifecycle,
         activity: this.liveActivity,
@@ -625,6 +635,7 @@ class GalacticaStatusRuntime {
     const title = formatActiveWorkTitle({
       focus: this.focus,
       workFocus: this.workFocus,
+      subject: this.subject,
       goal: this.projectedGoal(),
       ...(taskTitle ? { taskTitle } : {}),
       ...(this.sessionName ? { sessionName: this.sessionName } : {}),
@@ -642,6 +653,10 @@ class GalacticaStatusRuntime {
 
   currentWorkFocus(): SessionWorkFocus {
     return this.workFocus;
+  }
+
+  currentSubject(): SessionSubject {
+    return this.subject;
   }
 
   currentGoal(): GoalHeaderState | null {
@@ -725,6 +740,12 @@ class GalacticaStatusRuntime {
       this.liveLifecycle = 'listening';
       this.liveActivity = undefined;
     }
+    this.publish();
+  }
+
+  setSubject(subject: SessionSubject): void {
+    if (sameSessionSubject(this.subject, subject)) return;
+    this.subject = subject;
     this.publish();
   }
 
@@ -953,6 +974,11 @@ export default function galacticaStatus(pi: ExtensionAPI): void {
     runtime?.setWorkFocus(focus);
   }
 
+  function persistAndApplySubject(subject: SessionSubject): void {
+    pi.appendEntry(SESSION_SUBJECT_ENTRY_TYPE, subject);
+    runtime?.setSubject(subject);
+  }
+
   function persistAndApplyFocus(focus: OpenSpecFocus): void {
     if (
       focus.mode === 'task' &&
@@ -968,6 +994,34 @@ export default function galacticaStatus(pi: ExtensionAPI): void {
     return focus.state === 'clear'
       ? 'Work focus: clear'
       : `Work focus: ${focus.state} · ${focus.intent}`;
+  }
+
+  function subjectStatus(subject: SessionSubject): string {
+    return subject.state === 'clear'
+      ? 'Session subject: clear'
+      : `Session subject: ${subject.title}`;
+  }
+
+  function applySubjectAction(
+    action: 'status' | 'set',
+    title?: string,
+  ): { ok: boolean; message: string; subject: SessionSubject } {
+    const current = runtime?.currentSubject() ?? NO_SESSION_SUBJECT;
+
+    if (action === 'status') {
+      return { ok: true, message: subjectStatus(current), subject: current };
+    }
+
+    const next = sessionSubject('set', title);
+    if (!next || next.state !== 'set') {
+      return {
+        ok: false,
+        message: 'Session subject requires a non-empty title',
+        subject: current,
+      };
+    }
+    if (!sameSessionSubject(current, next)) persistAndApplySubject(next);
+    return { ok: true, message: subjectStatus(next), subject: next };
   }
 
   function applyWorkAction(
@@ -1087,6 +1141,7 @@ export default function galacticaStatus(pi: ExtensionAPI): void {
     const branch = ctx.sessionManager.getBranch();
     const focus = restoreOpenSpecFocus(branch);
     const workFocus = restoreSessionWorkFocus(branch);
+    const subject = restoreSessionSubject(branch);
     const goal = restoreGoalHeaderState(branch);
     const sessionName = pi.getSessionName() ?? ctx.sessionManager.getSessionName();
     runtime = new GalacticaStatusRuntime(
@@ -1095,6 +1150,7 @@ export default function galacticaStatus(pi: ExtensionAPI): void {
       publisher,
       focus,
       workFocus,
+      subject,
       goal,
       sessionName,
     );
@@ -1109,6 +1165,7 @@ export default function galacticaStatus(pi: ExtensionAPI): void {
     const branch = ctx.sessionManager.getBranch();
     runtime?.setFocus(restoreOpenSpecFocus(branch));
     runtime?.setWorkFocus(restoreSessionWorkFocus(branch));
+    runtime?.setSubject(restoreSessionSubject(branch));
     runtime?.setGoal(restoreGoalHeaderState(branch));
     runtime?.settle();
   });
@@ -1233,6 +1290,40 @@ export default function galacticaStatus(pi: ExtensionAPI): void {
         details: {
           ok: result.ok,
           focus: result.focus,
+        },
+      };
+    },
+  });
+
+  pi.registerTool({
+    name: 'subject',
+    label: 'Session Subject',
+    description:
+      'Show or set the sanitized session subject that keeps the focus row populated beneath OpenSpec, Goal, and Session Work',
+    promptSnippet: 'Manage the automatic session subject title',
+    promptGuidelines: [
+      'Author a short sanitized subject (at most 120 characters, never raw prompt text) at the first conversational turn; revise it only when the topic clearly shifts. Never require Human action for it.',
+    ],
+    parameters: Type.Object({
+      action: StringEnum(['status', 'set'] as const),
+      title: Type.Optional(
+        Type.String({
+          description: 'Required only for set: the short sanitized subject title',
+        }),
+      ),
+    }),
+    async execute(_toolCallId, params) {
+      const result = applySubjectAction(params.action, params.title);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: result.ok ? result.message : `Error: ${result.message}`,
+          },
+        ],
+        details: {
+          ok: result.ok,
+          subject: result.subject,
         },
       };
     },

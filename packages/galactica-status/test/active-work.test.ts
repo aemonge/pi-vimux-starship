@@ -1746,6 +1746,51 @@ test('restoreSessionSubject prefers the latest valid subject entry', () => {
   assert.deepEqual(restoreSessionSubject([]), NO_SESSION_SUBJECT);
 });
 
+test('subject tool persists sanitized subjects and restores them on resume', async () => {
+  const harness = new RuntimeHarness();
+  try {
+    await harness.emit('session_start', { reason: 'startup' });
+
+    const missing = await harness.tool('subject', { action: 'set', title: '   ' });
+    assert.equal(missing.details.ok, false);
+    assert.match(missing.content[0].text, /requires a non-empty title/u);
+
+    const set = await harness.tool('subject', {
+      action: 'set',
+      title: '  Shape the never-empty focus row  ',
+    });
+    assert.equal(set.details.ok, true);
+    assert.deepEqual(set.details.subject, {
+      state: 'set',
+      title: 'Shape the never-empty focus row',
+    });
+
+    const stable = await harness.tool('subject', {
+      action: 'set',
+      title: 'Shape the never-empty focus row',
+    });
+    assert.equal(stable.details.ok, true);
+
+    const status = await harness.tool('subject', { action: 'status' });
+    assert.equal(
+      status.content[0].text,
+      'Session subject: Shape the never-empty focus row',
+    );
+
+    const subjectEntries = harness.entries.filter(
+      (entry) => entry.customType === 'galactica-status.session-subject.v1',
+    );
+    assert.equal(subjectEntries.length, 1);
+  } finally {
+    await harness.stop();
+  }
+
+  assert.deepEqual(restoreSessionSubject(harness.entries), {
+    state: 'set',
+    title: 'Shape the never-empty focus row',
+  });
+});
+
 test('subject titles fill the fallback before session name and yield to work', () => {
   const common = {
     focus: { mode: 'none' } as const,
