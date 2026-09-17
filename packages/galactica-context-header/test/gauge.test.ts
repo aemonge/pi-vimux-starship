@@ -452,7 +452,7 @@ test('parses bounded work counters without accepting impossible progress', () =>
       titles: ['Long Plan title', 'Current Task title'],
       color: 'accent',
     },
-    suggestion: 'validate-result',
+    suggestion: 'requesting-validation',
     counters: {
       agents: { active: 2, total: 3 },
       activeRuns: { children: 3, subagents: 2 },
@@ -465,7 +465,7 @@ test('parses bounded work counters without accepting impossible progress', () =>
     titles: ['Long Plan title', 'Current Task title'],
     color: 'accent',
   });
-  assert.equal(parsed?.suggestion, 'validate-result');
+  assert.equal(parsed?.suggestion, 'requesting-validation');
   assert.deepEqual(parsed?.counters, {
     agents: { active: 2, total: 3 },
     activeRuns: { children: 3, subagents: 2 },

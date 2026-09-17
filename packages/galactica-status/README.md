@@ -98,9 +98,10 @@ publication.
 The header projection uses the rich lifecycle `understanding`, `working`, `waiting`,
 `assuring`, `learning`, `answering`, `blocked`, `listening`, or `aborted`. It separately
 publishes one explicit selection with OpenSpec Task → Goal → Session Work precedence,
-or `null` when no work is selected. A controlled suggestion enum communicates only the
-next lifecycle boundary, such as `complete-scope`, `validate-result`,
-`human-validation`, or `resolve-blocker`; it never carries generated prose. Direct tool
+or `null` when no work is selected. A controlled suggestion enum communicates only
+Human-facing reporting cues such as `requesting-validation`,
+`awaiting-continuation`, or `requesting-redirection`; it never carries generated
+prose. Direct tool
 categories, read-only Pi Goal state, and known Taskflow phases move the lifecycle
 without exposing arguments or raw node prose. Goal state is restored from Pi's canonical
 `goal-state` session entries without enabling Goal RPC. An active Goal renders bounded

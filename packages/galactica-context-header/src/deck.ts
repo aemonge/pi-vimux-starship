@@ -291,17 +291,30 @@ function activityLabel(state: HeaderDeckState): string {
 }
 
 const SUGGESTION_LABELS: Record<HeaderSuggestion, string> = {
-  'shape-direction': 'shape direction',
-  'complete-scope': 'complete scope',
-  'validate-result': 'validate result',
-  'capture-learning': 'capture learning',
-  'human-review': 'Human review',
-  continue: 'continue',
-  'human-input': 'Human input',
-  'human-validation': 'Human validation',
-  'resolve-blocker': 'resolve blocker',
-  'resume-or-redirect': 'resume or redirect',
+  'requesting-validation': 'requesting validation or redirection',
+  'awaiting-continuation': 'awaiting continuation',
+  'requesting-redirection': 'requesting redirection',
+  'awaiting-resume': 'awaiting resume or redirect',
+  'requesting-input': 'requesting input',
 };
+
+const PLACEHOLDER_TITLES = new Set(['no focused task', 'no focus']);
+
+function whatLine(state: HeaderDeckState): string {
+  const work = state.header?.work;
+  const title = (work?.titles ?? []).find(
+    (candidate) => candidate && !PLACEHOLDER_TITLES.has(candidate),
+  );
+  const pathLabel = safeText(work?.activityPath?.at(-1)?.label ?? '');
+  const steps = state.header?.counters?.steps;
+  const base = safeText(title ?? '') || pathLabel;
+  if (!base) return '';
+  if (steps && steps.total > 0) {
+    const current = Math.min(steps.completed + 1, steps.total);
+    return `${base} · step ${current}/${steps.total}`;
+  }
+  return base;
+}
 
 function suggestionLine(
   state: HeaderDeckState,
@@ -309,11 +322,16 @@ function suggestionLine(
   recovering: boolean,
 ): string {
   const suggestion = state.header?.suggestion;
-  const semanticColor = !suggestion
-    ? 'dim'
-    : suggestion === 'resolve-blocker'
+  if (!suggestion) {
+    const what = lifecycle(state).active ? whatLine(state) : '';
+    return what
+      ? color(theme, 'accent', what)
+      : color(theme, 'dim', `󰁕 —`);
+  }
+  const semanticColor =
+    suggestion === 'requesting-redirection'
       ? 'error'
-      : ['human-input', 'human-validation'].includes(suggestion)
+      : ['requesting-validation', 'requesting-input'].includes(suggestion)
         ? 'warning'
         : recovering
           ? 'accent'
@@ -321,7 +339,7 @@ function suggestionLine(
   return color(
     theme,
     semanticColor,
-    `󰁕 ${suggestion ? SUGGESTION_LABELS[suggestion] : '—'}`,
+    `󰁕 ${SUGGESTION_LABELS[suggestion]}`,
   );
 }
 

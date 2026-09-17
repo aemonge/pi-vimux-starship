@@ -5,7 +5,7 @@ through Pi's supported widget and event APIs.
 
 ```text
 ─ 󰠭 › ─────────────────────────────────────────────────────────────────────
-( 3 ›  2 · 00:05'12) working ⟩ checking 󰁕 validate result     task 1/2 ›  stps 3/5
+( 3 ›  2 · 00:05'12) working ⟩ checking Stabilize runtime and focus · step 3/5     task 1/2 ›  stps 3/5
 󰓾 Stabilize runtime and focus in the cockpit
 ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 [󰆧]  ~/projects/example                                     main ⟩  clean
@@ -86,8 +86,11 @@ suggestion: HeaderSuggestion | null; // controlled enum, never generated prose
 Selection priority remains exact OpenSpec Task, Goal, then Session Work. Older
 protocol-1 events may use sanitized non-placeholder work titles as a legacy selection;
 explicit malformed selection is rejected rather than borrowing a fallback. The
-suggestion vocabulary is producer-owned and bounded to lifecycle actions such as
-`complete scope`, `validate result`, `Human validation`, and `resolve blocker`.
+suggestion vocabulary is producer-owned, appears only in waiting, blocked, approval,
+or aborted states, and is bounded to reporting cues such as
+`requesting validation or redirection`, `awaiting continuation`, and
+`requesting redirection`. While work is active, the same slot reports the current
+WHAT: the focused task title with live step progress.
 
 The preferred activity contract is a structured path that never stores separators:
 

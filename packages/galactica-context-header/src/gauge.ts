@@ -101,16 +101,11 @@ export type HeaderSelection = {
 };
 
 export const HEADER_SUGGESTIONS = [
-  'shape-direction',
-  'complete-scope',
-  'validate-result',
-  'capture-learning',
-  'human-review',
-  'continue',
-  'human-input',
-  'human-validation',
-  'resolve-blocker',
-  'resume-or-redirect',
+  'requesting-validation',
+  'awaiting-continuation',
+  'requesting-redirection',
+  'awaiting-resume',
+  'requesting-input',
 ] as const;
 
 export type HeaderSuggestion = (typeof HEADER_SUGGESTIONS)[number];

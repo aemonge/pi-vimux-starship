@@ -38,7 +38,7 @@ function fixture(): HeaderDeckState {
         ],
         color: 'accent',
       },
-      suggestion: 'human-validation',
+      suggestion: 'requesting-validation',
       diagnostics: null,
       backgroundActivity: false,
       approvalRequired: true,
@@ -99,9 +99,9 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.match(lines[1] ?? '', /^─+$/u);
   assert.match(
     lines[2] ?? '',
-    /^\( 2 ›  1 · 00:07'00\) waiting ⟩ idle 󰁕 Human validation\s+ task 0\/1 ›  stps 6\/16$/u,
+    /^\( 2 ›  1 · 00:07'00\) waiting ⟩ idle 󰁕 requesting validation or redirection\s+ task 0\/1 ›  stps 6\/16$/u,
   );
-  assert.doesNotMatch(lines[2] ?? '', /Human validation ⟩  task/u);
+  assert.doesNotMatch(lines[2] ?? '', /requesting validation or redirection ⟩  task/u);
   assert.equal(plain(lines[3] ?? ''), '┈'.repeat(160));
   assert.equal(plain(lines[5] ?? ''), '┈'.repeat(160));
   assert.match(lines[3] ?? '', /^\u001b\[2m/u);
@@ -245,12 +245,12 @@ test('keeps activity and focus distinct on the title row', () => {
     titles: ['Plan title', 'Current task'],
     color: 'accent',
   };
-  state.header!.suggestion = 'validate-result';
+  state.header!.suggestion = 'requesting-validation';
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
   assert.match(
     lines[2] ?? '',
-    /^\( 2 ›  1 · 00:07'00\) assuring ⟩ verify 󰁕 validate result\s+ task/u,
+    /^\( 2 ›  1 · 00:07'00\) assuring ⟩ verify 󰁕 requesting validation or redirection\s+ task/u,
   );
   assert.equal(lines[0], `󰠭 ⟩ Plan title › Current task`);
   assert.equal(lines.join('\n').split('Running checks').length - 1, 0);
@@ -337,7 +337,7 @@ test('bolds only current control and status anchors', () => {
   for (const regular of [
     "( 2 ›  1 · 00:07'00)",
     'idle',
-    'Human validation',
+    'requesting validation or redirection',
     'Read-only preflight for the interrupted one-line Review ledger fix',
     'before further OpenSpec validation and implementation',
     ' stps 6/16',
@@ -362,7 +362,7 @@ test('uses a bold blue lifecycle with neutral activity and green direction', () 
     titles: ['Plan title', 'Current task'],
     color: 'accent',
   };
-  state.header!.suggestion = 'validate-result';
+  state.header!.suggestion = 'requesting-validation';
   state.header!.approvalRequired = false;
   const colors: string[] = [];
   const theme = {
@@ -377,10 +377,10 @@ test('uses a bold blue lifecycle with neutral activity and green direction', () 
 
   assert.ok(colors.includes('accent:assuring'));
   assert.ok(colors.includes('text:verify'));
-  assert.ok(colors.includes('success:󰁕 validate result'));
+  assert.ok(colors.includes('warning:󰁕 requesting validation or redirection'));
   assert.ok(colors.includes('accent:Plan title › Current task'));
   assert.equal(colors.includes('accent:verify'), false);
-  assert.equal(colors.includes('accent:󰁕 validate result'), false);
+  assert.equal(colors.includes('accent:󰁕 requesting validation or redirection'), false);
 });
 
 test('colors recovery activity and direction blue while only lifecycle stays bold', () => {
@@ -396,7 +396,7 @@ test('colors recovery activity and direction blue while only lifecycle stays bol
     titles: ['Repair runtime state'],
     color: 'accent',
   };
-  state.header!.suggestion = 'complete-scope';
+  state.header!.suggestion = 'awaiting-resume';
   state.header!.approvalRequired = false;
   const colors: string[] = [];
   const bolded: string[] = [];
@@ -413,12 +413,32 @@ test('colors recovery activity and direction blue while only lifecycle stays bol
 
   const lines = renderHeaderDeck(state, 160, theme as never);
 
-  assert.match(lines[2] ?? '', /working ⟩ recovering 󰁕 complete scope\s+ task/u);
+  assert.match(lines[2] ?? '', /working ⟩ recovering 󰁕 awaiting resume or redirect\s+ task/u);
   assert.ok(colors.includes('accent:recovering'));
-  assert.ok(colors.includes('accent:󰁕 complete scope'));
+  assert.ok(colors.includes('accent:󰁕 awaiting resume or redirect'));
   assert.ok(bolded.includes('working'));
   assert.equal(bolded.includes('recovering'), false);
-  assert.equal(bolded.includes('󰁕 complete scope'), false);
+  assert.equal(bolded.includes('󰁕 awaiting resume or redirect'), false);
+});
+
+test('reports the WHAT with task title and step while active without a cue', () => {
+  const state = fixture();
+  state.header!.work = {
+    lifecycle: 'working',
+    titles: ['Plan title', 'Current task'],
+    color: 'accent',
+    activity: { kind: 'implementation' },
+  };
+  state.header!.selection = null;
+  state.header!.suggestion = null;
+  state.header!.approvalRequired = false;
+  state.header!.blocked = false;
+
+  const lines = renderHeaderDeck(state, 160, plainTheme as never);
+  const status = plain(lines[2] ?? '');
+
+  assert.ok(status.includes('working ⟩ implementing Plan title · step 7/16'));
+  assert.equal(status.includes('󰁕 Plan title'), false);
 });
 
 test('keeps lifecycle contextual and colors progress by completion', () => {
@@ -438,7 +458,7 @@ test('keeps lifecycle contextual and colors progress by completion', () => {
   assert.ok(colors.includes('warning:waiting'));
   assert.ok(colors.includes("accent:· 00:07'00"));
   assert.ok(colors.includes('dim:idle'));
-  assert.ok(colors.includes('warning:󰁕 Human validation'));
+  assert.ok(colors.includes('warning:󰁕 requesting validation or redirection'));
   assert.ok(
     colors.includes(
       'accent:Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation',
