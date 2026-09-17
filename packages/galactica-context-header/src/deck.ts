@@ -324,9 +324,7 @@ function suggestionLine(
   const suggestion = state.header?.suggestion;
   if (!suggestion) {
     const what = lifecycle(state).active ? whatLine(state) : '';
-    return what
-      ? color(theme, 'accent', what)
-      : color(theme, 'dim', `󰁕 —`);
+    return what ? color(theme, 'accent', what) : color(theme, 'dim', `󰁕 —`);
   }
   const semanticColor =
     suggestion === 'requesting-redirection'
@@ -336,11 +334,7 @@ function suggestionLine(
         : recovering
           ? 'accent'
           : 'success';
-  return color(
-    theme,
-    semanticColor,
-    `󰁕 ${SUGGESTION_LABELS[suggestion]}`,
-  );
+  return color(theme, semanticColor, `󰁕 ${SUGGESTION_LABELS[suggestion]}`);
 }
 
 function runtimeCapsule(state: HeaderDeckState, theme: Theme): string {

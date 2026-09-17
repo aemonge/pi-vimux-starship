@@ -413,7 +413,10 @@ test('colors recovery activity and direction blue while only lifecycle stays bol
 
   const lines = renderHeaderDeck(state, 160, theme as never);
 
-  assert.match(lines[2] ?? '', /working ⟩ recovering 󰁕 awaiting resume or redirect\s+ task/u);
+  assert.match(
+    lines[2] ?? '',
+    /working ⟩ recovering 󰁕 awaiting resume or redirect\s+ task/u,
+  );
   assert.ok(colors.includes('accent:recovering'));
   assert.ok(colors.includes('accent:󰁕 awaiting resume or redirect'));
   assert.ok(bolded.includes('working'));
