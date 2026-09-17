@@ -301,7 +301,7 @@ test('publishes explicit selection and controlled next-action suggestions', () =
     ],
     color: 'accent',
   });
-  assert.equal(selected.suggestion, 'validate-result');
+  assert.equal(selected.suggestion, null);
 
   const idle = publisherModule.buildHeaderStatusEvent([]);
   assert.equal(idle.selection, null);
@@ -311,7 +311,7 @@ test('publishes explicit selection and controlled next-action suggestions', () =
     workFocus: { state: 'active', intent: 'Continue stable cockpit layout' },
   });
   assert.equal(restoredWork.work?.lifecycle, 'listening');
-  assert.equal(restoredWork.suggestion, 'continue');
+  assert.equal(restoredWork.suggestion, 'awaiting-continuation');
 
   const validation = publisherModule.buildHeaderStatusEvent([], {
     workFocus: { state: 'validation', intent: 'Validate stable cockpit layout' },
@@ -321,7 +321,7 @@ test('publishes explicit selection and controlled next-action suggestions', () =
     titles: ['Validate stable cockpit layout'],
     color: 'warning',
   });
-  assert.equal(validation.suggestion, 'human-validation');
+  assert.equal(validation.suggestion, 'requesting-validation');
   assert.doesNotMatch(JSON.stringify([selected, validation]), /prompt|command|path/u);
 });
 

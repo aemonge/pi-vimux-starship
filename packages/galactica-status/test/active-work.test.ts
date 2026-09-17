@@ -1000,7 +1000,7 @@ test('ordinary direct tools publish bounded activity until agent settle', async 
       titles: [intent],
       color: 'accent',
     });
-    assert.equal(latestHeader(harness)?.suggestion, 'shape-direction');
+    assert.equal(latestHeader(harness)?.suggestion, null);
 
     await harness.emit('tool_execution_end', {
       toolCallId: 'direct-read',
@@ -1061,7 +1061,7 @@ test('ordinary direct tools publish bounded activity until agent settle', async 
       color: 'accent',
       activity: { kind: 'result-review' },
     });
-    assert.equal(latestHeader(harness)?.suggestion, 'validate-result');
+    assert.equal(latestHeader(harness)?.suggestion, null);
     assert.doesNotMatch(
       JSON.stringify(latestHeaderWork(harness)),
       /private|\/project|result\.md/u,
@@ -1074,7 +1074,7 @@ test('ordinary direct tools publish bounded activity until agent settle', async 
       color: 'accent',
       activity: { kind: 'awaiting-input' },
     });
-    assert.equal(latestHeader(harness)?.suggestion, 'human-input');
+    assert.equal(latestHeader(harness)?.suggestion, 'requesting-input');
   } finally {
     await harness.stop();
   }

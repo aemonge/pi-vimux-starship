@@ -515,16 +515,11 @@ export type HeaderSelection = {
 };
 
 export const HEADER_SUGGESTIONS = [
-  'shape-direction',
-  'complete-scope',
-  'validate-result',
-  'capture-learning',
-  'human-review',
-  'continue',
-  'human-input',
-  'human-validation',
-  'resolve-blocker',
-  'resume-or-redirect',
+  'requesting-validation',
+  'awaiting-continuation',
+  'requesting-redirection',
+  'awaiting-resume',
+  'requesting-input',
 ] as const;
 
 export type HeaderSuggestion = (typeof HEADER_SUGGESTIONS)[number];
@@ -623,19 +618,14 @@ function headerSuggestion(options: {
   approvalRequired: boolean;
   blocked: boolean;
 }): HeaderSuggestion | null {
-  if (options.blocked) return 'resolve-blocker';
+  if (options.blocked) return 'requesting-redirection';
   if (options.approvalRequired || options.activity?.kind === 'awaiting-validation') {
-    return 'human-validation';
+    return 'requesting-validation';
   }
-  if (options.activity?.kind === 'awaiting-input') return 'human-input';
-  if (options.lifecycle === 'aborted') return 'resume-or-redirect';
-  if (options.lifecycle === 'understanding') return 'shape-direction';
-  if (options.lifecycle === 'working') return 'complete-scope';
-  if (options.lifecycle === 'assuring') return 'validate-result';
-  if (options.lifecycle === 'learning') return 'capture-learning';
-  if (options.lifecycle === 'answering') return 'human-review';
+  if (options.activity?.kind === 'awaiting-input') return 'requesting-input';
+  if (options.lifecycle === 'aborted') return 'awaiting-resume';
   if (['waiting', 'listening'].includes(options.lifecycle) && options.selection) {
-    return 'continue';
+    return 'awaiting-continuation';
   }
   return null;
 }
