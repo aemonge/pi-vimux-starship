@@ -290,8 +290,8 @@ function titleMetrics(state: HeaderDeckState, theme: Theme): string {
     : `${color(theme, 'dim', ` —`)} ${minorSeparator(theme, 'dim')} ${color(theme, 'dim', ` —`)}`;
   const progress =
     progressLine(state, theme) ||
-    `${color(theme, 'dim', ` task —`)} ${minorSeparator(theme, 'dim')} ${color(theme, 'dim', ` stps —`)}`;
-  return [timer, runs, progress].join(` ${semanticSeparator(theme)} `);
+    `${color(theme, 'dim', ` task —  `)} ${minorSeparator(theme, 'dim')} ${color(theme, 'dim', ` stps —`)}`;
+  return [timer, runs, progress].join(`  ${semanticSeparator(theme)}  `);
 }
 
 function spanElapsed(ms: number): string {
