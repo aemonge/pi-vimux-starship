@@ -3,9 +3,14 @@ import type {
   OrchestrationState,
   ProgressFact,
   RunSpan,
-  SelectionState,
   StageValue,
 } from './types.ts';
+import type { GoalHeaderState } from './goal.ts';
+import type {
+  OpenSpecFocus,
+  SessionSubject,
+  SessionWorkFocus,
+} from './active-work.ts';
 
 /**
  * Append-only event ledger for the cockpit status core.
@@ -17,7 +22,10 @@ import type {
  */
 
 export const LEDGER_EVENT_TYPES = [
-  'selection/set',
+  'focus/openspec',
+  'focus/goal',
+  'focus/work',
+  'focus/subject',
   'run/start',
   'run/stage',
   'run/end',
@@ -30,7 +38,14 @@ export const LEDGER_EVENT_TYPES = [
 export type LedgerEventType = (typeof LEDGER_EVENT_TYPES)[number];
 
 export type LedgerEvent =
-  | { type: 'selection/set'; at: number; selection: SelectionState }
+  | {
+      type: 'focus/openspec';
+      at: number;
+      focus: OpenSpecFocus;
+    }
+  | { type: 'focus/goal'; at: number; goal: GoalHeaderState | null }
+  | { type: 'focus/work'; at: number; work: SessionWorkFocus }
+  | { type: 'focus/subject'; at: number; subject: SessionSubject }
   | { type: 'run/start'; at: number; span: RunSpan }
   | { type: 'run/stage'; at: number; id: string; stage: StageValue; declared: boolean }
   | { type: 'run/end'; at: number; id: string }

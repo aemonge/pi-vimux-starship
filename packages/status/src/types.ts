@@ -1,3 +1,5 @@
+import type { GoalHeaderState } from './goal.ts';
+
 export type CheckState = 'pass' | 'fail' | 'running' | 'unknown';
 export type WorkflowState = 'running' | 'blocked' | 'complete' | 'idle' | 'unknown';
 export type WidgetColor =
@@ -193,7 +195,7 @@ export type SelectionState =
   | { kind: 'openspec-task'; change: string; task: string }
   | {
       kind: 'goal';
-      status: 'active' | 'blocked' | 'stopped' | 'complete';
+      status: GoalHeaderState['status'];
       waiting: boolean;
     }
   | { kind: 'session-work'; intent: string; phase: 'active' | 'validation' }

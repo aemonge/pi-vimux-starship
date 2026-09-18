@@ -41,9 +41,17 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `packages/status/src/ledger.ts`, `packages/status/src/types.ts`.
   - Subject: `step(status-core): add append-only event ledger and snapshot types`.
       run, progress, diagnostics, orchestration, and taskflow producers.
-- [ ] Create `src/reducer.ts`: fold events into `CockpitSnapshot` with the single
+- [x] Create `src/reducer.ts`: fold events into `CockpitSnapshot` with the single
       selection resolver (`openspec-task > goal > session-work > subject > none`),
       runs spans, and freshness-honest progress.
+  - Started 2026-09-18T13:05:30Z; completed 2026-09-18T13:08:40Z; elapsed ~3m.
+  - Correction: ledger event union revised in the same Step — `selection/set`
+      became four raw fact events (`focus/openspec|goal|work|subject`) so the
+      reducer owns priority, per the contract's single-resolver rule.
+  - Check: `tsc --noEmit` green.
+  - Paths: `packages/status/src/reducer.ts`, `packages/status/src/ledger.ts`,
+    `packages/status/src/types.ts`.
+  - Subject: `step(status-core): add pure reducer with single selection resolver`.
 - [ ] Unit tests: resolver priority, derived-only title/status projections,
       placeholder-free silence rules, and the KO detail-naming rule.
 - [ ] Focused checks: `npm run test:status`, `check:baseline`, `check:openspec`.
