@@ -7,7 +7,7 @@ file was copied byte-for-byte; dependency trees and generated state were exclude
 
 | Imported directory                      | Responsibility                                          | Upstream relationship                 |
 | --------------------------------------- | ------------------------------------------------------- | ------------------------------------- |
-| `packages/status`             | Focus, lifecycle, OpenSpec, Goal, Taskflow, diagnostics | Galactica-authored                    |
+| `packages/status`                       | Focus, lifecycle, OpenSpec, Goal, Taskflow, diagnostics | Galactica-authored                    |
 | `packages/galactica-context-header`     | Header, Git, MCP, process resources, prompt telemetry   | Galactica-authored                    |
 | `packages/pi-fancy-footer-full-palette` | Footer, layout, quota, cost, widget protocol            | Local fork of `pi-fancy-footer` 3.0.1 |
 | `packages/pi-vim-top-border`            | Vim editor, rails, clipboard, external-editor action    | Local descendant of `pi-vim` 0.14.1   |

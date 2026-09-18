@@ -62,10 +62,33 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     `packages/status/test/reducer.test.ts`, `packages/status/src/reducer.ts`,
     `packages/status/src/types.ts`, `baseline/source.sha256`.
   - Subject: `step(status-core): prove the fold with discriminating unit tests`.
-- [ ] Focused checks: `npm run test:status`, `check:baseline`, `check:openspec`.
+- [x] Focused checks: `npm run test:status`, `check:baseline`, `check:openspec`.
+  - Started 2026-09-18T13:15:30Z; completed 2026-09-18T13:21:00Z; elapsed ~6m.
+  - Check: full `npm run check` exit 0 — baseline 99 files, packed artifact and
+    extracted load PASS, prettier clean, lint clean, typecheck clean, five suites
+    green (139 component tests incl. 19 new), composition PASS, openspec PASS.
+  - Repairs during assurance: table reflow in `docs/source-inventory.md`, unused
+    type import removed from `test/reducer.test.ts`, baseline manifest re-refreshed.
+  - Paths: `docs/source-inventory.md`,
+    `packages/status/test/reducer.test.ts`, `baseline/source.sha256`.
+  - Subject: `step(status-core): satisfy the full repository check gate`.
 - [ ] Human validation: review reducer tests against the contract grammar;
       preserve original response, canonical outcome, and UTC.
   - Evidence: pending.
+- **Implementation confirmed at:** 2026-09-18T13:00Z (minute precision, turn
+  preceding first Step start).
+- **Implementation started at:** 2026-09-18T13:01:23Z.
+- **Work completed at:** 2026-09-18T13:21:00Z.
+- **Assurance started at:** 2026-09-18T13:15:30Z (focused checks followed each
+  Step immediately; full gate at Task close).
+- **Assurance completed at:** 2026-09-18T13:21:00Z.
+- **Ready for validation at:** 2026-09-18T13:21:00Z.
+- **Actual implementation:** 19m37s across five Steps including per-Step focused
+  checks; Human wait excluded. The 75–150m range was conservative: the rename was
+  mechanical (`git mv` plus path propagation) and the core modules were
+  pre-designed in the frozen-contract conversation.
+- **Final Task-boundary commit (after canonical VALID):**
+  `feat(status-core): deliver ledger, reducer, and legacy-free home`.
 
 ## Task 2 — Producers append; output stays byte-identical
 

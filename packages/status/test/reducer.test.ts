@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import type { LedgerEvent } from '../src/ledger.ts';
 import type { GoalHeaderState } from '../src/goal.ts';
 import type { RunSpan } from '../src/types.ts';
 import {
