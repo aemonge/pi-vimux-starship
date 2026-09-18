@@ -212,7 +212,7 @@ function elevatedSelectionLines(
     .map((value) => safeText(value))
     .filter(Boolean);
   if (!selection || titles.length === 0) {
-    return [`${prefix}${color(theme, 'dim', '—')}`];
+    return []; // frozen contract: no selection means no slot
   }
   const contentWidth = Math.max(1, width - visibleWidth(prefix));
   const selectionColor = ['accent', 'success'].includes(selection.color)
@@ -253,15 +253,26 @@ function alignedSingleRow(left: string, right: string, width: number): string {
 function progressLine(state: HeaderDeckState, theme: Theme): string {
   const tasks = state.header?.counters.tasks;
   const steps = state.header?.counters.steps;
-  const taskText = tasks ? `${tasks.completed}/${tasks.total}` : '—';
-  const stepText = steps ? `${steps.completed}/${steps.total}` : '—';
-  const counterColor = (counter: typeof tasks): string =>
-    !counter
-      ? 'dim'
-      : counter.total > 0 && counter.completed >= counter.total
-        ? 'success'
-        : 'text';
-  return `${color(theme, counterColor(tasks), ` task ${taskText}`, true)} ${minorSeparator(theme, 'dim')} ${color(theme, counterColor(steps), ` stps ${stepText}`)}`;
+  // Frozen contract: absent facts remove their slots; placeholder dashes are
+  // forbidden. No counters at all collapses the whole progress slot.
+  const segments: string[] = [];
+  if (tasks) {
+    const semantic =
+      tasks.total > 0 && tasks.completed >= tasks.total ? 'success' : 'text';
+    segments.push(
+      color(theme, semantic, ` task ${tasks.completed}/${tasks.total}`, true),
+    );
+  }
+  if (steps) {
+    const semantic =
+      steps.total > 0 && steps.completed >= steps.total ? 'success' : 'text';
+    segments.push(
+      color(theme, semantic, ` stps ${steps.completed}/${steps.total}`, true),
+    );
+  }
+  if (segments.length === 0) return '';
+  if (segments.length === 1) return segments[0] ?? '';
+  return `${segments[0]} ${minorSeparator(theme, 'dim')} ${segments[1]}`;
 }
 
 const ACTIVITY_LABELS: Record<HeaderActivity['kind'], string> = {
@@ -324,7 +335,7 @@ function suggestionLine(
   const suggestion = state.header?.suggestion;
   if (!suggestion) {
     const what = lifecycle(state).active ? whatLine(state) : '';
-    return what ? color(theme, 'accent', what) : color(theme, 'dim', `󰁕 —`);
+    return what ? color(theme, 'accent', what) : ''; // frozen contract: silence, no dash
   }
   const semanticColor =
     suggestion === 'requesting-redirection'
@@ -374,10 +385,11 @@ function gitRight(state: HeaderDeckState, theme: Theme): string {
       color(theme, semanticColor, `${icon} ${count}`),
     );
   const status = !state.gitAvailable
-    ? color(theme, 'dim', '—')
+    ? ''
     : dirty.length > 0
       ? dirty.join(` ${minorSeparator(theme)} `)
       : color(theme, 'success', ' clean');
+  if (!status) return branch;
   return `${branch} ${semanticSeparator(theme)} ${status}`;
 }
 
@@ -395,11 +407,9 @@ function compactTelemetryLeft(state: HeaderDeckState, theme: Theme): string {
   return [
     globalLeft(state, theme),
     semanticSeparator(theme),
-    color(
-      theme,
-      ctxColor,
-      `󰾆 ${state.contextPercent === undefined ? '—' : formatDeckPercent(state.contextPercent)}`,
-    ),
+    state.contextPercent === undefined
+      ? undefined
+      : color(theme, 'accent', formatDeckPercent(state.contextPercent)),
     minorSeparator(theme, ctxColor),
     color(
       theme,
@@ -415,29 +425,26 @@ function compactTelemetryRight(
   nowMs = Date.now(),
 ): string {
   const resources = state.resources;
-  const resourceColor =
-    resources?.cpuWarning || resources?.memoryWarning
-      ? 'warning'
-      : resources
-        ? 'accent'
-        : 'dim';
-  const mcp = state.mcp ? `${state.mcp.healthy}/${state.mcp.total}` : '—';
+  // Frozen contract: absent telemetry removes its slot; no placeholder dashes.
+  const resourceSegments: string[] = [];
+  if (resources) {
+    const resourceColor =
+      resources.cpuWarning || resources.memoryWarning ? 'warning' : 'accent';
+    const parts = [
+      color(theme, resourceColor, ` cpu ${formatDeckCpu(resources.cpuPercent)}`),
+      color(theme, resourceColor, ` ram ${formatDeckBytes(resources.memoryBytes)}`),
+    ];
+    resourceSegments.push(parts.join(` ${minorSeparator(theme, resourceColor)} `));
+  }
+  if (state.mcp) {
+    resourceSegments.push(
+      color(theme, 'accent', ` mcp ${state.mcp.healthy}/${state.mcp.total}`),
+    );
+  }
   const quotaAndCost = quotaAndCostTiles(state, theme, nowMs);
-  const resourcesAndCapabilities = [
-    color(
-      theme,
-      resourceColor,
-      ` ${resources ? formatDeckCpu(resources.cpuPercent) : '—'}`,
-    ),
-    minorSeparator(theme, resourceColor),
-    color(
-      theme,
-      resourceColor,
-      ` ${resources ? formatDeckBytes(resources.memoryBytes) : '—'}`,
-    ),
-    minorSeparator(theme),
-    color(theme, state.mcp ? 'accent' : 'dim', ` ${mcp}`),
-  ].join(' ');
+  if (resourceSegments.length === 0) return quotaAndCost;
+  const resourcesAndCapabilities = resourceSegments.join(` ${minorSeparator(theme)} `);
+  if (!quotaAndCost) return resourcesAndCapabilities;
   return [quotaAndCost, resourcesAndCapabilities].join(` ${semanticSeparator(theme)} `);
 }
 
@@ -447,30 +454,20 @@ function quotaAndCostTiles(
   nowMs: number,
 ): string {
   const telemetry = state.footerTelemetry;
-  const costTile = color(
-    theme,
-    telemetry ? 'accent' : 'dim',
-    `󰜦 ${telemetry ? formatCost(telemetry.totalCost) : '—'}`,
-  );
+  // Frozen contract: absent telemetry removes its slot; no placeholder dashes.
+  const tiles: string[] = [];
+  if (telemetry) {
+    tiles.push(color(theme, 'accent', ` cost ${formatCost(telemetry.totalCost)}`));
+  }
 
   const windows = telemetry?.quotaWindows ?? [];
   if (windows.length === 0) {
     const quota = telemetry?.quotaPercent;
-    const quotaColor =
-      quota !== undefined && quota >= 80
-        ? 'warning'
-        : quota === undefined
-          ? 'dim'
-          : 'accent';
-    return [
-      color(
-        theme,
-        quotaColor,
-        ` ${quota === undefined ? '—' : formatDeckPercent(quota)}`,
-      ),
-      minorSeparator(theme),
-      costTile,
-    ].join(' ');
+    if (quota !== undefined) {
+      const quotaColor = quota >= 80 ? 'warning' : 'accent';
+      tiles.unshift(color(theme, quotaColor, ` quota ${formatDeckPercent(quota)}`));
+    }
+    return tiles.join(` ${minorSeparator(theme)} `);
   }
 
   // Icons carry window identity: minute/hour windows are the coding window and
@@ -496,7 +493,7 @@ function quotaAndCostTiles(
       )
     : undefined;
 
-  return [costTile, calendarTile, codingTile]
+  return [...tiles, calendarTile, codingTile]
     .filter((part): part is string => part !== undefined)
     .join(` ${semanticSeparator(theme)} `);
 }
