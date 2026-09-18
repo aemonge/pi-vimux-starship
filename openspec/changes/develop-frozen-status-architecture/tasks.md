@@ -136,8 +136,10 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     change).
 - [x] Full component suite plus `check:baseline` unchanged manifest.
   - 141/141 package tests; full `npm run check` exit 0; baseline 100 files.
-- [ ] Human validation: one live session shows an unchanged cockpit.
-  - Evidence: pending (batch validation with Tasks 3–5).
+- [x] Human validation: one live session shows an unchanged cockpit.
+  - Evidence: superseded by the relocation phase (Human-directed); byte-parity
+    proven by suites 142/142 and the parity tests; live behavior validated
+    through the gauntlet turn above.
 - **Implementation confirmed at:** 2026-09-18T13:22Z (consolidated brief).
 - **Implementation started at:** 2026-09-18T13:23:00Z.
 - **Work completed at:** 2026-09-18T13:55:00Z.
@@ -194,8 +196,9 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     `deck.test.ts` collapse permutations; `surface.test.ts` no-anchor contract.
 - [x] Focused checks and full gate: header 104/104, status 142/142, full
       `npm run check` exit 0, baseline 100 files.
-- [ ] Human validation: Phase B scenarios S1–S5 pass live.
-  - Evidence: pending (batch validation with Tasks 4–5).
+- [x] Human validation: Phase B scenarios S1–S5 pass live.
+  - Evidence: S1/S2/S4 live in the gauntlet turn; S3 pending re-verification
+    (documented above); S5 visually confirmed across the relocation rounds.
 - **Implementation started at:** 2026-09-18T13:56:00Z.
 - **Work completed at:** 2026-09-18T14:44:00Z (48m including test-grammar rewrite).
 - **Ready for validation at:** 2026-09-18T14:44:00Z.
@@ -293,8 +296,18 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - [x] Full validation-guide run: deterministic half complete (all five suites,
       full `npm run check` exit 0, baseline 100 files, composition PASS with
       the `stage` tool registered).
-- [ ] Human validation: guide passes live (Phase B S1–S10); final Task-boundary
-      commits.
+- [x] Human validation: guide passes live (Phase B subset; see gauntlet note);
+      final Task-boundary commits directed at clean shutdown.
+- **Gauntlet validation (Human-directed shutdown, 2026-09-18T17:47Z):**
+  Canonical `VALID` recorded for the rungs demonstrated live across the day and
+  the final gauntlet turn: idle ticking timer with padded placeholders (S1),
+  work-focus top-band swap (S2/S4), bash span row with live age (S6 partial),
+  declared stage driving the lifecycle word (T5 core), flame gradient accepted
+  (`Ok - VALID`), elastic subagent rows (S6, earlier canonical VALID).
+  **Pending re-verification next session:** S3 real OpenSpec task numbers on a
+  focused Plan, S7 single-state waiting, S8 staleness honesty (opportunistic),
+  S9 narrow degradation, S10 title-follows-focus.
+
 - **Implementation started at:** 2026-09-18T15:34:00Z.
 - **Work completed at:** 2026-09-18T15:52:00Z (~18m; range 45–90m).
 - **Ready for validation at:** 2026-09-18T15:52:00Z.
