@@ -497,7 +497,7 @@ function simpleQuotaTile(state: HeaderDeckState, theme: Theme): string {
   if (windows.length === 0) {
     const quota = telemetry.quotaPercent;
     if (quota === undefined) return '';
-    const quotaColor = quota >= 80 ? 'warning' : 'accent';
+    const quotaColor = quota >= 80 ? 'error' : quota >= 60 ? 'warning' : 'accent';
     return color(theme, quotaColor, ` ${formatDeckPercent(quota)}`);
   }
   // With windows, the long-range calendar tile joins the left group; the
@@ -506,7 +506,7 @@ function simpleQuotaTile(state: HeaderDeckState, theme: Theme): string {
   if (!calendar) return '';
   return color(
     theme,
-    calendar.percent >= 80 ? 'warning' : 'accent',
+    calendar.percent >= 80 ? 'error' : calendar.percent >= 60 ? 'warning' : 'accent',
     `󰃰 ${formatDeckPercent(calendar.percent)}`,
   );
 }
@@ -529,7 +529,7 @@ function windowQuotaTiles(
     tiles.push(
       color(
         theme,
-        coding.percent >= 80 ? 'warning' : 'accent',
+        coding.percent >= 80 ? 'error' : coding.percent >= 60 ? 'warning' : 'accent',
         coding.resetAt !== undefined
           ? `󰈸 ${formatDeckPercent(coding.percent)} › 󰅐 ${formatDeckCountdown(coding.resetAt, nowMs)}`
           : `󰈸 ${formatDeckPercent(coding.percent)}`,
