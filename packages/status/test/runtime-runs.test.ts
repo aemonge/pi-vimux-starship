@@ -6,8 +6,8 @@ function subagentPartial(agents: Array<{ agent?: string; active: boolean }>): un
   return {
     details: {
       kind: 'pi-subagent',
-      results: agents.map((entry, index) => ({
-        agent: entry.agent ?? `agent-${index}`,
+      results: agents.map((entry) => ({
+        ...(entry.agent ? { agent: entry.agent } : {}),
         exitCode: -1,
         sawAgentStart: true,
         sawAgentSettled: !entry.active,
@@ -37,13 +37,13 @@ test('partial results map to per-agent child spans with inferred stage', () => {
   store.beginRoot('turn-1', 'working', 1_000);
   store.begin('sub-1', 'subagent', 'turn-1', 2_000);
 
+  // Names arrive via the tool input calls, mapped by result order.
+  const calls = [{ agent: 'reviewer' }, { agent: 'scout' }];
   assert.equal(
     store.update(
       'sub-1',
-      subagentPartial([
-        { agent: 'reviewer', active: true },
-        { agent: 'scout', active: true },
-      ]),
+      subagentPartial([{ active: true }, { active: true }]),
+      calls,
       3_000,
     ),
     true,
@@ -61,23 +61,22 @@ test('settled agents collapse; change queue reports starts and ends', () => {
   const store = new RuntimeSpanStore();
   store.beginRoot('turn-1', 'working', 1_000);
   store.begin('sub-1', 'subagent', 'turn-1', 2_000);
+  const calls = [{ agent: 'reviewer' }, { agent: 'scout' }];
   store.update(
     'sub-1',
-    subagentPartial([
-      { agent: 'reviewer', active: true },
-      { agent: 'scout', active: true },
-    ]),
+    subagentPartial([{ active: true }, { active: true }]),
+    calls,
     3_000,
   );
   store.drainChanges();
 
   assert.equal(
-    store.update('sub-1', subagentPartial([{ agent: 'reviewer', active: false }])),
+    store.update('sub-1', subagentPartial([{ active: false }]), calls),
     true,
   );
   const changes = store.drainChanges();
   // Settled reviewer ends explicitly; absent scout ends by omission.
-  assert.deepEqual([...changes.ended].sort(), ['sub-1:reviewer', 'sub-1:scout']);
+  assert.deepEqual([...changes.ended].sort(), ['sub-1:0', 'sub-1:1']);
   const snap = store.snapshot();
   assert.equal(
     snap.spans?.some((span) => span.agent === 'scout'),
@@ -113,11 +112,8 @@ test('count parity with the retired tracker semantics', () => {
   store.begin('sub-1', 'subagent', 'turn-1', 2_000);
   store.update(
     'sub-1',
-    subagentPartial([
-      { agent: 'a', active: true },
-      { agent: 'b', active: true },
-      { agent: 'c', active: true },
-    ]),
+    subagentPartial([{ active: true }, { active: true }, { active: true }]),
+    [{ agent: 'a' }, { agent: 'b' }, { agent: 'c' }],
     3_000,
   );
   const snap = store.snapshot();

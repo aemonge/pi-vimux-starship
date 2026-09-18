@@ -910,8 +910,8 @@ class GalacticaStatusRuntime {
     }
   }
 
-  updateRuntimeRun(toolCallId: string, partialResult: unknown): void {
-    if (!this.runtimeSpans.update(toolCallId, partialResult)) return;
+  updateRuntimeRun(toolCallId: string, partialResult: unknown, args?: unknown): void {
+    if (!this.runtimeSpans.update(toolCallId, partialResult, args)) return;
     this.syncSpanEvents();
     this.publish();
   }
@@ -1344,7 +1344,7 @@ export default function galacticaStatus(pi: ExtensionAPI): void {
   });
 
   pi.on('tool_execution_update', (event) => {
-    runtime?.updateRuntimeRun(event.toolCallId, event.partialResult);
+    runtime?.updateRuntimeRun(event.toolCallId, event.partialResult, event.args);
     if (event.toolName !== 'taskflow') return;
     const phase = taskflowUpdateHeaderPhase(event.partialResult);
     if (phase) runtime?.setTaskflowPhase(phase);

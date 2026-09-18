@@ -120,18 +120,35 @@ export class RuntimeSpanStore {
    * Map subagent partial results to per-agent child spans. Returns true when any
    * span started or ended; queued changes are drained by `drainChanges()`.
    */
-  update(toolCallId: string, partialResult: unknown, now = Date.now()): boolean {
+  update(
+    toolCallId: string,
+    partialResult: unknown,
+    args?: unknown,
+    now = Date.now(),
+  ): boolean {
     const parent = this.spans.get(toolCallId);
     if (!parent || parent.kind !== 'subagent') return false;
     const results = partialAgentResults(partialResult);
     if (!results) return false;
+    // Agent names live in the tool input, not the results: calls[i].agent maps
+    // to results[i] by order. Bounded identifiers only, never prompt content.
+    const rawCalls = Array.isArray(args)
+      ? args
+      : (args as { calls?: unknown } | undefined)?.calls;
+    const calls = Array.isArray(rawCalls)
+      ? (rawCalls as Array<{ agent?: unknown }>)
+      : [];
+    const callAgent = (index: number): string | undefined => {
+      const agent = calls[index]?.agent;
+      return typeof agent === 'string' && agent.trim() ? agent.trim() : undefined;
+    };
 
     let changed = false;
     const expected = new Set<string>();
     results.forEach((result, index) => {
-      const agent = result.agent?.trim() || undefined;
+      const agent = result.agent?.trim() || callAgent(index);
       if (!result.active) return;
-      const childId = `${toolCallId}:${agent ?? index}`;
+      const childId = `${toolCallId}:${index}`;
       expected.add(childId);
       const existing = this.spans.get(childId);
       if (existing && existing.endedAt === undefined) {
