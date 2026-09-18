@@ -238,8 +238,11 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - [x] Tests: nesting, settle-collapse, and count parity with the retired tracker.
   - Store unit tests plus deck elastic-row tests; harness counter assertions pass
     unchanged (count parity preserved: containers do not count as runs).
-- [ ] Human validation: Phase B scenario S6 live with two subagents.
-  - Evidence: pending (batch validation with Task 5).
+- [x] Human validation: Phase B scenario S6 live with two subagents.
+  - Evidence: Canonical `VALID` at 2026-09-18T16:43:30Z. Original response:
+    "Sub agent Works!" and "For this S6 it's an VALID". Elastic rows rendered
+    with agent names and per-agent inferred stages (scout → understanding,
+    verifier → assuring) and collapsed on settle; root span ran declared.
 - **Implementation started at:** 2026-09-18T14:50:00Z.
 - **Work completed at:** 2026-09-18T15:05:00Z (~15m; range 45–90m — the
   partials parser and event seams already existed from Tasks 1–3).
