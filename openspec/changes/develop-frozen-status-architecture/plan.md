@@ -14,7 +14,8 @@
 - **Execution outline:** Build the ledger and reducer, rewire producers behind
   byte-identical output, switch renderers to the snapshot while deleting the
   priority waterfalls, grow runs into a span tree, then hook up declared stages and
-  retire the compatibility channels.
+  retire the compatibility channels. Legacy package names retire with the slices
+  that own them (`status` in Task 1, `header` in Task 3).
 - **Estimate basis:** The frozen contract (`docs/status-architecture.md`, commit
   `8733686`) fixes the data model; module sizes are known from inspection
   (galactica-status `index.ts` 1460 lines, `publisher.ts` 1251, deck 608); no
@@ -36,8 +37,9 @@
 
 ## Scope
 
-- **In:** `packages/galactica-status` (ledger, reducer, producer rewiring, publisher
-  retirement), `packages/galactica-context-header` render paths, footer widget feeds,
+- **In:** `packages/status` (renamed from `galactica-status` in Task 1: ledger,
+  reducer, producer rewiring, publisher retirement), `packages/header` (renamed
+  from `galactica-context-header` in Task 3) render paths, footer widget feeds,
   terminal title derivation, and their tests.
 - **Out:** layout or element relocation (explicitly deferred by the contract); the
   Ramona `AGENTS.md` stage-emission duty itself (separate galactica slice with its

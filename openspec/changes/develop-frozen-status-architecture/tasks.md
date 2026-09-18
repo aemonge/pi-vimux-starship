@@ -2,10 +2,11 @@
 
 Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 
-## Task 1 — Event ledger and reducer
+## Task 1 — Event ledger, reducer, and status package rename
 
-- **Value:** Cockpit state has one writer and one shape; unit tests prove the fold
-  against the frozen contract before anything live changes.
+- **Value:** Cockpit state has one writer and one shape, born in a legacy-free
+  package home; unit tests prove the fold against the frozen contract before
+  anything live changes.
 - **Method source:** predefined
 - **Method name:** Happy-path
 - **Method contract:** Smallest complete ledger-plus-reducer core with no producer
@@ -13,12 +14,18 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Execution source:** native-direct
 - **Execution name:** Sequential strangler slices
 - **Estimate basis:** Contract fixes the model; new module with no live coupling.
-- **Estimated implementation:** 45–90 minutes; Human wait excluded.
+- **Estimated implementation:** 75–150 minutes including the package rename;
+  Human wait excluded.
 - **Estimate confidence:** Low — no comparable accepted Plan.
 - **Human-wait estimate:** Separate and unbounded after deterministic checks.
 - **Refinement trigger:** Split if event typing exceeds roughly fifteen bounded
-  types or the reducer crosses 300 lines.
+  types, the reducer crosses 300 lines, or the rename surfaces unexpected reference
+  depth.
 
+- [ ] Rename `packages/galactica-status` to `packages/status`, propagating the root
+      manifest path, package name, validation tooling, and documentation mentions;
+      persisted session-entry strings and event channel names stay unchanged for
+      compatibility.
 - [ ] Create `src/ledger.ts`: bounded append-only event types covering selection,
       run, progress, diagnostics, orchestration, and taskflow producers.
 - [ ] Create `src/reducer.ts`: fold events into `CockpitSnapshot` with the single
@@ -63,7 +70,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 ## Task 3 — Renderers consume the snapshot; waterfalls die
 
 - **Value:** Exhibits 1–3 and 5 die; the frozen grammar becomes visible (Phase B
-  S1–S5) with silence rules enforced in render tests.
+  S1–S5) with silence rules enforced in render tests, in a legacy-free header
+  package home.
 - **Method source:** predefined
 - **Method name:** Happy-path
 - **Method contract:** Switch deck, footer, and title rendering to the snapshot and
@@ -72,12 +80,15 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Execution name:** Sequential strangler slices
 - **Estimate basis:** Deck and publisher waterfalls are localized from inspection
   (`deck.ts:215`, `deck.ts:256-257`, `fallbackTitles` in `index.ts`).
-- **Estimated implementation:** 60–120 minutes; Human wait excluded.
+- **Estimated implementation:** 75–150 minutes including the package rename;
+  Human wait excluded.
 - **Estimate confidence:** Low-medium — seams located, render tests to rewrite.
 - **Human-wait estimate:** Separate and unbounded; live Phase B pass required.
 - **Refinement trigger:** Split renderers by surface if the three surfaces cannot
   land in one independently validatable slice.
 
+- [ ] Rename `packages/galactica-context-header` to `packages/header`, propagating
+      manifests, tooling, and documentation mentions.
 - [ ] Deck, footer widgets, and terminal title read the snapshot only; delete
       `fallbackTitles` and duplicate priority chains in `publisher.ts` and `deck.ts`.
 - [ ] Remove placeholder em-dash rendering (`deck.ts:215`, `deck.ts:256-257`, and
