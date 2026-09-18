@@ -573,7 +573,7 @@ function selectedOpenSpecTitles(
     : [normalizeInline(state.changeId), normalizeInline(focusedTaskId ?? 'no focus')];
 }
 
-function headerSelection(options: {
+export function headerSelection(options: {
   openSpec?: OpenSpecState | null;
   focusedTaskId?: string;
   goal?: GoalHeaderState | null;

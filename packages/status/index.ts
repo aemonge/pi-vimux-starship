@@ -69,7 +69,15 @@ import {
   ResourceBag,
   type RefreshOutcome,
 } from './src/state.ts';
+import { boundedPhase, EventLedger, type LedgerEvent } from './src/ledger.ts';
+import {
+  applyEvent,
+  emptyFacts,
+  snapshotFromFacts,
+  type ReducerFacts,
+} from './src/reducer.ts';
 import type {
+  CockpitSnapshot,
   CommandRunner,
   DiagnosticsState,
   LoadedConfig,
@@ -198,6 +206,9 @@ class GalacticaStatusRuntime {
   private readonly statusHealth = new Map<Domain, StatusHealthCondition>();
   private lastStatusHealthSignature = '';
   private readonly store: AtomicStatusStore;
+  private readonly statusLedger = new EventLedger();
+  private cockpitFacts: ReducerFacts = emptyFacts();
+  private cockpitVersion = 0;
   private readonly pi: ExtensionAPI;
   private readonly ctx: SessionContext;
   private readonly publisher: FancyFooterPublisher;
@@ -234,6 +245,11 @@ class GalacticaStatusRuntime {
       projectRoot: ctx.cwd,
       configPath: '',
     });
+    const seededAt = Date.now();
+    this.recordEvent({ type: 'focus/openspec', at: seededAt, focus });
+    this.recordEvent({ type: 'focus/work', at: seededAt, work: workFocus });
+    this.recordEvent({ type: 'focus/subject', at: seededAt, subject });
+    if (goal) this.recordEvent({ type: 'focus/goal', at: seededAt, goal });
   }
 
   private runner: CommandRunner = async (command, args, options) => {
@@ -504,6 +520,39 @@ class GalacticaStatusRuntime {
       diagnostics,
       orchestration,
     });
+    const refreshed = this.store.get();
+    const hierarchy = refreshed.openspec?.hierarchy;
+    const recordedAt = Date.now();
+    this.recordEvent({
+      type: 'progress/refresh',
+      at: recordedAt,
+      progress: hierarchy
+        ? {
+            tasks: hierarchy.tasks,
+            steps: {
+              completed: Object.values(hierarchy.stepsByTask).reduce(
+                (sum, entry) => sum + entry.completed,
+                0,
+              ),
+              total: Object.values(hierarchy.stepsByTask).reduce(
+                (sum, entry) => sum + entry.total,
+                0,
+              ),
+            },
+            freshAt: recordedAt,
+          }
+        : null,
+    });
+    this.recordEvent({
+      type: 'diagnostics/refresh',
+      at: recordedAt,
+      state: refreshed.diagnostics,
+    });
+    this.recordEvent({
+      type: 'orchestration/refresh',
+      at: recordedAt,
+      state: refreshed.orchestration,
+    });
     this.configureWatchers();
     this.publish();
   }
@@ -566,22 +615,26 @@ class GalacticaStatusRuntime {
     if (this.stopped) return;
     const snapshot = this.store.get();
     const goal = this.projectedGoal();
+    // Builders read focus facts through the snapshot layer (recordEvent stores
+    // the same object references), so output stays byte-identical while the
+    // ledger becomes the feeding seam.
+    const focus = this.cockpitFacts.openSpec;
+    const work = this.cockpitFacts.work;
+    const subject = this.cockpitFacts.subject;
     const focusedOpenSpec =
-      this.focus.mode === 'task' && snapshot.openspec?.changeId === this.focus.change
+      focus.mode === 'task' && snapshot.openspec?.changeId === focus.change
         ? snapshot.openspec
         : null;
     const visibleWorkFocus =
-      this.focus.mode === 'task' ||
-      goal ||
-      (this.workFocus.state === 'clear' && this.openSpecFeedback)
+      focus.mode === 'task' || goal || (work.state === 'clear' && this.openSpecFeedback)
         ? undefined
-        : this.workFocus;
+        : work;
     const widgets = buildWidgetSnapshots(
       { ...snapshot, openspec: focusedOpenSpec },
       {
-        focusedTaskId: this.focus.mode === 'task' ? this.focus.taskId : undefined,
+        focusedTaskId: focus.mode === 'task' ? focus.taskId : undefined,
         openSpecFeedback:
-          this.focus.mode === 'none' && !visibleWorkFocus
+          focus.mode === 'none' && !visibleWorkFocus
             ? this.openSpecFeedback
             : undefined,
         openSpecOverview: this.openSpecOverview,
@@ -605,9 +658,9 @@ class GalacticaStatusRuntime {
       GALACTICA_HEADER_CHANNEL,
       buildHeaderStatusEvent(widgets, {
         openSpec: focusedOpenSpec,
-        focusedTaskId: this.focus.mode === 'task' ? this.focus.taskId : undefined,
+        focusedTaskId: focus.mode === 'task' ? focus.taskId : undefined,
         workFocus: visibleWorkFocus,
-        subject: this.subject,
+        subject,
         orchestration: snapshot.orchestration,
         lifecycle: this.liveLifecycle,
         activity: this.liveActivity,
@@ -623,19 +676,21 @@ class GalacticaStatusRuntime {
   }
 
   private updateTitle(snapshot = this.store.get()): void {
-    const focusedTaskId = this.focus.mode === 'task' ? this.focus.taskId : undefined;
+    const facts = this.cockpitFacts;
+    const focusedTaskId =
+      facts.openSpec.mode === 'task' ? facts.openSpec.taskId : undefined;
     const taskTitle =
-      this.focus.mode === 'task' &&
-      snapshot.openspec?.changeId === this.focus.change &&
+      facts.openSpec.mode === 'task' &&
+      snapshot.openspec?.changeId === facts.openSpec.change &&
       !snapshot.openspec.meta.stale
         ? (snapshot.openspec.allTasks ?? snapshot.openspec.pendingTasks).find(
             (task) => task.id === focusedTaskId,
           )?.title
         : undefined;
     const title = formatActiveWorkTitle({
-      focus: this.focus,
-      workFocus: this.workFocus,
-      subject: this.subject,
+      focus: facts.openSpec,
+      workFocus: facts.work,
+      subject: facts.subject,
       goal: this.projectedGoal(),
       ...(taskTitle ? { taskTitle } : {}),
       ...(this.sessionName ? { sessionName: this.sessionName } : {}),
@@ -645,6 +700,16 @@ class GalacticaStatusRuntime {
     if (title === this.lastTitle) return;
     this.lastTitle = title;
     this.ctx.ui.setTitle(title);
+  }
+
+  private recordEvent(event: LedgerEvent): void {
+    this.cockpitFacts = applyEvent(this.cockpitFacts, event);
+    this.cockpitVersion += 1;
+    this.statusLedger.append(event);
+  }
+
+  cockpitSnapshot(): CockpitSnapshot {
+    return snapshotFromFacts(this.cockpitFacts, this.cockpitVersion);
   }
 
   currentFocus(): OpenSpecFocus {
@@ -685,6 +750,7 @@ class GalacticaStatusRuntime {
   setGoal(goal: GoalHeaderState | null): void {
     if (sameGoalHeaderState(this.goal, goal)) return;
     this.goal = goal;
+    this.recordEvent({ type: 'focus/goal', at: Date.now(), goal });
     this.goalProjectionSuppressed = false;
     if (goal) {
       this.ensureGoalPolling();
@@ -725,6 +791,7 @@ class GalacticaStatusRuntime {
   setFocus(focus: OpenSpecFocus): void {
     if (sameOpenSpecFocus(this.focus, focus)) return;
     this.focus = focus;
+    this.recordEvent({ type: 'focus/openspec', at: Date.now(), focus });
     this.store.clearOpenSpec();
     this.publish();
     this.launch(this.refresh(false), 'openspec');
@@ -733,6 +800,7 @@ class GalacticaStatusRuntime {
   setWorkFocus(focus: SessionWorkFocus): void {
     if (sameSessionWorkFocus(this.workFocus, focus)) return;
     this.workFocus = focus;
+    this.recordEvent({ type: 'focus/work', at: Date.now(), work: focus });
     if (focus.state === 'validation') {
       this.liveLifecycle = 'waiting';
       this.liveActivity = { kind: 'awaiting-validation' };
@@ -746,6 +814,7 @@ class GalacticaStatusRuntime {
   setSubject(subject: SessionSubject): void {
     if (sameSessionSubject(this.subject, subject)) return;
     this.subject = subject;
+    this.recordEvent({ type: 'focus/subject', at: Date.now(), subject });
     this.publish();
   }
 
@@ -797,7 +866,21 @@ class GalacticaStatusRuntime {
   }
 
   beginRuntimeRun(toolCallId: string, toolName: string): void {
-    if (this.runtimeRuns.begin(toolCallId, toolName)) this.publish();
+    if (!this.runtimeRuns.begin(toolCallId, toolName)) return;
+    const at = Date.now();
+    this.recordEvent({
+      type: 'run/start',
+      at,
+      span: {
+        id: toolCallId,
+        kind: toolName === 'bash' ? 'bash' : 'subagent',
+        parent: null,
+        stage: 'working',
+        stageDeclared: false,
+        since: at,
+      },
+    });
+    this.publish();
   }
 
   updateRuntimeRun(toolCallId: string, partialResult: unknown): void {
@@ -805,12 +888,21 @@ class GalacticaStatusRuntime {
   }
 
   finishRuntimeRun(toolCallId: string): void {
-    if (this.runtimeRuns.finish(toolCallId)) this.publish();
+    if (!this.runtimeRuns.finish(toolCallId)) return;
+    this.recordEvent({ type: 'run/end', at: Date.now(), id: toolCallId });
+    this.publish();
   }
 
   setTaskflowPhase(phase: string | undefined): void {
     if (this.liveTaskflowPhase === phase) return;
     this.liveTaskflowPhase = phase;
+    if (phase) {
+      this.recordEvent({
+        type: 'taskflow/phase',
+        at: Date.now(),
+        phase: boundedPhase(phase),
+      });
+    }
     if (phase) {
       this.liveLifecycle = taskflowPhaseHeaderLifecycle(phase);
       this.liveActivity = undefined;

@@ -115,16 +115,40 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Refinement trigger:** Split by producer domain if parity diverges or the
   midpoint exceeds 90 minutes.
 
-- [ ] Route `work_focus`, `openspec_focus`, `subject` tool actions, Pi lifecycle
+- [x] Route `work_focus`, `openspec_focus`, `subject` tool actions, Pi lifecycle
       events, goal sync, collectors, and taskflow updates through ledger appends.
-- [ ] Feed the publisher's widget, header, and title builders from the snapshot
+  - Wired via runtime seams: constructor seeds restored facts; `setFocus`,
+    `setWorkFocus`, `setSubject`, `setGoal`, refresh completion (progress,
+    diagnostics, orchestration), `beginRuntimeRun`/`finishRuntimeRun` (bash and
+    subagent spans), and `setTaskflowPhase` (bounded label).
+- [x] Feed the publisher's widget, header, and title builders from the snapshot
       instead of runtime fields.
-- [ ] Golden parity tests: snapshot-driven output equals previous output across
+  - `publish()` and `updateTitle()` now read focus facts through
+    `cockpitFacts` (object identity with recorded events → byte-identical by
+    construction).
+- [x] Golden parity tests: snapshot-driven output equals previous output across
       recorded sequences covering focus, goal, work, subject, taskflow, and
       collector inputs.
-- [ ] Full component suite plus `check:baseline` unchanged manifest.
+  - `test/parity.test.ts`: resolver slot equals the legacy `headerSelection`
+    waterfall across six golden matrices (source vocabulary translated
+    `openspec` → `openspec-task`); incremental recordEvent fold equals full
+    ledger replay. `headerSelection` exported for test access (no behavior
+    change).
+- [x] Full component suite plus `check:baseline` unchanged manifest.
+  - 141/141 package tests; full `npm run check` exit 0; baseline 100 files.
 - [ ] Human validation: one live session shows an unchanged cockpit.
-  - Evidence: pending.
+  - Evidence: pending (batch validation with Tasks 3–5).
+- **Implementation confirmed at:** 2026-09-18T13:22Z (consolidated brief).
+- **Implementation started at:** 2026-09-18T13:23:00Z.
+- **Work completed at:** 2026-09-18T13:55:00Z.
+- **Assurance started at:** 2026-09-18T13:45:00Z.
+- **Assurance completed at:** 2026-09-18T13:55:00Z.
+- **Ready for validation at:** 2026-09-18T13:55:00Z.
+- **Actual implementation:** ~32m including per-slice checks; Human wait
+  excluded. Within the 60–120m range (under: producer seams were already
+  enumerated during preflight).
+- **Final Task-boundary commit (after canonical VALID):**
+  `feat(status-core): route all producers through the event ledger`.
 
 ## Task 3 — Renderers consume the snapshot; waterfalls die
 
