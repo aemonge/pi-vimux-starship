@@ -1,6 +1,6 @@
 import type { SessionSubject, SessionWorkFocus } from './active-work.ts';
 import type { GoalHeaderState } from './goal.ts';
-import type { ActiveRuntimeRuns } from './runtime-runs.ts';
+import type { ActiveRunSpanView, ActiveRuntimeRuns } from './runtime-runs.ts';
 import type {
   DiagnosticsState,
   FancyFooterMessage,
@@ -544,6 +544,7 @@ export type HeaderStatusEvent = {
   backgroundActivity: boolean;
   approvalRequired: boolean;
   blocked: boolean;
+  activeRunSpans?: ActiveRunSpanView[];
   counters: {
     agents: { active: number; total: number };
     activeRuns?: ActiveRuntimeRuns;
@@ -630,7 +631,7 @@ function headerSuggestion(options: {
   return null;
 }
 
-function classifyHeaderActivity(sourceText: string): HeaderActivity | undefined {
+export function classifyHeaderActivity(sourceText: string): HeaderActivity | undefined {
   const source = normalizeInline(sourceText).toLowerCase().replaceAll('-', ' ');
   if (!source) return undefined;
   if (/\bskill\s+proposal\b/u.test(source)) return { kind: 'skill-proposal' };
@@ -1012,6 +1013,7 @@ export function buildHeaderStatusEvent(
     goal?: GoalHeaderState | null;
     goalAutomaticTurnLimit?: number;
     activeRuns?: ActiveRuntimeRuns;
+    activeRunSpans?: ActiveRunSpanView[];
   } = {},
 ): HeaderStatusEvent {
   const diagnosticsWidget = widgets.find(
@@ -1132,6 +1134,7 @@ export function buildHeaderStatusEvent(
 
   return {
     protocol: 1,
+    ...(options.activeRunSpans ? { activeRunSpans: options.activeRunSpans } : {}),
     activity: activity ?? null,
     selection,
     suggestion,

@@ -62,7 +62,7 @@ import {
   taskflowPhaseHeaderLifecycle,
   taskflowUpdateHeaderPhase,
 } from './src/publisher.ts';
-import { RuntimeRunTracker } from './src/runtime-runs.ts';
+import { RuntimeSpanStore } from './src/runtime-runs.ts';
 import {
   AtomicStatusStore,
   createDebouncer,
@@ -202,7 +202,9 @@ class GalacticaStatusRuntime {
   private liveTaskflowPhase: string | undefined;
   private readonly directToolActivities = new Map<string, HeaderActivity>();
   private directToolFailed = false;
-  private readonly runtimeRuns = new RuntimeRunTracker();
+  private readonly runtimeSpans = new RuntimeSpanStore();
+  private currentTurnId: string | null = null;
+  private turnCounter = 0;
   private readonly statusHealth = new Map<Domain, StatusHealthCondition>();
   private lastStatusHealthSignature = '';
   private readonly store: AtomicStatusStore;
@@ -657,7 +659,11 @@ class GalacticaStatusRuntime {
         taskflowPhase: this.liveTaskflowPhase,
         goal,
         goalAutomaticTurnLimit: this.goalAutomaticTurnLimit,
-        activeRuns: this.runtimeRuns.snapshot(),
+        activeRuns: (() => {
+          const runs = this.runtimeSpans.snapshot();
+          return { children: runs.children, subagents: runs.subagents };
+        })(),
+        activeRunSpans: this.runtimeSpans.snapshot().spans ?? [],
       }),
     );
     this.updateTitle(snapshot);
@@ -762,6 +768,10 @@ class GalacticaStatusRuntime {
   beginTurn(prompt: unknown): void {
     this.directToolActivities.clear();
     this.directToolFailed = false;
+    this.turnCounter += 1;
+    this.currentTurnId = `turn-${this.turnCounter}`;
+    this.runtimeSpans.beginRoot(this.currentTurnId, 'understanding');
+    this.syncSpanEvents();
     this.syncGoalFromSession();
     const suppressStoppedGoal = Boolean(
       this.goal && this.goal.status !== 'active' && !isGoalOwnedPrompt(prompt),
@@ -855,30 +865,45 @@ class GalacticaStatusRuntime {
   }
 
   beginRuntimeRun(toolCallId: string, toolName: string): void {
-    if (!this.runtimeRuns.begin(toolCallId, toolName)) return;
-    const at = Date.now();
-    this.recordEvent({
-      type: 'run/start',
-      at,
-      span: {
-        id: toolCallId,
-        kind: toolName === 'bash' ? 'bash' : 'subagent',
-        parent: null,
-        stage: 'working',
-        stageDeclared: false,
-        since: at,
-      },
-    });
+    const kind = toolName === 'bash' ? 'bash' : 'subagent';
+    if (!this.runtimeSpans.begin(toolCallId, kind, this.currentTurnId)) return;
+    this.syncSpanEvents();
     this.publish();
   }
 
+  private syncSpanEvents(): void {
+    const changes = this.runtimeSpans.drainChanges();
+    const at = Date.now();
+    for (const started of changes.started) {
+      this.recordEvent({
+        type: 'run/start',
+        at,
+        span: {
+          id: started.id,
+          kind: started.kind,
+          parent: started.parent,
+          ...(started.agent ? { agent: started.agent } : {}),
+          ...(started.label ? { label: started.label } : {}),
+          stage: started.stage,
+          stageDeclared: false,
+          since: at,
+        },
+      });
+    }
+    for (const ended of changes.ended) {
+      this.recordEvent({ type: 'run/end', at, id: ended });
+    }
+  }
+
   updateRuntimeRun(toolCallId: string, partialResult: unknown): void {
-    if (this.runtimeRuns.update(toolCallId, partialResult)) this.publish();
+    if (!this.runtimeSpans.update(toolCallId, partialResult)) return;
+    this.syncSpanEvents();
+    this.publish();
   }
 
   finishRuntimeRun(toolCallId: string): void {
-    if (!this.runtimeRuns.finish(toolCallId)) return;
-    this.recordEvent({ type: 'run/end', at: Date.now(), id: toolCallId });
+    if (!this.runtimeSpans.finish(toolCallId)) return;
+    this.syncSpanEvents();
     this.publish();
   }
 
@@ -912,6 +937,11 @@ class GalacticaStatusRuntime {
   settle(): void {
     this.directToolActivities.clear();
     this.directToolFailed = false;
+    if (this.currentTurnId) {
+      this.runtimeSpans.endRoot(this.currentTurnId);
+      this.currentTurnId = null;
+      this.syncSpanEvents();
+    }
     if (this.liveLifecycle === 'aborted') {
       this.publish();
       return;

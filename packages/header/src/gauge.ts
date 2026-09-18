@@ -119,6 +119,15 @@ export type HeaderSnapshot = {
   backgroundActivity: boolean;
   approvalRequired: boolean;
   blocked: boolean;
+  activeRunSpans?: Array<{
+    id: string;
+    kind: 'agent' | 'subagent' | 'bash';
+    parent: string | null;
+    agent?: string;
+    label?: string;
+    stage: string;
+    elapsedMs: number;
+  }>;
   counters: {
     agents: { active: number; total: number };
     activeRuns?: { children: number; subagents: number };

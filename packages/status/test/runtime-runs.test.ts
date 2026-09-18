@@ -1,84 +1,127 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { RuntimeSpanStore } from '../src/runtime-runs.ts';
 
-import { RuntimeRunTracker } from '../src/runtime-runs.ts';
+function subagentPartial(agents: Array<{ agent?: string; active: boolean }>): unknown {
+  return {
+    details: {
+      kind: 'pi-subagent',
+      results: agents.map((entry, index) => ({
+        agent: entry.agent ?? `agent-${index}`,
+        exitCode: -1,
+        sawAgentStart: true,
+        sawAgentSettled: !entry.active,
+      })),
+    },
+  };
+}
 
-test('counts Bash only as a child run for its exact tool lifecycle', () => {
-  const tracker = new RuntimeRunTracker();
+test('root span opens per turn and children nest under it', () => {
+  const store = new RuntimeSpanStore();
+  assert.equal(store.beginRoot('turn-1', 'understanding', 1_000), true);
+  assert.equal(store.begin('bash-1', 'bash', 'turn-1', 2_000), true);
+  assert.equal(store.begin('sub-1', 'subagent', 'turn-1', 3_000), true);
 
-  assert.deepEqual(tracker.snapshot(), { children: 0, subagents: 0 });
-  assert.equal(tracker.begin('bash-1', 'bash'), true);
-  assert.deepEqual(tracker.snapshot(), { children: 1, subagents: 0 });
-  assert.equal(tracker.finish('bash-1'), true);
-  assert.deepEqual(tracker.snapshot(), { children: 0, subagents: 0 });
+  const snap = store.snapshot(4_000);
+  // The subagent tool span is a container: only bash counts until agents appear.
+  assert.equal(snap.children, 1);
+  assert.equal(snap.subagents, 0);
+  const bash = snap.spans?.find((span) => span.id === 'bash-1');
+  assert.equal(bash?.parent, 'turn-1');
+  assert.equal(bash?.kind, 'bash');
+  assert.equal(bash?.elapsedMs, 2_000);
 });
 
-test('counts only lifecycle-evidenced active subagents', () => {
-  const tracker = new RuntimeRunTracker();
-  tracker.begin('subagent-1', 'subagent');
+test('partial results map to per-agent child spans with inferred stage', () => {
+  const store = new RuntimeSpanStore();
+  store.beginRoot('turn-1', 'working', 1_000);
+  store.begin('sub-1', 'subagent', 'turn-1', 2_000);
 
   assert.equal(
-    tracker.update('subagent-1', {
-      details: {
-        kind: 'pi-subagent',
-        results: [
-          {
-            exitCode: -1,
-            agent: 'queued-private-name',
-            prompt: 'queued private prompt',
-          },
-          {
-            exitCode: -1,
-            sawAgentStart: true,
-            sawAgentSettled: false,
-            agent: 'running-private-name',
-            prompt: 'running private prompt',
-          },
-          {
-            exitCode: -1,
-            sawAgentStart: true,
-            agent: 'second-running-private-name',
-            prompt: 'second running private prompt',
-          },
-          {
-            exitCode: 0,
-            sawAgentStart: true,
-            sawAgentSettled: true,
-            agent: 'complete-private-name',
-            prompt: 'completed private prompt',
-          },
-        ],
-      },
-    }),
+    store.update(
+      'sub-1',
+      subagentPartial([
+        { agent: 'reviewer', active: true },
+        { agent: 'scout', active: true },
+      ]),
+      3_000,
+    ),
     true,
   );
-  assert.deepEqual(tracker.snapshot(), { children: 2, subagents: 2 });
-
-  assert.equal(
-    tracker.update('subagent-1', {
-      details: {
-        kind: 'pi-subagent',
-        results: [
-          { exitCode: -1 },
-          { exitCode: 0, sawAgentStart: true, sawAgentSettled: true },
-        ],
-      },
-    }),
-    true,
-  );
-  assert.deepEqual(tracker.snapshot(), { children: 0, subagents: 0 });
+  const snap = store.snapshot(4_000);
+  const reviewer = snap.spans?.find((span) => span.agent === 'reviewer');
+  assert.equal(reviewer?.parent, 'sub-1');
+  assert.equal(reviewer?.stage, 'assuring');
+  const scout = snap.spans?.find((span) => span.agent === 'scout');
+  assert.equal(scout?.stage, 'understanding');
+  assert.equal(snap.subagents, 2);
 });
 
-test('ignores malformed and unrelated progress without inventing active work', () => {
-  const tracker = new RuntimeRunTracker();
-  tracker.begin('subagent-1', 'subagent');
+test('settled agents collapse; change queue reports starts and ends', () => {
+  const store = new RuntimeSpanStore();
+  store.beginRoot('turn-1', 'working', 1_000);
+  store.begin('sub-1', 'subagent', 'turn-1', 2_000);
+  store.update(
+    'sub-1',
+    subagentPartial([
+      { agent: 'reviewer', active: true },
+      { agent: 'scout', active: true },
+    ]),
+    3_000,
+  );
+  store.drainChanges();
 
-  assert.equal(tracker.update('subagent-1', { details: { running: 8 } }), false);
   assert.equal(
-    tracker.update('subagent-1', {
-      details: { kind: 'pi-subagent', results: 'private child output' },
-    }),
+    store.update('sub-1', subagentPartial([{ agent: 'reviewer', active: false }])),
+    true,
+  );
+  const changes = store.drainChanges();
+  // Settled reviewer ends explicitly; absent scout ends by omission.
+  assert.deepEqual([...changes.ended].sort(), ['sub-1:reviewer', 'sub-1:scout']);
+  const snap = store.snapshot();
+  assert.equal(
+    snap.spans?.some((span) => span.agent === 'scout'),
     false,
   );
-  assert.deepEqual(tracker.snapshot(), { children: 0, subagents: 0 });
+  assert.equal(
+    snap.spans?.some((span) => span.agent === 'reviewer'),
+    false,
+  );
+  assert.equal(
+    snap.spans?.some((span) => span.id === 'sub-1'),
+    true,
+  );
+});
+
+test('finishing spans and roots ends them exactly once', () => {
+  const store = new RuntimeSpanStore();
+  store.beginRoot('turn-1', 'working', 1_000);
+  store.begin('bash-1', 'bash', 'turn-1', 2_000);
+  assert.equal(store.finish('bash-1', 3_000), true);
+  assert.equal(store.finish('bash-1', 4_000), false);
+  assert.equal(store.endRoot('turn-1', 5_000), true);
+  assert.equal(store.endRoot('turn-1', 6_000), false);
+  const snap = store.snapshot();
+  assert.equal(snap.children, 0);
+  assert.equal(snap.spans?.length, 0);
+});
+
+test('count parity with the retired tracker semantics', () => {
+  const store = new RuntimeSpanStore();
+  store.beginRoot('turn-1', 'working', 1_000);
+  store.begin('bash-1', 'bash', 'turn-1', 2_000);
+  store.begin('sub-1', 'subagent', 'turn-1', 2_000);
+  store.update(
+    'sub-1',
+    subagentPartial([
+      { agent: 'a', active: true },
+      { agent: 'b', active: true },
+      { agent: 'c', active: true },
+    ]),
+    3_000,
+  );
+  const snap = store.snapshot();
+  // children = bash(1) + per-agent(3); the tool span is a container, not a run.
+  assert.equal(snap.children, 4);
+  assert.equal(snap.subagents, 3);
 });

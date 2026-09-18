@@ -273,6 +273,31 @@ function progressLine(state: HeaderDeckState, theme: Theme): string {
   return `${segments[0]} ${minorSeparator(theme, 'dim')} ${segments[1]}`;
 }
 
+function spanElapsed(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1_000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}'${String(seconds).padStart(2, '0')}`;
+}
+
+function spanTreeRows(state: HeaderDeckState, width: number, theme: Theme): string[] {
+  // Frozen contract runs fact: one elastic row per live child run, naming its
+  // agent and stage; the rows collapse the moment the spans settle.
+  if (width < 60) return [];
+  const spans = (state.header?.activeRunSpans ?? []).filter(
+    (span) => span.agent !== undefined || span.kind === 'bash',
+  );
+  return spans.map((span, index) => {
+    const branch = index === spans.length - 1 ? '└' : '├';
+    const who = span.agent ?? span.label ?? span.kind;
+    const left = `  ${branch} ${who} ${span.stage}`;
+    const right = color(theme, 'dim', spanElapsed(span.elapsedMs));
+    const fitted = truncateToWidth(left, Math.max(1, width - 8), '…');
+    const gap = Math.max(1, width - fitted.length - right.length);
+    return `${fitted}${' '.repeat(gap)}${right}`;
+  });
+}
+
 const ACTIVITY_LABELS: Record<HeaderActivity['kind'], string> = {
   understanding: 'interpreting',
   inspection: 'inspecting',
@@ -589,6 +614,7 @@ export function renderHeaderDeck(
     ...focusLines,
     top,
     status,
+    ...spanTreeRows(state, boundedWidth, theme),
     divider,
     ...alignedRows(projectLeft(state, theme), gitRight(state, theme), boundedWidth),
     divider,

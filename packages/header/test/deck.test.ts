@@ -737,3 +737,40 @@ test('weekly-only telemetry paints the calendar tile alone', () => {
   assert.ok(!tail.includes(FLAME_ICON));
   assert.ok(!tail.includes(CLOCK_ICON), 'calendar never carries a countdown');
 });
+
+test('renders elastic span rows naming each live child run', () => {
+  const state = fixture();
+  state.header!.activeRunSpans = [
+    {
+      id: 'sub-1:reviewer',
+      kind: 'subagent',
+      parent: 'sub-1',
+      agent: 'reviewer',
+      stage: 'assuring',
+      elapsedMs: 41_000,
+    },
+    {
+      id: 'bash-2',
+      kind: 'bash',
+      parent: 'turn-1',
+      label: 'pytest',
+      stage: 'working',
+      elapsedMs: 10_000,
+    },
+  ];
+  const lines = renderHeaderDeck(state, 120, plainTheme as never);
+  const reviewer = lines.find((line) => line.includes('reviewer')) ?? '';
+  assert.match(reviewer, /├ reviewer assuring/u);
+  assert.match(reviewer, /00'41/u);
+  const bashRow = lines.find((line) => line.includes('pytest')) ?? '';
+  assert.match(bashRow, /└ .*pytest working/u);
+  assert.match(bashRow, /00'10/u);
+});
+
+test('span rows collapse when no child runs are live', () => {
+  const lines = renderHeaderDeck(fixture(), 120, plainTheme as never);
+  assert.equal(
+    lines.some((line) => line.includes('├') || line.includes('└')),
+    false,
+  );
+});
