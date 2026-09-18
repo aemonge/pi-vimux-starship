@@ -396,7 +396,7 @@ function gitRight(state: HeaderDeckState, theme: Theme): string {
   const branch = color(
     theme,
     state.branch ? 'success' : 'dim',
-    ` ${safeText(state.branch || '(detached)', 80)}`,
+    ` ${safeText(state.branch || '(detached)', 32)}`,
   );
   const entries = [
     [state.git.staged, 'success', ''],
@@ -561,7 +561,6 @@ export function renderHeaderDeck(
 
   const lineColor = 'thinkingHigh';
   const topPrefix = topRailPrefix(state, boundedWidth, theme, lineColor);
-  const nativeStatusCount = state.piStatus?.nativeStatusCount ?? 0;
   const top = `${topPrefix}${color(
     theme,
     lineColor,
@@ -572,9 +571,9 @@ export function renderHeaderDeck(
     ? suppliedModeRail.plain === MODE_ICONS.insert
     : state.mode === 'insert';
   const bottomPrefix = `${color(theme, lineColor, '─ ')}${modeRail.styled}${color(theme, lineColor, ' ')}`;
-  const countText =
-    nativeStatusCount > 0 ? `${color(theme, 'dim', `${nativeStatusCount}`)} ` : '';
-  const bottomSuffix = `${color(theme, lineColor, ' ')}${countText}${color(theme, lineColor, '‹ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' ─')}`;
+  // Relocation phase: the footer count is deleted — diagnostics live on the
+  // top rule; the bottom rail keeps only the mode icon and the anchor echo.
+  const bottomSuffix = `${color(theme, lineColor, ' ')}${color(theme, lineColor, '‹ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' ─')}`;
   const bottom = `${bottomPrefix}${color(
     theme,
     lineColor,
@@ -608,24 +607,46 @@ export function renderHeaderDeck(
   const trailing = [activitySegment, suggestionSegment].filter(
     (segment) => segment !== '',
   );
+  // Relocation phase: the capsule lives top-right on the title band; the
+  // project context merges into the status row; git composes the right side
+  // beside the progress slot.
+  // Narrow frames: the capsule yields before the selection anchor does.
+  const capsule = boundedWidth >= 40 ? runtimeCapsule(state, theme) : '';
+  const focusLines = elevatedSelectionLines(state, boundedWidth, theme);
+  const titleBase = focusLines.length > 0 ? focusLines : [''];
+  const titleRows =
+    capsule || focusLines.length > 0
+      ? [
+          alignedSingleRow(titleBase[0] ?? '', capsule, boundedWidth),
+          ...titleBase.slice(1),
+        ]
+      : [];
+
+  // Narrow frames: the project context yields before the stage does.
+  const projectSegment = boundedWidth >= 100 ? projectLeft(state, theme) : '';
   const statusLeft = [
-    runtimeCapsule(state, theme),
+    projectSegment,
+    ...(lifecycleSegment ? [semanticSeparator(theme)] : []),
     lifecycleSegment,
     ...(lifecycleSegment && trailing.length > 0 ? [semanticSeparator(theme)] : []),
     ...trailing,
   ]
     .filter((segment) => segment !== '')
     .join(' ');
-  const status = alignedSingleRow(statusLeft, progressLine(state, theme), boundedWidth);
-  const focusLines = elevatedSelectionLines(state, boundedWidth, theme);
+  // Narrow frames: git yields before progress; progress before the stage.
+  const statusRight = [
+    ...(boundedWidth >= 60 ? [progressLine(state, theme)] : []),
+    ...(boundedWidth >= 100 ? [truncateToWidth(gitRight(state, theme), 52, '…')] : []),
+  ]
+    .filter((segment) => segment !== '')
+    .join('  ');
+  const status = alignedSingleRow(statusLeft, statusRight, boundedWidth);
 
   const rows = [
-    ...focusLines,
+    ...titleRows,
     top,
     status,
     ...spanTreeRows(state, boundedWidth, theme),
-    divider,
-    ...alignedRows(projectLeft(state, theme), gitRight(state, theme), boundedWidth),
     divider,
     ...alignedRows(
       compactTelemetryLeft(state, theme),
