@@ -175,3 +175,52 @@ export type FancyFooterMessage =
 
 export type PublishOperation =
   { type: 'upsert'; widget: FancyFooterWidget } | { type: 'remove'; id: string };
+
+// --- Frozen status contract: snapshot facts -------------------------------
+
+export type StageValue =
+  | 'understanding'
+  | 'working'
+  | 'assuring'
+  | 'learning'
+  | 'answering'
+  | 'waiting'
+  | 'blocked'
+  | 'listening'
+  | 'aborted';
+
+export type SelectionState =
+  | { kind: 'openspec-task'; change: string; task: string }
+  | {
+      kind: 'goal';
+      status: 'active' | 'blocked' | 'stopped' | 'complete';
+      waiting: boolean;
+    }
+  | { kind: 'session-work'; intent: string; phase: 'active' | 'validation' }
+  | { kind: 'subject'; title: string }
+  | { kind: 'none' };
+
+export type RunSpan = {
+  id: string;
+  kind: 'agent' | 'subagent' | 'bash';
+  parent: string | null;
+  label?: string;
+  agent?: string;
+  stage: StageValue;
+  stageDeclared: boolean;
+  since: number;
+  endedAt?: number;
+};
+
+export type ProgressFact = {
+  tasks: { completed: number; total: number };
+  steps: { completed: number; total: number };
+  freshAt: number;
+};
+
+export type CockpitSnapshot = {
+  version: number;
+  selection: SelectionState;
+  runs: RunSpan[];
+  progress: ProgressFact | null;
+};

@@ -34,7 +34,12 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     `scripts/check-package.mjs`, `src/index.ts`, `AGENTS.md`, `docs/handoff.md`,
     `docs/source-inventory.md`, `baseline/source.sha256`.
   - Subject: `step(status-core): rename galactica-status to legacy-free home`.
-- [ ] Create `src/ledger.ts`: bounded append-only event types covering selection,
+- [x] Create `src/ledger.ts`: bounded append-only event types covering selection,
+      run, progress, diagnostics, orchestration, and taskflow.
+  - Started 2026-09-18T13:03:00Z; completed 2026-09-18T13:05:10Z; elapsed ~2m.
+  - Check: `tsc --noEmit` green with new snapshot facts in `src/types.ts`.
+  - Paths: `packages/status/src/ledger.ts`, `packages/status/src/types.ts`.
+  - Subject: `step(status-core): add append-only event ledger and snapshot types`.
       run, progress, diagnostics, orchestration, and taskflow producers.
 - [ ] Create `src/reducer.ts`: fold events into `CockpitSnapshot` with the single
       selection resolver (`openspec-task > goal > session-work > subject > none`),
