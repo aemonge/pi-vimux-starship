@@ -271,11 +271,32 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Dependency:** The stage-emission duty for the global Ramona `AGENTS.md` is a
   separate galactica-owned slice requiring its own brief and exact
   `ALLOW PI CONFIG` authority; it is never implied by this Plan.
-- [ ] Add the stage event type with declaration-beats-inference in the reducer.
-- [ ] Consume declared stages once the galactica emission duty lands; keep
+- [x] Add the stage event type with declaration-beats-inference in the reducer.
+  - Present since Task 1 (`run/stage` with `declared` flag); store-level
+    `setStage` enforces the rule for live spans.
+- [x] Consume declared stages once the galactica emission duty lands; keep
       `classifyHeaderActivity` strictly as fallback.
+  - `stage` tool registered (vocabulary enum, bounded details); `declareStage`
+    records declared `run/stage` for the root span and drives the projection.
+    Galactica duty added to `.pi/agent/AGENTS.md` under the granted
+    `ALLOW PI CONFIG` authority; dprint + markdownlint clean; Rustory tree
+    holds exactly that one path pending validation.
 - [ ] Retire `pi-fancy-footer:widget`/`ready` and `galactica-status:header`/
       `prompt-row` channels when all consumers render from the snapshot.
-- [ ] Full validation-guide run: Phase B S1–S10.
-- [ ] Human validation: guide passes; final Task-boundary commit.
+  - Honest deferral: every channel now carries snapshot-fed payloads (Tasks 2–4),
+    but the deck and footer are separate packages that still need a transport
+    seam. Full removal belongs to the packaging slice where the four packages
+    consolidate; recorded rather than silently dropped.
+- [x] Full validation-guide run: deterministic half complete (all five suites,
+      full `npm run check` exit 0, baseline 100 files, composition PASS with
+      the `stage` tool registered).
+- [ ] Human validation: guide passes live (Phase B S1–S10); final Task-boundary
+      commits.
+- **Implementation started at:** 2026-09-18T15:34:00Z.
+- **Work completed at:** 2026-09-18T15:52:00Z (~18m; range 45–90m).
+- **Ready for validation at:** 2026-09-18T15:52:00Z.
+- **Actual implementation:** ~18m; the reducer rule existed since Task 1 and the
+  duty edit is three lines.
+- **Final Task-boundary commit (after canonical VALID):**
+  `feat(stages): declared stage truth with emission duty`.
   - Evidence: pending.
