@@ -224,15 +224,28 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Refinement trigger:** Split rendering from the store if partials prove too
       sparse for per-agent identity.
 
-- [ ] Replace `RuntimeRunTracker` with a span store (`id`, `kind`, `parent`,
+- [x] Replace `RuntimeRunTracker` with a span store (`id`, `kind`, `parent`,
       `label`, `agent`, `stage`, `since`, `endedAt`).
-- [ ] Map subagent partials to per-agent spans with inferred-stage fallback; bash
+  - `RuntimeSpanStore`: root turn spans, bash leaves, subagent containers with
+    per-agent child spans from partials; inferred stage from agent name;
+    cascade end; change queue drained into ledger events.
+- [x] Map subagent partials to per-agent spans with inferred-stage fallback; bash
       children as leaf spans.
-- [ ] Render elastic tree rows through `galactica-status:header` and footer widget
+- [x] Render elastic tree rows through `galactica-status:header` and footer widget
       channels.
-- [ ] Tests: nesting, settle-collapse, and count parity with the retired tracker.
+  - `activeRunSpans` on the header event; deck renders `├`/`└` rows naming agent,
+    stage, elapsed; collapse below 60 columns and on settle.
+- [x] Tests: nesting, settle-collapse, and count parity with the retired tracker.
+  - Store unit tests plus deck elastic-row tests; harness counter assertions pass
+    unchanged (count parity preserved: containers do not count as runs).
 - [ ] Human validation: Phase B scenario S6 live with two subagents.
-  - Evidence: pending.
+  - Evidence: pending (batch validation with Task 5).
+- **Implementation started at:** 2026-09-18T14:50:00Z.
+- **Work completed at:** 2026-09-18T15:05:00Z (~15m; range 45–90m — the
+  partials parser and event seams already existed from Tasks 1–3).
+- **Ready for validation at:** 2026-09-18T15:05:00Z.
+- **Final Task-boundary commit (after canonical VALID):**
+  `feat(spans): per-agent run spans with elastic tree rows`.
 
 ## Task 5 — Declared stages and channel retirement
 
