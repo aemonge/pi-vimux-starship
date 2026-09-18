@@ -422,8 +422,11 @@ function latestHeader(harness: RuntimeHarness): Record<string, unknown> | undefi
   return undefined;
 }
 
-function latestHeaderWork(harness: RuntimeHarness): unknown {
-  return latestHeader(harness)?.work;
+function latestHeaderWork(
+  harness: RuntimeHarness,
+): { lifecycle?: string; titles?: string[] } | null | undefined {
+  return latestHeader(harness)?.work as
+    { lifecycle?: string; titles?: string[] } | null | undefined;
 }
 
 function openSpecFooterText(message: unknown): string | undefined {
@@ -1240,7 +1243,9 @@ test('unfocused direct tools publish an activity-only header bridge', async () =
     assert.doesNotMatch(JSON.stringify(latestHeader()), /private|project|README/u);
 
     await harness.emit('agent_settled', {});
-    assert.equal(latestHeader()?.work, null);
+    const settledWork = latestHeader()?.work as
+      { lifecycle?: string } | null | undefined;
+    assert.equal(settledWork?.lifecycle, 'listening');
     assert.equal(latestHeader()?.activity, null);
   } finally {
     await harness.stop();
@@ -1330,7 +1335,7 @@ test('Goal polling notices idle slash-command clear without enabling RPC', async
       1_200,
     );
 
-    assert.equal(latestHeaderWork(harness), null);
+    assert.equal(latestHeaderWork(harness)?.lifecycle, 'listening');
   } finally {
     await harness.stop();
   }
@@ -1374,7 +1379,7 @@ test('stopped Goal title yields automatically on normal Pi input and returns on 
 
     await harness.emit('agent_settled', {});
     await new Promise<void>((resolve) => setImmediate(resolve));
-    assert.equal(latestHeaderWork(harness), null);
+    assert.equal(latestHeaderWork(harness)?.lifecycle, 'listening');
 
     harness.entries.push(
       goalStateEntry('active', { automaticModelTurns: 0, id: 'goal-1' }),

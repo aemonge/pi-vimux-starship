@@ -1108,7 +1108,7 @@ export function buildHeaderStatusEvent(
       color: orchestrationColor(options.orchestration, Date.now()),
       ...projectedActivity,
     };
-  } else if (lifecycle !== 'listening' || activity) {
+  } else {
     work = {
       lifecycle,
       titles:

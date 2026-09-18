@@ -951,6 +951,39 @@ function legacyHeaderSelection(work: HeaderWork | null): HeaderSelection | null 
   return { source: 'legacy', titles, color: work.color };
 }
 
+function parseActiveRunSpans(value: unknown): HeaderSnapshot['activeRunSpans'] | null {
+  if (!Array.isArray(value)) return null;
+  const spans = value
+    .map((rawSpan) => {
+      if (!rawSpan || typeof rawSpan !== 'object' || Array.isArray(rawSpan))
+        return null;
+      const span = rawSpan as Record<string, unknown>;
+      if (typeof span.id !== 'string') return null;
+      if (
+        typeof span.kind !== 'string' ||
+        !['agent', 'subagent', 'bash'].includes(span.kind)
+      ) {
+        return null;
+      }
+      if (typeof span.stage !== 'string') return null;
+      const elapsedMs = typeof span.elapsedMs === 'number' ? span.elapsedMs : 0;
+      return {
+        id: span.id,
+        kind: span.kind as 'agent' | 'subagent' | 'bash',
+        parent: typeof span.parent === 'string' ? span.parent : null,
+        ...(typeof span.agent === 'string' ? { agent: span.agent } : {}),
+        ...(typeof span.label === 'string' ? { label: span.label } : {}),
+        stage: span.stage,
+        elapsedMs,
+      };
+    })
+    .filter(
+      (span): span is NonNullable<HeaderSnapshot['activeRunSpans']>[number] =>
+        span !== null,
+    );
+  return spans.length > 0 ? spans : null;
+}
+
 export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const message = raw as Record<string, unknown>;
@@ -985,10 +1018,7 @@ export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
         : undefined;
       const hasValidExplicitActivityPath =
         hasExplicitActivityPath && activityPath !== undefined;
-      const hasVisibleActivity = hasValidExplicitActivityPath
-        ? activityPath.length > 0
-        : activity !== undefined;
-      if (lifecycle && (titles.length > 0 || hasVisibleActivity)) {
+      if (lifecycle) {
         work = {
           lifecycle,
           titles,
@@ -1076,6 +1106,13 @@ export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
     work,
     diagnostics,
     backgroundActivity: message.backgroundActivity === true,
+    ...(parseActiveRunSpans(message.activeRunSpans)
+      ? {
+          activeRunSpans: parseActiveRunSpans(
+            message.activeRunSpans,
+          ) as HeaderSnapshot['activeRunSpans'],
+        }
+      : {}),
     approvalRequired: message.approvalRequired === true,
     blocked: message.blocked === true,
     counters: {

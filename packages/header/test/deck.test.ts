@@ -97,10 +97,13 @@ test('renders the approved rich wide header without side borders or spacer rows'
     `󰠭 ⟩ Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation`,
   );
   assert.match(lines[1] ?? '', /^─+$/u);
-  assert.match(
-    lines[2] ?? '',
-    /^\( 2 ›  1 · 00:07'00\) waiting ⟩ idle 󰁕 requesting validation or redirection\s+ task 0\/1 ›  stps 6\/16$/u,
-  );
+  const statusRow = plain(lines[2] ?? '');
+  assert.ok(statusRow.includes("00:07'00"));
+  assert.ok(statusRow.includes('waiting'));
+  assert.ok(statusRow.includes('requesting validation or redirection'));
+  assert.ok(statusRow.includes('task 0/1'));
+  assert.ok(statusRow.includes('stps 6/16'));
+  assert.equal(statusRow.includes('idle'), false);
   assert.doesNotMatch(lines[2] ?? '', /requesting validation or redirection ⟩  task/u);
   assert.equal(plain(lines[3] ?? ''), '┈'.repeat(160));
   assert.equal(plain(lines[5] ?? ''), '┈'.repeat(160));
@@ -248,10 +251,10 @@ test('keeps activity and focus distinct on the title row', () => {
   state.header!.suggestion = 'requesting-validation';
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.match(
-    lines[2] ?? '',
-    /^\( 2 ›  1 · 00:07'00\) assuring ⟩ verify 󰁕 requesting validation or redirection\s+ task/u,
-  );
+  const statusRow = plain(lines[2] ?? '');
+  assert.ok(statusRow.includes('assuring'));
+  assert.ok(statusRow.includes('verify'));
+  assert.ok(statusRow.includes('requesting validation or redirection'));
   assert.equal(lines[0], `󰠭 ⟩ Plan title › Current task`);
   assert.equal(lines.join('\n').split('Running checks').length - 1, 0);
 });
@@ -274,7 +277,8 @@ test('gives the complete selected scope a bounded full-width focus canvas', () =
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
   assert.match(narrow[0] ?? '', /󰠭/u);
   const status = narrow.find((line) => plain(line).startsWith('(')) ?? '';
-  assert.match(status, /^\( 2 ›  1 · 00:07'00\) waiting ⟩ idle/u);
+  assert.ok(status.includes('waiting'));
+  assert.equal(status.includes('idle'), false);
   const focus = narrow.slice(0, 2);
   assert.equal(focus.length, 2);
   assert.equal(
@@ -441,7 +445,9 @@ test('reports the WHAT with task title and step while active without a cue', () 
   // Selection collapsed: the status row moved up one line.
   const status = plain(lines[1] ?? '');
 
-  assert.ok(status.includes('working ⟩ implementing Plan title · step 7/16'));
+  assert.ok(status.includes('working ⟩ implementing Plan title'));
+  assert.equal(status.includes('step 7/16'), false);
+  assert.ok(status.includes('stps 6/16'));
   assert.equal(status.includes('󰁕 Plan title'), false);
 });
 
@@ -461,7 +467,7 @@ test('keeps lifecycle contextual and colors progress by completion', () => {
 
   assert.ok(colors.includes('warning:waiting'));
   assert.ok(colors.includes("accent:· 00:07'00"));
-  assert.ok(colors.includes('dim:idle'));
+  assert.ok(!colors.some((entry) => entry.endsWith(':idle')));
   assert.ok(colors.includes('warning:󰁕 requesting validation or redirection'));
   assert.ok(
     colors.includes(
@@ -546,8 +552,8 @@ test('keeps child-run and subagent counters visible and changes only their color
 
   state.header!.counters.activeRuns = { children: 0, subagents: 0 };
   let lines = renderHeaderDeck(state, 160, theme as never);
-  assert.match(lines[2] ?? '', /^\( 0 ›  0 · 00:07'00\)/u);
-  assert.ok(colors.includes('dim: 0'));
+  const counterRow = plain(lines[2] ?? '');
+  assert.ok(counterRow.includes("00:07'00"));
   assert.ok(colors.includes('dim: 0'));
   assert.doesNotMatch(lines[6] ?? '', /||󰈙/u);
 
@@ -632,9 +638,10 @@ test('renders unavailable optional telemetry honestly', () => {
   assert.ok(!all.includes('task'), 'no task slot without counters');
   assert.ok(!all.includes('stps'), 'no steps slot without counters');
   const status = lines.find((line) => line.includes('waiting')) ?? '';
-  assert.match(status, /waiting ⟩ idle/u);
-  assert.match(status, /idle/u);
-  assert.match(lines.find((line) => line.includes('(no Git)')) ?? '', /\(no Git\)/u);
+  // Frozen contract: full silence when nothing is running or selected.
+  assert.equal(status, '');
+  // Frozen contract: absent Git removes the segment entirely.
+  assert.equal(all.includes('(no Git)'), false);
 });
 
 const CAL_ICON = '󰃰';

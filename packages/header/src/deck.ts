@@ -157,21 +157,22 @@ function formatCost(value: number): string {
   return `$${normalized.toFixed(decimals).replace(/\.?0+$/u, '')}`;
 }
 
-function lifecycle(state: HeaderDeckState): { label: string; active: boolean } {
-  const raw =
-    state.header?.work?.lifecycle || (state.elapsedMs === null ? 'waiting' : 'working');
+function lifecycle(state: HeaderDeckState): { label: string; active: boolean } | null {
+  // Frozen contract: the renderer never fabricates a stage.
+  const raw = state.header?.work?.lifecycle;
+  if (!raw) return null;
   const aliases: Record<string, string> = {
-    listening: 'waiting',
     active: 'working',
     implementation: 'working',
     verification: 'assuring',
     'awaiting validation': 'waiting',
     'awaiting input': 'waiting',
   };
-  const label = safeText(aliases[raw.toLowerCase()] ?? raw, 24) || 'waiting';
+  const label = safeText(aliases[raw.toLowerCase()] ?? raw, 24);
+  if (!label) return null;
   return {
     label,
-    active: !['waiting', 'listening'].includes(raw.toLowerCase()),
+    active: !['waiting', 'listening'].includes(label.toLowerCase()),
   };
 }
 
@@ -256,16 +257,14 @@ function progressLine(state: HeaderDeckState, theme: Theme): string {
   // Frozen contract: absent facts remove their slots; placeholder dashes are
   // forbidden. No counters at all collapses the whole progress slot.
   const segments: string[] = [];
-  if (tasks) {
-    const semantic =
-      tasks.total > 0 && tasks.completed >= tasks.total ? 'success' : 'text';
+  if (tasks && tasks.total > 0) {
+    const semantic = tasks.completed >= tasks.total ? 'success' : 'text';
     segments.push(
       color(theme, semantic, ` task ${tasks.completed}/${tasks.total}`, true),
     );
   }
-  if (steps) {
-    const semantic =
-      steps.total > 0 && steps.completed >= steps.total ? 'success' : 'text';
+  if (steps && steps.total > 0) {
+    const semantic = steps.completed >= steps.total ? 'success' : 'text';
     segments.push(color(theme, semantic, ` stps ${steps.completed}/${steps.total}`));
   }
   if (segments.length === 0) return '';
@@ -293,7 +292,7 @@ function spanTreeRows(state: HeaderDeckState, width: number, theme: Theme): stri
     const left = `  ${branch} ${who} ${span.stage}`;
     const right = color(theme, 'dim', spanElapsed(span.elapsedMs));
     const fitted = truncateToWidth(left, Math.max(1, width - 8), '…');
-    const gap = Math.max(1, width - fitted.length - right.length);
+    const gap = Math.max(1, width - visibleWidth(fitted) - visibleWidth(right));
     return `${fitted}${' '.repeat(gap)}${right}`;
   });
 }
@@ -340,13 +339,8 @@ function whatLine(state: HeaderDeckState): string {
     (candidate) => candidate && !PLACEHOLDER_TITLES.has(candidate),
   );
   const pathLabel = safeText(work?.activityPath?.at(-1)?.label ?? '');
-  const steps = state.header?.counters?.steps;
   const base = safeText(title ?? '') || pathLabel;
-  if (!base) return '';
-  if (steps && steps.total > 0) {
-    const current = Math.min(steps.completed + 1, steps.total);
-    return `${base} · step ${current}/${steps.total}`;
-  }
+  // Frozen contract: one home per fact — step counts live in progressLine only.
   return base;
 }
 
@@ -357,7 +351,7 @@ function suggestionLine(
 ): string {
   const suggestion = state.header?.suggestion;
   if (!suggestion) {
-    const what = lifecycle(state).active ? whatLine(state) : '';
+    const what = lifecycle(state)?.active ? whatLine(state) : '';
     return what ? color(theme, 'accent', what) : ''; // frozen contract: silence, no dash
   }
   const semanticColor =
@@ -374,13 +368,20 @@ function suggestionLine(
 function runtimeCapsule(state: HeaderDeckState, theme: Theme): string {
   const children = state.header?.counters.activeRuns?.children ?? 0;
   const subagents = state.header?.counters.activeRuns?.subagents ?? 0;
+  const elapsed = state.elapsedMs;
+  // Frozen contract: idle removes the capsule; null elapsed removes only time.
+  if (children === 0 && subagents === 0 && elapsed == null) return '';
   const childColor = children > 0 ? 'accent' : 'dim';
   const subagentColor = subagents > 0 ? 'accent' : 'dim';
-  const timeColor = state.elapsedMs === null ? 'dim' : 'accent';
+  const timeSegment =
+    elapsed == null
+      ? ''
+      : ` ${color(theme, 'accent', `· ${formatDeckElapsed(elapsed)}`)}`;
   return (
     `${color(theme, 'dim', '(')}${color(theme, childColor, ` ${children}`)} ` +
-    `${minorSeparator(theme, 'dim')} ${color(theme, subagentColor, ` ${subagents}`)} ` +
-    `${color(theme, timeColor, `· ${formatDeckElapsed(state.elapsedMs)}`)}${color(theme, 'dim', ')')}`
+    `${minorSeparator(theme, 'dim')} ${color(theme, subagentColor, ` ${subagents}`)}` +
+    timeSegment +
+    `${color(theme, 'dim', ')')}`
   );
 }
 
@@ -390,11 +391,12 @@ function projectLeft(state: HeaderDeckState, theme: Theme): string {
 }
 
 function gitRight(state: HeaderDeckState, theme: Theme): string {
-  const branchText = state.branch || (state.gitAvailable ? '(detached)' : '(no Git)');
+  // Frozen contract: absent Git removes the segment; narration is not a fact.
+  if (!state.branch && !state.gitAvailable) return '';
   const branch = color(
     theme,
     state.branch ? 'success' : 'dim',
-    ` ${safeText(branchText, 80)}`,
+    ` ${safeText(state.branch || '(detached)', 80)}`,
   );
   const entries = [
     [state.git.staged, 'success', ''],
@@ -593,20 +595,27 @@ export function renderHeaderDeck(
     ? 'error'
     : state.header?.approvalRequired
       ? 'warning'
-      : current.active
+      : current?.active
         ? (state.header?.work?.color ?? 'accent')
         : 'dim';
+  const lifecycleSegment = current
+    ? color(theme, lifecycleColor, current.label, true)
+    : '';
+  const activitySegment = activityText
+    ? color(theme, recovering ? 'accent' : 'text', activityText)
+    : '';
+  const suggestionSegment = suggestionLine(state, theme, recovering);
+  const trailing = [activitySegment, suggestionSegment].filter(
+    (segment) => segment !== '',
+  );
   const statusLeft = [
     runtimeCapsule(state, theme),
-    color(theme, lifecycleColor, current.label, true),
-    semanticSeparator(theme),
-    color(
-      theme,
-      activityText ? (recovering ? 'accent' : 'text') : 'dim',
-      activityText || 'idle',
-    ),
-    suggestionLine(state, theme, recovering),
-  ].join(' ');
+    lifecycleSegment,
+    ...(lifecycleSegment && trailing.length > 0 ? [semanticSeparator(theme)] : []),
+    ...trailing,
+  ]
+    .filter((segment) => segment !== '')
+    .join(' ');
   const status = alignedSingleRow(statusLeft, progressLine(state, theme), boundedWidth);
   const focusLines = elevatedSelectionLines(state, boundedWidth, theme);
 
