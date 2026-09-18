@@ -52,8 +52,16 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `packages/status/src/reducer.ts`, `packages/status/src/ledger.ts`,
     `packages/status/src/types.ts`.
   - Subject: `step(status-core): add pure reducer with single selection resolver`.
-- [ ] Unit tests: resolver priority, derived-only title/status projections,
+- [x] Unit tests: resolver priority, derived-only title/status projections,
       placeholder-free silence rules, and the KO detail-naming rule.
+  - Started 2026-09-18T13:09:30Z; completed 2026-09-18T13:15:00Z; elapsed ~6m.
+  - Check: 19/19 new tests; package suite 139/139; `tsc --noEmit` green;
+    prettier write+check on exact paths; baseline manifest refreshed to 99 files;
+    `check:openspec` PASS.
+  - Paths: `packages/status/test/ledger.test.ts`,
+    `packages/status/test/reducer.test.ts`, `packages/status/src/reducer.ts`,
+    `packages/status/src/types.ts`, `baseline/source.sha256`.
+  - Subject: `step(status-core): prove the fold with discriminating unit tests`.
 - [ ] Focused checks: `npm run test:status`, `check:baseline`, `check:openspec`.
 - [ ] Human validation: review reducer tests against the contract grammar;
       preserve original response, canonical outcome, and UTC.

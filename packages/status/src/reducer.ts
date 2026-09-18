@@ -1,10 +1,6 @@
 import type { LedgerEvent } from './ledger.ts';
 import type { GoalHeaderState } from './goal.ts';
-import type {
-  OpenSpecFocus,
-  SessionSubject,
-  SessionWorkFocus,
-} from './active-work.ts';
+import type { OpenSpecFocus, SessionSubject, SessionWorkFocus } from './active-work.ts';
 import type {
   CockpitSnapshot,
   ProgressFact,
@@ -133,7 +129,10 @@ export function reduceLedger(events: readonly LedgerEvent[]): CockpitSnapshot {
   return snapshotFromFacts(facts, events.length);
 }
 
-export function snapshotFromFacts(facts: ReducerFacts, version: number): CockpitSnapshot {
+export function snapshotFromFacts(
+  facts: ReducerFacts,
+  version: number,
+): CockpitSnapshot {
   const runs = [...facts.runs.values()].sort((left, right) => {
     if (left.since !== right.since) return left.since - right.since;
     return left.id < right.id ? -1 : 1;
@@ -185,7 +184,7 @@ export function deriveTitle(snapshot: CockpitSnapshot): string {
       detail = selection.title;
       break;
     default:
-      detail = 'pi';
+      detail = '';
   }
-  return `π ${detail}`;
+  return detail ? `π ${detail}` : 'π';
 }

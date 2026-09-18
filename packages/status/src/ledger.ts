@@ -6,11 +6,7 @@ import type {
   StageValue,
 } from './types.ts';
 import type { GoalHeaderState } from './goal.ts';
-import type {
-  OpenSpecFocus,
-  SessionSubject,
-  SessionWorkFocus,
-} from './active-work.ts';
+import type { OpenSpecFocus, SessionSubject, SessionWorkFocus } from './active-work.ts';
 
 /**
  * Append-only event ledger for the cockpit status core.
@@ -85,10 +81,9 @@ export class EventLedger {
 
 /** Bounded taskflow phase label: inline, trimmed, single line, hard-capped. */
 export function boundedPhase(value: string): string {
-  const normalized = value.replace(/[\u0000-\u001f\u007f-\u009f]/gu, ' ').replace(
-    /\s+/gu,
-    ' ',
-  );
+  const normalized = value
+    .replace(/[\u0000-\u001f\u007f-\u009f]/gu, ' ')
+    .replace(/\s+/gu, ' ');
   const points = Array.from(normalized.trim());
   if (points.length <= 40) return points.join('');
   return `${points.slice(0, 39).join('')}…`;
