@@ -18,7 +18,7 @@ The root `package.json` is an umbrella Pi manifest. Its four exact extension ent
 preserve the current startup order:
 
 1. `packages/pi-fancy-footer-full-palette/src/index.ts`
-2. `packages/galactica-status/index.ts`
+2. `packages/status/index.ts`
 3. `packages/galactica-context-header/index.ts`
 4. `packages/pi-vim-top-border/index.ts`
 

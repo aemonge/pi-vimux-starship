@@ -18,7 +18,7 @@ export const REQUIRED_FILES = [
   'licenses/pi-vim-LICENSE',
   'package.json',
   'packages/galactica-context-header/index.ts',
-  'packages/galactica-status/index.ts',
+  'packages/status/index.ts',
   'packages/pi-fancy-footer-full-palette/src/index.ts',
   'packages/pi-vim-top-border/index.ts',
   'src/deck-surface.ts',

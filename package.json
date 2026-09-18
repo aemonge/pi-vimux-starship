@@ -48,7 +48,7 @@
     "check:composition": "node --import tsx/esm src/local-load-probe.ts",
     "check:openspec": "node scripts/check-openspec.mjs",
     "test:tooling": "node --import tsx/esm --test test/*.test.ts",
-    "test:status": "npm --prefix packages/galactica-status test",
+    "test:status": "npm --prefix packages/status test",
     "test:header": "npm --prefix packages/galactica-context-header test",
     "test:footer": "npm --prefix packages/pi-fancy-footer-full-palette test",
     "test:vim": "npm --prefix packages/pi-vim-top-border test",

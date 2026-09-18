@@ -22,10 +22,18 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   types, the reducer crosses 300 lines, or the rename surfaces unexpected reference
   depth.
 
-- [ ] Rename `packages/galactica-status` to `packages/status`, propagating the root
+- [x] Rename `packages/galactica-status` to `packages/status`, propagating the root
       manifest path, package name, validation tooling, and documentation mentions;
       persisted session-entry strings and event channel names stay unchanged for
       compatibility.
+  - Started 2026-09-18T13:01:23Z; completed 2026-09-18T13:02:34Z; elapsed 1m11s.
+  - Check: `npm run test:status` green; offline lockfile refresh clean; frozen
+    islands (entry types, channels, slash commands, config filename) verified
+    intact; baseline manifest refreshed, PASS (95 files).
+  - Paths: `packages/status/**` (git-moved), `package.json`, `package-lock.json`,
+    `scripts/check-package.mjs`, `src/index.ts`, `AGENTS.md`, `docs/handoff.md`,
+    `docs/source-inventory.md`, `baseline/source.sha256`.
+  - Subject: `step(status-core): rename galactica-status to legacy-free home`.
 - [ ] Create `src/ledger.ts`: bounded append-only event types covering selection,
       run, progress, diagnostics, orchestration, and taskflow producers.
 - [ ] Create `src/reducer.ts`: fold events into `CockpitSnapshot` with the single

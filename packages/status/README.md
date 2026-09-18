@@ -1,4 +1,4 @@
-# galactica-status
+# status
 
 A small local [Pi](https://pi.dev) extension that gathers project status and publishes
 structured widgets to `pi-fancy-footer`. It never renders a footer, status block, or
@@ -33,12 +33,12 @@ This repository loads the package from Pi settings:
 
 ```json
 {
-    "packages": ["npm:pi-fancy-footer", "./packages/galactica-status"]
+    "packages": ["npm:pi-fancy-footer", "./packages/status"]
 }
 ```
 
 The relative package path is resolved from `~/.pi/agent/settings.json`, so the managed
-source lives at `.pi/agent/packages/galactica-status` in Galactica.
+source lives at `.pi/agent/packages/status` in Galactica.
 
 ## OpenSpec detection
 
@@ -385,7 +385,7 @@ From the Galactica repository:
 ```sh
 # Remove the two package entries from .pi/agent/settings.json.
 rm -f ~/.pi/agent/galactica-status.json ~/.pi/agent/fancy-footer.json
-rm -rf .pi/agent/packages/galactica-status
+rm -rf .pi/agent/packages/status
 rm -f .pi/agent/galactica-status.json .pi/agent/fancy-footer.json
 mv .pi/agent/extensions/openspec-footer.ts.disabled \
   .pi/agent/extensions/openspec-footer.ts

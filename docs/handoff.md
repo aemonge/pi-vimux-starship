@@ -40,7 +40,7 @@ First use the isolated probe documented in `development.md`. After automated and
 parity checks pass, propose one exact Pi settings migration that replaces:
 
 - `./packages/pi-fancy-footer-full-palette`;
-- `./packages/galactica-status`;
+- `./packages/status`;
 - `./packages/galactica-context-header`;
 - `./packages/pi-vim-top-border`;
 
