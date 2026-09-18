@@ -170,19 +170,40 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Refinement trigger:** Split renderers by surface if the three surfaces cannot
   land in one independently validatable slice.
 
-- [ ] Rename `packages/galactica-context-header` to `packages/header`, propagating
+- [x] Rename `packages/galactica-context-header` to `packages/header`, propagating
       manifests, tooling, and documentation mentions.
-- [ ] Deck, footer widgets, and terminal title read the snapshot only; delete
+  - Commit `2e88500`; frozen island literals (channels, entry types) untouched.
+- [x] Deck, footer widgets, and terminal title read the snapshot only; delete
       `fallbackTitles` and duplicate priority chains in `publisher.ts` and `deck.ts`.
-- [ ] Remove placeholder em-dash rendering (`deck.ts:215`, `deck.ts:256-257`, and
+  - `publish()`/`updateTitle()` feed from `cockpitFacts`; `fallbackTitles`
+    computation deleted; `buildHeaderStatusEvent` work-branch titles collapse to
+    `[]` without selection.
+- [x] Remove placeholder em-dash rendering (`deck.ts:215`, `deck.ts:256-257`, and
       siblings); absent facts remove their slots entirely.
-- [ ] Enforce the KO amendment in render tests: details name their subject or the
+  - Selection anchor, progress counters, suggestion cue, Git status, context,
+    cpu/ram/mcp, cost/quota tiles all collapse on absence; zero plain em-dashes
+    remain in `deck.ts`.
+- [x] Enforce the KO amendment in render tests: details name their subject or the
       slot collapses.
-- [ ] One discriminating regression test per exhibit (glue, header dash, task/steps
+  - The WHAT line survives (real work titles name their subject); placeholder
+    titles filter through `PLACEHOLDER_TITLES` as before.
+- [x] One discriminating regression test per exhibit (glue, header dash, task/steps
       placeholders, emptiness narration; triple-state waiting lands with Task 5
       stage wiring).
+  - `parity.test.ts` exhibit regression (narration tokens never serialize);
+    `deck.test.ts` collapse permutations; `surface.test.ts` no-anchor contract.
+- [x] Focused checks and full gate: header 104/104, status 142/142, full
+      `npm run check` exit 0, baseline 100 files.
 - [ ] Human validation: Phase B scenarios S1–S5 pass live.
-  - Evidence: pending.
+  - Evidence: pending (batch validation with Tasks 4–5).
+- **Implementation started at:** 2026-09-18T13:56:00Z.
+- **Work completed at:** 2026-09-18T14:44:00Z (48m including test-grammar rewrite).
+- **Ready for validation at:** 2026-09-18T14:44:00Z.
+- **Actual implementation:** ~48m vs 75–150m range; glyph-preserving surgical
+  edits and pre-enumerated seams kept it under.
+- **Final Task-boundary commit (after canonical VALID):**
+  `feat(render): snapshot-only rendering with zero placeholder slots`.
+- **Commits:** `2e88500` (rename), `e8e66fc` (grammar + waterfalls).
 
 ## Task 4 — Runs become a span tree
 
