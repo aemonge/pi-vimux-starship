@@ -78,6 +78,7 @@ import {
 } from './src/reducer.ts';
 import type {
   CockpitSnapshot,
+  StageValue,
   CommandRunner,
   DiagnosticsState,
   LoadedConfig,
@@ -817,6 +818,20 @@ class GalacticaStatusRuntime {
     this.publish();
   }
 
+  declareStage(stage: StageValue): boolean {
+    if (!this.currentTurnId) return false;
+    const changed = this.runtimeSpans.setStage(this.currentTurnId, stage, true);
+    this.recordEvent({
+      type: 'run/stage',
+      at: Date.now(),
+      id: this.currentTurnId,
+      stage,
+      declared: true,
+    });
+    this.setLiveProjection(stage);
+    return changed;
+  }
+
   setLiveProjection(lifecycle: HeaderLifecycle, activity?: HeaderActivity): void {
     if (
       this.liveLifecycle === lifecycle &&
@@ -1402,6 +1417,41 @@ export default function galacticaStatus(pi: ExtensionAPI): void {
           ok: result.ok,
           focus: result.focus,
         },
+      };
+    },
+  });
+
+  pi.registerTool({
+    name: 'stage',
+    label: 'Stage',
+    description:
+      'Declare the current stage of the Ramona loop (status truth; one call per transition)',
+    promptSnippet: 'Declare the current loop stage for status truth',
+    parameters: Type.Object({
+      stage: StringEnum([
+        'understanding',
+        'working',
+        'assuring',
+        'learning',
+        'answering',
+        'waiting',
+        'blocked',
+        'listening',
+        'aborted',
+      ] as const),
+    }),
+    async execute(_toolCallId, params) {
+      const declared = runtime?.declareStage(params.stage) ?? false;
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: declared
+              ? `Stage declared: ${params.stage}`
+              : `Stage recorded: ${params.stage} (no active turn span)`,
+          },
+        ],
+        details: { kind: 'stage-declaration', stage: params.stage },
       };
     },
   });

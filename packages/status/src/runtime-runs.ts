@@ -33,6 +33,7 @@ interface TrackedSpan {
   agent?: string;
   label?: string;
   stage: StageValue;
+  stageDeclared: boolean;
   since: number;
   endedAt?: number;
 }
@@ -85,6 +86,7 @@ export class RuntimeSpanStore {
       kind: 'agent',
       parent: null,
       stage,
+      stageDeclared: false,
       since: now,
     });
   }
@@ -105,6 +107,7 @@ export class RuntimeSpanStore {
       kind,
       parent,
       stage: 'working',
+      stageDeclared: false,
       since: now,
     });
   }
@@ -146,6 +149,7 @@ export class RuntimeSpanStore {
           parent: toolCallId,
           agent,
           stage: inferredStage(agent),
+          stageDeclared: false,
           since: now,
         }) || changed;
     });
@@ -158,6 +162,17 @@ export class RuntimeSpanStore {
       }
     }
     return changed;
+  }
+
+  setStage(id: string, stage: StageValue, declared: boolean): boolean {
+    const span = this.spans.get(id);
+    if (!span || span.endedAt !== undefined) return false;
+    // Declaration beats inference: an inferred stage never overrides a declared one.
+    if (!declared && span.stageDeclared) return false;
+    if (span.stage === stage && span.stageDeclared === declared) return false;
+    span.stage = stage;
+    span.stageDeclared = declared;
+    return true;
   }
 
   drainChanges(): SpanStoreChange {
