@@ -72,9 +72,16 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `docs/source-inventory.md`,
     `packages/status/test/reducer.test.ts`, `baseline/source.sha256`.
   - Subject: `step(status-core): satisfy the full repository check gate`.
-- [ ] Human validation: review reducer tests against the contract grammar;
+- [x] Human validation: review reducer tests against the contract grammar;
       preserve original response, canonical outcome, and UTC.
-  - Evidence: pending.
+  - Evidence: Canonical `VALID` at 2026-09-18T13:18:53Z. Original response:
+    `VALID`.
+- **Observed Human wait:** under one minute of elapsed review conversation;
+    ready-for-validation timestamps above were minute-level approximations
+    recorded at Task close — the canonical VALID evidence uses the live clock.
+- **Estimate outcome:** 19m37s actual implementation vs the conservative
+    75–150m range (rename mechanical, core pre-designed); Human wait separate
+    and excluded.
 - **Implementation confirmed at:** 2026-09-18T13:00Z (minute precision, turn
   preceding first Step start).
 - **Implementation started at:** 2026-09-18T13:01:23Z.
