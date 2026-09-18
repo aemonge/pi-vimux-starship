@@ -49,7 +49,7 @@
     "check:openspec": "node scripts/check-openspec.mjs",
     "test:tooling": "node --import tsx/esm --test test/*.test.ts",
     "test:status": "npm --prefix packages/status test",
-    "test:header": "npm --prefix packages/galactica-context-header test",
+    "test:header": "npm --prefix packages/header test",
     "test:footer": "npm --prefix packages/pi-fancy-footer-full-palette test",
     "test:vim": "npm --prefix packages/pi-vim-top-border test",
     "test:components": "npm run test:status && npm run test:header && npm run test:footer && npm run test:vim"

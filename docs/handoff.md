@@ -41,7 +41,7 @@ parity checks pass, propose one exact Pi settings migration that replaces:
 
 - `./packages/pi-fancy-footer-full-palette`;
 - `./packages/status`;
-- `./packages/galactica-context-header`;
+- `./packages/header`;
 - `./packages/pi-vim-top-border`;
 
 with the standalone absolute local path. That protected mutation requires exact

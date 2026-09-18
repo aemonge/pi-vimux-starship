@@ -438,7 +438,8 @@ test('reports the WHAT with task title and step while active without a cue', () 
   state.header!.blocked = false;
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  const status = plain(lines[2] ?? '');
+  // Selection collapsed: the status row moved up one line.
+  const status = plain(lines[1] ?? '');
 
   assert.ok(status.includes('working ⟩ implementing Plan title · step 7/16'));
   assert.equal(status.includes('󰁕 Plan title'), false);
@@ -482,24 +483,22 @@ test('keeps lifecycle contextual and colors progress by completion', () => {
   state.header!.counters.steps = undefined;
   colors.length = 0;
   renderHeaderDeck(state, 160, theme as never);
-  assert.ok(colors.includes('dim: task —'));
-  assert.ok(colors.includes('dim:›'));
-  assert.ok(colors.includes('dim: stps —'));
+  // Frozen contract: absent counters remove their slots — no dash narration.
+  assert.ok(!colors.some((entry) => entry.includes('task')));
+  assert.ok(!colors.some((entry) => entry.includes('stps')));
 
   state.header!.counters.tasks = { completed: 0, total: 1 };
   colors.length = 0;
   renderHeaderDeck(state, 160, theme as never);
-  assert.ok(colors.includes('text: task 0/1'));
-  assert.ok(colors.includes('dim:›'));
-  assert.ok(colors.includes('dim: stps —'));
+  assert.ok(colors.some((entry) => entry.includes(' task 0/1')));
+  assert.ok(!colors.some((entry) => entry.includes('stps')));
 
   state.header!.counters.tasks = undefined;
   state.header!.counters.steps = { completed: 10, total: 10 };
   colors.length = 0;
   renderHeaderDeck(state, 160, theme as never);
-  assert.ok(colors.includes('dim: task —'));
-  assert.ok(colors.includes('dim:›'));
-  assert.ok(colors.includes('success: stps 10/10'));
+  assert.ok(!colors.some((entry) => entry.includes('task')));
+  assert.ok(colors.some((entry) => entry.includes(' stps 10/10')));
 });
 
 test('uses prompt-line color for rules and major separators with violet ladybugs', () => {
@@ -624,23 +623,18 @@ test('renders unavailable optional telemetry honestly', () => {
   state.gitAvailable = false;
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.match(
-    lines[2] ?? '',
-    /^\( 0 ›  0 · 00:00'00\) waiting ⟩ idle 󰁕 —\s+ task — ›  stps —$/u,
-  );
-  assert.equal(plain(lines[0] ?? ''), `󰠭 ⟩ —`);
-  assert.doesNotMatch(lines.join('\n'), /next direction/u);
-  assert.match(lines.find((line) => line.includes('')) ?? '', / \(no Git\) ⟩ —/u);
-  assert.doesNotMatch(lines.join('\n'), /clean/u);
-  assert.match(lines.find((line) => line.includes('')) ?? '', / task — ›  stps —/u);
-  assert.match(
-    lines.find((line) => line.includes('')) ?? '',
-    /󰜦 — ⟩  — ›  — ›  —/u,
-  );
-  assert.equal(lines.join('\n').split('').length - 1, 1);
-  assert.equal(lines.join('\n').split('').length - 1, 1);
-  assert.doesNotMatch(lines.join('\n'), /󰈙/u);
-  assert.match(lines.find((line) => line.includes('')) ?? '', /󰾆 —.* — › 󰜦 —/u);
+  const all = lines.join('\n');
+  // Frozen contract: absent facts remove their slots — the frame collapses
+  // without a single placeholder dash or emptiness narration.
+  assert.equal(all.includes('—'), false);
+  assert.doesNotMatch(all, /next direction/u);
+  assert.doesNotMatch(all, /clean/u);
+  assert.ok(!all.includes('task'), 'no task slot without counters');
+  assert.ok(!all.includes('stps'), 'no steps slot without counters');
+  const status = lines.find((line) => line.includes('waiting')) ?? '';
+  assert.match(status, /waiting ⟩ idle/u);
+  assert.match(status, /idle/u);
+  assert.match(lines.find((line) => line.includes('(no Git)')) ?? '', /\(no Git\)/u);
 });
 
 const CAL_ICON = '󰃰';

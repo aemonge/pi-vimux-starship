@@ -1,4 +1,4 @@
-# galactica-context-header
+# header
 
 A dependency-free Pi extension that coordinates the prompt information architecture
 through Pi's supported widget and event APIs.
@@ -215,5 +215,5 @@ npm run check
 
 ## Remove
 
-Delete `./packages/galactica-context-header` from `.pi/agent/settings.json`, remove this
+Delete `./packages/header` from `.pi/agent/settings.json`, remove this
 directory, and run `/reload`.

@@ -1232,7 +1232,7 @@ test('unfocused direct tools publish an activity-only header bridge', async () =
 
     assert.deepEqual(latestHeader()?.work, {
       lifecycle: 'understanding',
-      titles: ['no focus'],
+      titles: [], // frozen contract: no narration
       color: 'accent',
       activity: { kind: 'inspection' },
     });
@@ -1362,7 +1362,7 @@ test('stopped Goal title yields automatically on normal Pi input and returns on 
     });
     assert.deepEqual(latestHeaderWork(harness), {
       lifecycle: 'understanding',
-      titles: ['no focus'],
+      titles: [], // frozen contract: no narration
       color: 'accent',
       activity: { kind: 'understanding' },
     });
@@ -1406,7 +1406,7 @@ test('rich lifecycle reports understanding, answering, abort, and next-turn rese
     });
     assert.deepEqual(latestHeaderWork(harness), {
       lifecycle: 'understanding',
-      titles: ['no focus'],
+      titles: [], // frozen contract: no narration
       color: 'accent',
       activity: { kind: 'understanding' },
     });
@@ -1420,7 +1420,7 @@ test('rich lifecycle reports understanding, answering, abort, and next-turn rese
     });
     assert.deepEqual(latestHeaderWork(harness), {
       lifecycle: 'answering',
-      titles: ['no focus'],
+      titles: [], // frozen contract: no narration
       color: 'accent',
     });
 
@@ -1437,7 +1437,7 @@ test('rich lifecycle reports understanding, answering, abort, and next-turn rese
     await harness.emit('agent_settled', {});
     assert.deepEqual(latestHeaderWork(harness), {
       lifecycle: 'aborted',
-      titles: ['no focus'],
+      titles: [], // frozen contract: no narration
       color: 'accent',
       activity: { kind: 'operation-aborted' },
     });
@@ -1448,7 +1448,7 @@ test('rich lifecycle reports understanding, answering, abort, and next-turn rese
     });
     assert.deepEqual(latestHeaderWork(harness), {
       lifecycle: 'understanding',
-      titles: ['no focus'],
+      titles: [], // frozen contract: no narration
       color: 'accent',
       activity: { kind: 'understanding' },
     });

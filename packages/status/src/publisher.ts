@@ -1114,7 +1114,7 @@ export function buildHeaderStatusEvent(
           ? []
           : taskflowPhase
             ? ['Taskflow run']
-            : (options.fallbackTitles ?? ['no focus']),
+            : [], // frozen contract: no selection narrates nothing
       color: 'accent',
       ...projectedActivity,
     };

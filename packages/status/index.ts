@@ -643,16 +643,6 @@ class GalacticaStatusRuntime {
         goal,
       },
     );
-    const fallbackTitles =
-      this.openSpecProjectDetected === false
-        ? ['no OpenSpec']
-        : this.openSpecFeedback === 'no-focus'
-          ? ['OpenSpec', 'no focus']
-          : this.openSpecFeedback === 'unavailable'
-            ? ['OpenSpec unavailable']
-            : this.openSpecFeedback === 'clear'
-              ? ['OpenSpec clear']
-              : ['no focus'];
     this.publisher.sync(widgets);
     this.pi.events.emit(
       GALACTICA_HEADER_CHANNEL,
@@ -665,7 +655,6 @@ class GalacticaStatusRuntime {
         lifecycle: this.liveLifecycle,
         activity: this.liveActivity,
         taskflowPhase: this.liveTaskflowPhase,
-        fallbackTitles,
         goal,
         goalAutomaticTurnLimit: this.goalAutomaticTurnLimit,
         activeRuns: this.runtimeRuns.snapshot(),

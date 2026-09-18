@@ -1,5 +1,5 @@
 {
-  "name": "galactica-context-header",
+  "name": "header",
   "version": "1.0.4",
   "private": true,
   "description": "Lightweight runtime status above the Pi editor",

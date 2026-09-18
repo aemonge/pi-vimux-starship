@@ -370,7 +370,7 @@ test('publishes bounded activity with an honest empty focus', () => {
 
   assert.deepEqual(event.work, {
     lifecycle: 'understanding',
-    titles: ['no focus'],
+    titles: [],
     color: 'accent',
     activity: { kind: 'planning' },
   });
@@ -381,9 +381,9 @@ test('publishes bounded activity with an honest empty focus', () => {
 test('projects explicit empty-state titles without inventing direct-response focus', () => {
   const event = publisherModule.buildHeaderStatusEvent([], {
     activity: { kind: 'synthesis' },
-    fallbackTitles: ['OpenSpec', 'no focus'],
+    fallbackTitles: [],
   });
-  assert.deepEqual(event.work?.titles, ['OpenSpec', 'no focus']);
+  assert.deepEqual(event.work?.titles, []);
   assert.doesNotMatch(JSON.stringify(event), /Direct response/u);
 });
 

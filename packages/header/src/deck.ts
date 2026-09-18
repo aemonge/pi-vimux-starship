@@ -260,15 +260,13 @@ function progressLine(state: HeaderDeckState, theme: Theme): string {
     const semantic =
       tasks.total > 0 && tasks.completed >= tasks.total ? 'success' : 'text';
     segments.push(
-      color(theme, semantic, ` task ${tasks.completed}/${tasks.total}`, true),
+      color(theme, semantic, ` task ${tasks.completed}/${tasks.total}`, true),
     );
   }
   if (steps) {
     const semantic =
       steps.total > 0 && steps.completed >= steps.total ? 'success' : 'text';
-    segments.push(
-      color(theme, semantic, ` stps ${steps.completed}/${steps.total}`, true),
-    );
+    segments.push(color(theme, semantic, ` stps ${steps.completed}/${steps.total}`));
   }
   if (segments.length === 0) return '';
   if (segments.length === 1) return segments[0] ?? '';
@@ -409,7 +407,7 @@ function compactTelemetryLeft(state: HeaderDeckState, theme: Theme): string {
     semanticSeparator(theme),
     state.contextPercent === undefined
       ? undefined
-      : color(theme, 'accent', formatDeckPercent(state.contextPercent)),
+      : color(theme, 'accent', `󰾆 ${formatDeckPercent(state.contextPercent)}`),
     minorSeparator(theme, ctxColor),
     color(
       theme,
@@ -431,14 +429,14 @@ function compactTelemetryRight(
     const resourceColor =
       resources.cpuWarning || resources.memoryWarning ? 'warning' : 'accent';
     const parts = [
-      color(theme, resourceColor, ` cpu ${formatDeckCpu(resources.cpuPercent)}`),
-      color(theme, resourceColor, ` ram ${formatDeckBytes(resources.memoryBytes)}`),
+      color(theme, resourceColor, ` ${formatDeckCpu(resources.cpuPercent)}`),
+      color(theme, resourceColor, ` ${formatDeckBytes(resources.memoryBytes)}`),
     ];
     resourceSegments.push(parts.join(` ${minorSeparator(theme, resourceColor)} `));
   }
   if (state.mcp) {
     resourceSegments.push(
-      color(theme, 'accent', ` mcp ${state.mcp.healthy}/${state.mcp.total}`),
+      color(theme, 'accent', ` ${state.mcp.healthy}/${state.mcp.total}`),
     );
   }
   const quotaAndCost = quotaAndCostTiles(state, theme, nowMs);
@@ -457,7 +455,7 @@ function quotaAndCostTiles(
   // Frozen contract: absent telemetry removes its slot; no placeholder dashes.
   const tiles: string[] = [];
   if (telemetry) {
-    tiles.push(color(theme, 'accent', ` cost ${formatCost(telemetry.totalCost)}`));
+    tiles.push(color(theme, 'accent', `󰜦 ${formatCost(telemetry.totalCost)}`));
   }
 
   const windows = telemetry?.quotaWindows ?? [];
@@ -465,7 +463,7 @@ function quotaAndCostTiles(
     const quota = telemetry?.quotaPercent;
     if (quota !== undefined) {
       const quotaColor = quota >= 80 ? 'warning' : 'accent';
-      tiles.unshift(color(theme, quotaColor, ` quota ${formatDeckPercent(quota)}`));
+      tiles.unshift(color(theme, quotaColor, ` ${formatDeckPercent(quota)}`));
     }
     return tiles.join(` ${minorSeparator(theme)} `);
   }

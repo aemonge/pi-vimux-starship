@@ -171,3 +171,30 @@ test('incremental recordEvent fold equals a full ledger replay (T2 parity)', () 
   assert.equal(incrementalSnapshot.selection.kind, 'subject');
   assert.equal(incrementalSnapshot.runs.length, 2);
 });
+
+test('exhibit regression: no selection narrates nothing (exhibits 1 and 5)', async () => {
+  const { buildHeaderStatusEvent } = await import('../src/publisher.ts');
+  for (const fallbackTitles of [undefined, ['no focus'], ['no OpenSpec']]) {
+    const event = buildHeaderStatusEvent([], {
+      openSpec: null,
+      workFocus: undefined,
+      subject: { state: 'clear' },
+      orchestration: null,
+      lifecycle: 'understanding',
+      activity: { kind: 'understanding' },
+      taskflowPhase: undefined,
+      ...(fallbackTitles ? { fallbackTitles } : {}),
+      goal: null,
+    });
+    assert.deepEqual(event.work?.titles ?? [], []);
+    const serialized = JSON.stringify(event);
+    for (const token of [
+      'no focus',
+      'no OpenSpec',
+      'OpenSpec clear',
+      'OpenSpec unavailable',
+    ]) {
+      assert.equal(serialized.includes(token), false, token);
+    }
+  }
+});

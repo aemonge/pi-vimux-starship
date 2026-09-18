@@ -133,7 +133,17 @@ test('editor-deck publishes a renderer without registering an above-editor widge
     bold: (text: string) => text,
   };
   const lines = renderer?.(120, theme) ?? [];
-  assert.match(lines[0] ?? '', /󰠭/u);
+  // Frozen contract: with no selection the anchor row collapses entirely —
+  // no slot, no dash, but the deck still renders its structure.
+  assert.equal(
+    lines.some((line) => line.includes('󰠭')),
+    false,
+  );
+  assert.equal(
+    lines.some((line) => line.includes('—')),
+    false,
+  );
+  assert.ok(lines.length > 0);
   assert.equal(typeof footerFactories[0], 'function');
 
   for (const handler of sharedHandlers.get('pi-mcp-adapter/status/v1') ?? []) {
