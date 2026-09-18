@@ -273,6 +273,27 @@ function progressLine(state: HeaderDeckState, theme: Theme): string {
   return `${segments[0]} ${minorSeparator(theme, 'dim')} ${segments[1]}`;
 }
 
+function titleMetrics(state: HeaderDeckState, theme: Theme): string {
+  const children = state.header?.counters.activeRuns?.children ?? 0;
+  const subagents = state.header?.counters.activeRuns?.subagents ?? 0;
+  const elapsed = state.elapsedMs;
+  const idle = state.idleMs;
+  // Human-directed composition: timer ⟩ runs ⟩ progress — real values when
+  // live, dim dash placeholders when not (gray-out amendment).
+  const timer =
+    elapsed != null
+      ? color(theme, 'accent', formatDeckElapsed(elapsed))
+      : color(theme, 'dim', formatDeckElapsed(idle ?? 0));
+  const runsLive = children > 0 || subagents > 0 || elapsed != null;
+  const runs = runsLive
+    ? `${color(theme, children > 0 ? 'accent' : 'dim', ` ${children}`)} ${minorSeparator(theme, 'dim')} ${color(theme, subagents > 0 ? 'accent' : 'dim', ` ${subagents}`)}`
+    : `${color(theme, 'dim', ` —`)} ${minorSeparator(theme, 'dim')} ${color(theme, 'dim', ` —`)}`;
+  const progress =
+    progressLine(state, theme) ||
+    `${color(theme, 'dim', ` task —`)} ${minorSeparator(theme, 'dim')} ${color(theme, 'dim', ` stps —`)}`;
+  return [timer, runs, progress].join(` ${semanticSeparator(theme)} `);
+}
+
 function spanElapsed(ms: number): string {
   const totalSeconds = Math.floor(ms / 1_000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -365,35 +386,6 @@ function suggestionLine(
           ? 'accent'
           : 'success';
   return color(theme, semanticColor, `󰁕 ${SUGGESTION_LABELS[suggestion]}`);
-}
-
-function runtimeCapsule(state: HeaderDeckState, theme: Theme): string {
-  const children = state.header?.counters.activeRuns?.children ?? 0;
-  const subagents = state.header?.counters.activeRuns?.subagents ?? 0;
-  const elapsed = state.elapsedMs;
-  // Gray-out amendment (Human-directed): an idle turn shows a dim capsule with
-  // the idle timer instead of hiding the slot.
-  if (children === 0 && subagents === 0 && elapsed == null) {
-    const idle = state.idleMs;
-    if (idle === undefined || idle <= 0) return '';
-    return (
-      `${color(theme, 'dim', '(')}${color(theme, 'dim', ` 0`)} ` +
-      `${minorSeparator(theme, 'dim')} ${color(theme, 'dim', ` 0`)} ` +
-      `${color(theme, 'dim', `· ${formatDeckElapsed(idle)}`)}${color(theme, 'dim', ')')}`
-    );
-  }
-  const childColor = children > 0 ? 'accent' : 'dim';
-  const subagentColor = subagents > 0 ? 'accent' : 'dim';
-  const timeSegment =
-    elapsed == null
-      ? ''
-      : ` ${color(theme, 'accent', `· ${formatDeckElapsed(elapsed)}`)}`;
-  return (
-    `${color(theme, 'dim', '(')}${color(theme, childColor, ` ${children}`)} ` +
-    `${minorSeparator(theme, 'dim')} ${color(theme, subagentColor, ` ${subagents}`)}` +
-    timeSegment +
-    `${color(theme, 'dim', ')')}`
-  );
 }
 
 function projectLeft(state: HeaderDeckState, theme: Theme): string {
@@ -633,15 +625,7 @@ export function renderHeaderDeck(
   // project context merges into the status row; git composes the right side
   // beside the progress slot.
   // Narrow frames: the capsule yields before the selection anchor does.
-  const capsule = boundedWidth >= 40 ? runtimeCapsule(state, theme) : '';
-  // Progress lives beside the capsule: real counts when focused, a dim
-  // gray-out placeholder when not (Human-directed).
-  const progress =
-    boundedWidth >= 40
-      ? progressLine(state, theme) ||
-        `${color(theme, 'dim', ` task —`)} ${minorSeparator(theme, 'dim')} ${color(theme, 'dim', ` stps —`)}`
-      : '';
-  const titleRight = [capsule, progress].filter((part) => part !== '').join('  ');
+  const titleRight = boundedWidth >= 40 ? titleMetrics(state, theme) : '';
   const focusLines = elevatedSelectionLines(state, boundedWidth, theme);
   const titleBase = focusLines.length > 0 ? focusLines : [''];
   const titleRows =

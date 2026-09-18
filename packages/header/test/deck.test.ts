@@ -464,7 +464,7 @@ test('keeps lifecycle contextual and colors progress by completion', () => {
   renderHeaderDeck(state, 160, theme as never);
 
   assert.ok(colors.includes('warning:waiting'));
-  assert.ok(colors.includes("accent:· 00:07'00"));
+  assert.ok(colors.includes("accent:00:07'00"));
   assert.ok(!colors.some((entry) => entry.endsWith(':idle')));
   assert.ok(colors.includes('warning:󰁕 requesting validation or redirection'));
   assert.ok(
