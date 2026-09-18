@@ -1113,6 +1113,7 @@ export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
           ) as HeaderSnapshot['activeRunSpans'],
         }
       : {}),
+    ...(typeof message.idleMs === 'number' ? { idleMs: message.idleMs } : {}),
     approvalRequired: message.approvalRequired === true,
     blocked: message.blocked === true,
     counters: {

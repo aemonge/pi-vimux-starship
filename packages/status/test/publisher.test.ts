@@ -6,7 +6,6 @@ import {
   FancyFooterPublisher,
   formatDiagnostics,
   formatOpenSpec,
-  formatOpenSpecOverview,
   formatSessionWork,
 } from '../src/publisher.ts';
 import { AtomicStatusStore, ResourceBag } from '../src/state.ts';
@@ -90,7 +89,7 @@ test('published OpenSpec icons communicate partial, complete, and blocked state'
   assert.equal(nerdIcon({ ...openSpec, phase: 'blocked' }), '[!]⠀');
 });
 
-test('publishes aggregate OpenSpec Plan and Task progress independently of focus', () => {
+test('aggregate progress stays silent without a focused task', () => {
   const overview = {
     projectRoot: '/project',
     actionableChanges: 2,
@@ -103,26 +102,12 @@ test('publishes aggregate OpenSpec Plan and Task progress independently of focus
   const widgets = buildWidgetSnapshots(snapshot({ openspec: null }), {
     openSpecOverview: overview,
   });
-  const boundary = widgets.find(
-    (widget) => widget.id === 'galactica.openspec-scope-separator',
+  // Frozen contract + Human direction: unfocused aggregate numbers never
+  // render — they did not represent the session's reality.
+  assert.equal(
+    widgets.find((widget) => widget.id === 'galactica.openspec-progress'),
+    undefined,
   );
-  const progress = widgets.find(
-    (widget) => widget.id === 'galactica.openspec-progress',
-  );
-
-  assert.equal(formatOpenSpecOverview(overview), '3/5 ›  21/34');
-  assert.equal(boundary?.content.text, '⟩');
-  assert.equal(boundary?.style?.textColor, 'thinkingHigh');
-  assert.equal(boundary?.layout?.enabled, false);
-  assert.equal(boundary?.layout?.position, 0);
-  assert.equal(boundary?.layout?.align, 'right');
-  assert.equal(progress?.content.text, '3/5 ›  21/34');
-  const progressIcon = progress?.icon;
-  assert.ok(progressIcon && typeof progressIcon.glyphs !== 'string');
-  assert.equal(progressIcon.glyphs.nerd, '');
-  assert.equal(progress?.layout?.position, 0);
-  assert.equal(progress?.layout?.align, 'right');
-  assert.equal(progress?.style?.textColor, 'accent');
 });
 
 test('publishes a dim right-aligned no-OpenSpec project state', () => {
@@ -138,8 +123,8 @@ test('publishes a dim right-aligned no-OpenSpec project state', () => {
 
   assert.equal(boundary?.content.text, '⟩');
   assert.equal(boundary?.style?.textColor, 'thinkingHigh');
-  assert.equal(progress?.content.text, 'no OpenSpec');
-  assert.equal(progress?.style?.textColor, 'dim');
+  // Gray-out amendment follow-through: no focus, no narration widget.
+  assert.equal(progress, undefined);
 });
 
 test('publishes dim OpenSpec feedback without inventing a focus', () => {
@@ -222,10 +207,10 @@ test('uses Goal, Focus, then no OpenSpec as row-one fallbacks', () => {
   assert.equal(focusWidgets[0]?.content.text, 'Focus');
 
   const emptyWidgets = buildWidgetSnapshots(snapshot({ openspec: null }), noProject);
+  // Frozen contract: no focus means no progress surface — no narration widget.
   assert.equal(
-    emptyWidgets.find((widget) => widget.id === 'galactica.openspec-progress')?.content
-      .text,
-    'no OpenSpec',
+    emptyWidgets.find((widget) => widget.id === 'galactica.openspec-progress'),
+    undefined,
   );
 });
 

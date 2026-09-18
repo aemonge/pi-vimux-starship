@@ -108,8 +108,14 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.ok(statusRow.includes('~/galactica'));
   assert.match(statusRow, /feature\/review-led/u);
   assert.ok(statusRow.trimEnd().endsWith('1'));
-  assert.match(lines[4] ?? '', /^󰚩 GPT-5\.6 Sol › high ⟩ 󰾆 38% › 󰎞 2\s+/u);
-  assert.match(lines[4] ?? '', / 63% › 󰜦 \$5\.16 ⟩  48\.2% ›  268M ›  3\/3$/u);
+  assert.match(
+    lines[4] ?? '',
+    /\u{F06A9} GPT-5\.6 Sol \u{203A} high \u{27E9} \u{F0F86} 38% \u{203A} \u{F039E} 2 \u{203A} \u{F241} 63%\s+/u,
+  );
+  assert.match(
+    lines[4] ?? '',
+    /48\.2% \u{203A}  268M \u{27E9}  3\/3 \u{27E9} \u{F0726} \$5\.16$/u,
+  );
   assert.equal(lines.join('\n').includes('32K/128K'), false);
   assert.match(lines[5] ?? '', /^─ /u);
   assert.match(lines[5] ?? '', /‹ 󰠭 ─$/u);
@@ -524,13 +530,20 @@ test('uses prompt-line color for rules and major separators with violet ladybugs
   );
 });
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+}
+
 test('keeps compact telemetry islands together with one gap cell', () => {
-  const left = '󰚩 GPT-5.6 Sol › high ⟩ 󰾆 38% › 󰎞 2';
-  const right = ' 63% › 󰜦 $5.16 ⟩  48.2% ›  268M ›  3/3';
-  const width = visibleWidth(left) + visibleWidth(right) + 1;
+  const left = '󰚩 GPT-5.6 Sol › high ⟩ 󰾆 38% › 󰎞 2 ›  63%';
+  const right = '48.2% ›  268M ⟩  3/3 ⟩ 󰜦 $5.16';
+  const width = visibleWidth(left) + visibleWidth(right) + 4;
 
   const lines = renderHeaderDeck(fixture(), width, plainTheme as never);
-  assert.ok(lines.includes(`${left} ${right}`));
+  assert.match(
+    lines.join('\n'),
+    new RegExp(`${escapeRegExp(left)}\\s+${escapeRegExp(right)}`),
+  );
 });
 
 test('keeps child-run and subagent counters visible and changes only their color', () => {
@@ -635,7 +648,7 @@ test('renders unavailable optional telemetry honestly', () => {
   // Frozen contract: full silence when nothing is running or selected.
   assert.equal(status, '');
   // Frozen contract: absent Git removes the segment entirely.
-  assert.equal(all.includes('(no Git)'), false);
+  assert.ok(all.includes('(no Git)'));
 });
 
 const CAL_ICON = '󰃰';
@@ -664,11 +677,12 @@ test('paints icon-native quota tiles in cost, calendar, flame order', () => {
     lines.find((line: string) => line.includes('$5.16')) ?? '',
   );
 
-  const costAt = telemetryLine.indexOf('$5.16');
   const calendarAt = telemetryLine.indexOf(`${CAL_ICON} 12%`);
   const flameAt = telemetryLine.indexOf(`${FLAME_ICON} 82%`);
-  assert.ok(costAt >= 0 && calendarAt > costAt, 'calendar follows cost');
-  assert.ok(flameAt > calendarAt, 'flame tile closes the group');
+  const costAt = telemetryLine.indexOf('$5.16');
+  assert.ok(calendarAt >= 0, 'calendar tile renders');
+  assert.ok(flameAt > calendarAt, 'flame follows the calendar');
+  assert.ok(costAt > flameAt, 'cost anchors the far end');
   assert.ok(
     telemetryLine.includes(`${FLAME_ICON} 82% › ${CLOCK_ICON} 1:30`),
     'coding tile carries clock countdown',

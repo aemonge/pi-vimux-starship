@@ -192,6 +192,17 @@ export class RuntimeSpanStore {
     return true;
   }
 
+  /** Time since the last root span ended; 0 while any span is active. */
+  idleMs(now = Date.now()): number {
+    let lastEnded = 0;
+    for (const span of this.spans.values()) {
+      if (span.endedAt === undefined) return 0;
+      if (span.kind === 'agent' && span.endedAt > lastEnded) lastEnded = span.endedAt;
+    }
+    if (lastEnded === 0) return 0;
+    return Math.max(0, Math.min(now - lastEnded, (99 * 60 + 59) * 1_000 + 999));
+  }
+
   drainChanges(): SpanStoreChange {
     const drained = this.changeQueue;
     this.changeQueue = { started: [], ended: [] };

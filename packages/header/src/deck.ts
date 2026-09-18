@@ -21,6 +21,7 @@ export interface HeaderDeckModeRail {
 
 export interface HeaderDeckState {
   elapsedMs: number | null;
+  idleMs?: number;
   header: HeaderSnapshot | null;
   cwd: string;
   devbox: boolean;
@@ -289,7 +290,8 @@ function spanTreeRows(state: HeaderDeckState, width: number, theme: Theme): stri
   return spans.map((span, index) => {
     const branch = index === spans.length - 1 ? '└' : '├';
     const who = span.agent ?? span.label ?? span.kind;
-    const left = `  ${branch} ${who} ${span.stage}`;
+    // Brown family (customMessageLabel), never bare black.
+    const left = color(theme, 'customMessageLabel', `  ${branch} ${who} ${span.stage}`);
     const right = color(theme, 'dim', spanElapsed(span.elapsedMs));
     const fitted = truncateToWidth(left, Math.max(1, width - 8), '…');
     const gap = Math.max(1, width - visibleWidth(fitted) - visibleWidth(right));
@@ -369,8 +371,17 @@ function runtimeCapsule(state: HeaderDeckState, theme: Theme): string {
   const children = state.header?.counters.activeRuns?.children ?? 0;
   const subagents = state.header?.counters.activeRuns?.subagents ?? 0;
   const elapsed = state.elapsedMs;
-  // Frozen contract: idle removes the capsule; null elapsed removes only time.
-  if (children === 0 && subagents === 0 && elapsed == null) return '';
+  // Gray-out amendment (Human-directed): an idle turn shows a dim capsule with
+  // the idle timer instead of hiding the slot.
+  if (children === 0 && subagents === 0 && elapsed == null) {
+    const idle = state.idleMs;
+    if (idle === undefined || idle <= 0) return '';
+    return (
+      `${color(theme, 'dim', '(')}${color(theme, 'dim', ` 0`)} ` +
+      `${minorSeparator(theme, 'dim')} ${color(theme, 'dim', ` 0`)} ` +
+      `${color(theme, 'dim', `· ${formatDeckElapsed(idle)}`)}${color(theme, 'dim', ')')}`
+    );
+  }
   const childColor = children > 0 ? 'accent' : 'dim';
   const subagentColor = subagents > 0 ? 'accent' : 'dim';
   const timeSegment =
@@ -391,8 +402,10 @@ function projectLeft(state: HeaderDeckState, theme: Theme): string {
 }
 
 function gitRight(state: HeaderDeckState, theme: Theme): string {
-  // Frozen contract: absent Git removes the segment; narration is not a fact.
-  if (!state.branch && !state.gitAvailable) return '';
+  // Gray-out amendment (Human-directed): absent Git shows a dim marker.
+  if (!state.branch && !state.gitAvailable) {
+    return color(theme, 'dim', '(no Git)');
+  }
   const branch = color(
     theme,
     state.branch ? 'success' : 'dim',
@@ -429,18 +442,22 @@ function compactTelemetryLeft(state: HeaderDeckState, theme: Theme): string {
       : state.contextPercent === undefined
         ? 'dim'
         : 'accent';
+  const segments: string[] = [];
+  if (state.contextPercent !== undefined) {
+    segments.push(
+      color(theme, 'accent', `󰾆 ${formatDeckPercent(state.contextPercent)}`),
+    );
+  }
+  if (state.compactionCount > 0) {
+    segments.push(color(theme, ctxColor, `󰎞 ${state.compactionCount}`));
+  }
+  const quota = simpleQuotaTile(state, theme);
+  if (quota) segments.push(quota);
+  if (segments.length === 0) return globalLeft(state, theme);
   return [
     globalLeft(state, theme),
     semanticSeparator(theme),
-    state.contextPercent === undefined
-      ? undefined
-      : color(theme, 'accent', `󰾆 ${formatDeckPercent(state.contextPercent)}`),
-    minorSeparator(theme, ctxColor),
-    color(
-      theme,
-      state.compactionCount > 0 ? ctxColor : 'dim',
-      `󰎞 ${state.compactionCount}`,
-    ),
+    segments.join(` ${minorSeparator(theme, ctxColor)} `),
   ].join(' ');
 }
 
@@ -450,77 +467,80 @@ function compactTelemetryRight(
   nowMs = Date.now(),
 ): string {
   const resources = state.resources;
-  // Frozen contract: absent telemetry removes its slot; no placeholder dashes.
+  // Relocation: resources left-to-right, cost anchors the far end.
   const resourceSegments: string[] = [];
   if (resources) {
     const resourceColor =
       resources.cpuWarning || resources.memoryWarning ? 'warning' : 'accent';
     const parts = [
-      color(theme, resourceColor, ` ${formatDeckCpu(resources.cpuPercent)}`),
-      color(theme, resourceColor, ` ${formatDeckBytes(resources.memoryBytes)}`),
+      color(theme, resourceColor, ` ${formatDeckCpu(resources.cpuPercent)}`),
+      color(theme, resourceColor, ` ${formatDeckBytes(resources.memoryBytes)}`),
     ];
     resourceSegments.push(parts.join(` ${minorSeparator(theme, resourceColor)} `));
   }
   if (state.mcp) {
     resourceSegments.push(
-      color(theme, 'accent', ` ${state.mcp.healthy}/${state.mcp.total}`),
+      color(theme, 'accent', ` ${state.mcp.healthy}/${state.mcp.total}`),
     );
   }
-  const quotaAndCost = quotaAndCostTiles(state, theme, nowMs);
-  if (resourceSegments.length === 0) return quotaAndCost;
-  const resourcesAndCapabilities = resourceSegments.join(` ${minorSeparator(theme)} `);
-  if (!quotaAndCost) return resourcesAndCapabilities;
-  return [quotaAndCost, resourcesAndCapabilities].join(` ${semanticSeparator(theme)} `);
+  const windows = windowQuotaTiles(state, theme, nowMs);
+  if (windows) resourceSegments.unshift(windows);
+  const cost = costTile(state, theme);
+  if (cost) resourceSegments.push(cost);
+  return resourceSegments.join(` ${semanticSeparator(theme)} `);
 }
 
-function quotaAndCostTiles(
+function simpleQuotaTile(state: HeaderDeckState, theme: Theme): string {
+  const telemetry = state.footerTelemetry;
+  if (!telemetry || (telemetry.quotaWindows ?? []).length > 0) return '';
+  const quota = telemetry.quotaPercent;
+  if (quota === undefined) return '';
+  const quotaColor = quota >= 80 ? 'warning' : 'accent';
+  return color(theme, quotaColor, ` ${formatDeckPercent(quota)}`);
+}
+
+function windowQuotaTiles(
   state: HeaderDeckState,
   theme: Theme,
-  nowMs: number,
+  nowMs = Date.now(),
 ): string {
   const telemetry = state.footerTelemetry;
-  // Frozen contract: absent telemetry removes its slot; no placeholder dashes.
-  const tiles: string[] = [];
-  if (telemetry) {
-    tiles.push(color(theme, 'accent', `󰜦 ${formatCost(telemetry.totalCost)}`));
-  }
-
   const windows = telemetry?.quotaWindows ?? [];
-  if (windows.length === 0) {
-    const quota = telemetry?.quotaPercent;
-    if (quota !== undefined) {
-      const quotaColor = quota >= 80 ? 'warning' : 'accent';
-      tiles.unshift(color(theme, quotaColor, ` ${formatDeckPercent(quota)}`));
-    }
-    return tiles.join(` ${minorSeparator(theme)} `);
-  }
-
+  if (windows.length === 0) return '';
   // Icons carry window identity: minute/hour windows are the coding window and
   // wear the permanent flame with its reset countdown; day windows are the long
   // window on the calendar. Telemetry lists windows shortest-first, so the
   // first of each class is the tightest one.
   const coding = windows.find((window) => /^[\d.]+[mh]$/u.test(window.label));
   const calendar = windows.find((window) => /^[\d.]+d$/u.test(window.label));
-  const calendarTile = calendar
-    ? color(
+  const tiles: string[] = [];
+  if (calendar) {
+    tiles.push(
+      color(
         theme,
         calendar.percent >= 80 ? 'warning' : 'accent',
         `󰃰 ${formatDeckPercent(calendar.percent)}`,
-      )
-    : undefined;
-  const codingTile = coding
-    ? color(
+      ),
+    );
+  }
+  if (coding) {
+    tiles.push(
+      color(
         theme,
         coding.percent >= 80 ? 'warning' : 'accent',
         coding.resetAt !== undefined
           ? `󰈸 ${formatDeckPercent(coding.percent)} › 󰅐 ${formatDeckCountdown(coding.resetAt, nowMs)}`
           : `󰈸 ${formatDeckPercent(coding.percent)}`,
-      )
-    : undefined;
+      ),
+    );
+  }
+  return tiles.join(` ${semanticSeparator(theme)} `);
+}
 
-  return [...tiles, calendarTile, codingTile]
-    .filter((part): part is string => part !== undefined)
-    .join(` ${semanticSeparator(theme)} `);
+function costTile(state: HeaderDeckState, theme: Theme): string {
+  const telemetry = state.footerTelemetry;
+  if (!telemetry) return '';
+  return color(theme, 'accent', `󰜦 ${formatCost(telemetry.totalCost)}`);
 }
 
 function topRailPrefix(

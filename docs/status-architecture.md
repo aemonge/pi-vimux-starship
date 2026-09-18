@@ -100,6 +100,10 @@ Title, status, and every rendered surface are pure projections of the snapshot:
   independently.
 - Each fact has exactly one home per surface; a fact appears at most once per surface.
 - Silence when there is nothing to say: absent facts remove their slots.
+- Gray-out amendment (Human-directed, 2026-09-18): the idle runtime capsule
+  (with a live idle timer), the Git slot, and capability counts render dim
+  markers instead of hiding; aggregate OpenSpec numbers never render without a
+  focused task.
 - A detail that only restates observability — "doing stuff" by another name — is a
   placeholder; rendered details must name their subject (agent, task, step, or
   command) or the slot collapses.

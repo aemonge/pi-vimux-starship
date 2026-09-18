@@ -71,7 +71,8 @@ export function parseMcpCapability(value: unknown): McpCapability | null {
 }
 
 export function capabilityText(capability: CapabilityCount | null): string {
-  return capability ? `${capability.healthy}/${capability.total}` : '—';
+  // Gray-out amendment: absent capability reports an empty slot, not a dash.
+  return capability ? `${capability.healthy}/${capability.total}` : '';
 }
 
 export function buildCapabilityFooterWidget(mcp: McpCapability | null) {

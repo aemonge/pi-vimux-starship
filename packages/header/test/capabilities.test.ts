@@ -49,7 +49,7 @@ test('normalizes only bounded LSP availability counters', () => {
 
 test('renders only MCP availability with a plug icon', () => {
   assert.equal(capabilityText({ healthy: 2, total: 3 }), '2/3');
-  assert.equal(capabilityText(null), '—');
+  assert.equal(capabilityText(null), '');
 
   const message = buildCapabilityFooterWidget({ healthy: 2, total: 3 });
   assert.equal(message.type, 'upsert');
@@ -71,7 +71,8 @@ test('renders only MCP availability with a plug icon', () => {
 
   const empty = buildCapabilityFooterWidget(null);
   assert.equal(empty.type, 'upsert');
-  assert.equal(empty.widget.content.text, '—');
+  // Gray-out amendment: absent capability reports an empty slot.
+  assert.equal(empty.widget.content.text, '');
   assert.deepEqual(empty.widget.icon, {
     glyphs: { nerd: '', emoji: '🔌', unicode: '◇', ascii: 'MCP' },
     color: 'dim',

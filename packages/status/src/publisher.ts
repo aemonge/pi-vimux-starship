@@ -243,7 +243,7 @@ export function buildWidgetSnapshots(
     });
   }
 
-  if (options.openSpecOverview) {
+  if (options.openSpecOverview && options.focusedTaskId) {
     const overview = options.openSpecOverview;
     const complete =
       overview.totalPlans > 0 &&
@@ -257,26 +257,15 @@ export function buildWidgetSnapshots(
       description: 'Aggregate completion across OpenSpec Plans and their Tasks',
       content: { type: 'text', text: formatOpenSpecOverview(overview) },
       icon: {
-        glyphs: { nerd: '', emoji: '📋', unicode: '▤', ascii: 'P' },
+        glyphs: { nerd: '', emoji: '📋', unicode: '▤', ascii: 'P' },
         color,
       },
       style: { textColor: color },
       layout: { row: 0, position: 0, align: 'right', fill: 'none', minWidth: 8 },
     });
-  } else if (options.openSpecProjectDetected === false && !hasActiveFallback) {
-    widgets.push({
-      id: OPEN_SPEC_PROGRESS_WIDGET_ID,
-      label: 'OpenSpec progress',
-      description: 'No OpenSpec project was found from the current project root',
-      content: { type: 'text', text: 'no OpenSpec' },
-      icon: {
-        glyphs: { nerd: '', emoji: '📋', unicode: '▤', ascii: 'P' },
-        color: 'dim',
-      },
-      style: { textColor: 'dim' },
-      layout: { row: 0, position: 0, align: 'right', fill: 'none', minWidth: 8 },
-    });
   }
+  // Frozen contract: without an OpenSpec focus there is no progress surface —
+  // no aggregate overview, no 'no OpenSpec' narration.
 
   if (!snapshot.openspec && !options.openSpecOverview && options.goal) {
     widgets.push({
@@ -1014,6 +1003,7 @@ export function buildHeaderStatusEvent(
     goalAutomaticTurnLimit?: number;
     activeRuns?: ActiveRuntimeRuns;
     activeRunSpans?: ActiveRunSpanView[];
+    idleMs?: number;
   } = {},
 ): HeaderStatusEvent {
   const diagnosticsWidget = widgets.find(
@@ -1135,6 +1125,7 @@ export function buildHeaderStatusEvent(
   return {
     protocol: 1,
     ...(options.activeRunSpans ? { activeRunSpans: options.activeRunSpans } : {}),
+    ...(options.idleMs ? { idleMs: options.idleMs } : {}),
     activity: activity ?? null,
     selection,
     suggestion,

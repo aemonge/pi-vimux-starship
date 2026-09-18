@@ -485,10 +485,8 @@ test('an unfocused OpenSpec project publishes quiet feedback without warning', a
       () => JSON.stringify(harness.sharedEvents),
     );
 
-    assert.equal(
-      openSpecFooterText(latestOpenSpecProgressMessage(harness)),
-      '0/2 ›  0/2',
-    );
+    // Focus-gated progress: unfocused aggregate numbers never publish.
+    assert.equal(latestOpenSpecProgressMessage(harness), undefined);
 
     await harness.command('openspec-focus', '');
     assert.deepEqual(harness.notifications.at(-1), {

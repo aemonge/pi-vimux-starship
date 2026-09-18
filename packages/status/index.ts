@@ -665,6 +665,7 @@ class GalacticaStatusRuntime {
           return { children: runs.children, subagents: runs.subagents };
         })(),
         activeRunSpans: this.runtimeSpans.snapshot().spans ?? [],
+        idleMs: this.runtimeSpans.idleMs(),
       }),
     );
     this.updateTitle(snapshot);
