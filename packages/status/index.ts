@@ -269,6 +269,14 @@ class GalacticaStatusRuntime {
   };
 
   start(): void {
+    // Heartbeat: span ages and the idle timer are publish-time facts; without
+    // a tick they freeze. One unref'd interval, no-op when nothing is live.
+    this.resources.addInterval(() => {
+      if (this.stopped) return;
+      const snap = this.runtimeSpans.snapshot();
+      const idle = this.runtimeSpans.idleMs();
+      if ((snap.spans?.length ?? 0) > 0 || idle > 0) this.publish();
+    }, 1_000);
     this.publish();
     this.ensureGoalPolling();
     this.launch(

@@ -290,8 +290,8 @@ function spanTreeRows(state: HeaderDeckState, width: number, theme: Theme): stri
   return spans.map((span, index) => {
     const branch = index === spans.length - 1 ? '└' : '├';
     const who = span.agent ?? span.label ?? span.kind;
-    // Brown family (customMessageLabel), never bare black.
-    const left = color(theme, 'customMessageLabel', `  ${branch} ${who} ${span.stage}`);
+    // Gruvbox brown (dim in this theme), never bare black nor violet.
+    const left = color(theme, 'dim', `  ${branch} ${who} ${span.stage}`);
     const right = color(theme, 'dim', spanElapsed(span.elapsedMs));
     const fitted = truncateToWidth(left, Math.max(1, width - 8), '…');
     const gap = Math.max(1, width - visibleWidth(fitted) - visibleWidth(right));
@@ -404,7 +404,7 @@ function projectLeft(state: HeaderDeckState, theme: Theme): string {
 function gitRight(state: HeaderDeckState, theme: Theme): string {
   // Gray-out amendment (Human-directed): absent Git shows a dim marker.
   if (!state.branch && !state.gitAvailable) {
-    return color(theme, 'dim', '(no Git)');
+    return color(theme, 'dim', ` (no Git)`);
   }
   const branch = color(
     theme,
@@ -492,11 +492,23 @@ function compactTelemetryRight(
 
 function simpleQuotaTile(state: HeaderDeckState, theme: Theme): string {
   const telemetry = state.footerTelemetry;
-  if (!telemetry || (telemetry.quotaWindows ?? []).length > 0) return '';
-  const quota = telemetry.quotaPercent;
-  if (quota === undefined) return '';
-  const quotaColor = quota >= 80 ? 'warning' : 'accent';
-  return color(theme, quotaColor, ` ${formatDeckPercent(quota)}`);
+  if (!telemetry) return '';
+  const windows = telemetry.quotaWindows ?? [];
+  if (windows.length === 0) {
+    const quota = telemetry.quotaPercent;
+    if (quota === undefined) return '';
+    const quotaColor = quota >= 80 ? 'warning' : 'accent';
+    return color(theme, quotaColor, ` ${formatDeckPercent(quota)}`);
+  }
+  // With windows, the long-range calendar tile joins the left group; the
+  // coding flame stays with the live resources on the right.
+  const calendar = windows.find((window) => /^[\d.]+d$/u.test(window.label));
+  if (!calendar) return '';
+  return color(
+    theme,
+    calendar.percent >= 80 ? 'warning' : 'accent',
+    `󰃰 ${formatDeckPercent(calendar.percent)}`,
+  );
 }
 
 function windowQuotaTiles(
@@ -512,17 +524,7 @@ function windowQuotaTiles(
   // window on the calendar. Telemetry lists windows shortest-first, so the
   // first of each class is the tightest one.
   const coding = windows.find((window) => /^[\d.]+[mh]$/u.test(window.label));
-  const calendar = windows.find((window) => /^[\d.]+d$/u.test(window.label));
   const tiles: string[] = [];
-  if (calendar) {
-    tiles.push(
-      color(
-        theme,
-        calendar.percent >= 80 ? 'warning' : 'accent',
-        `󰃰 ${formatDeckPercent(calendar.percent)}`,
-      ),
-    );
-  }
   if (coding) {
     tiles.push(
       color(
@@ -632,12 +634,20 @@ export function renderHeaderDeck(
   // beside the progress slot.
   // Narrow frames: the capsule yields before the selection anchor does.
   const capsule = boundedWidth >= 40 ? runtimeCapsule(state, theme) : '';
+  // Progress lives beside the capsule: real counts when focused, a dim
+  // gray-out placeholder when not (Human-directed).
+  const progress =
+    boundedWidth >= 40
+      ? progressLine(state, theme) ||
+        `${color(theme, 'dim', ` task —`)} ${minorSeparator(theme, 'dim')} ${color(theme, 'dim', ` stps —`)}`
+      : '';
+  const titleRight = [capsule, progress].filter((part) => part !== '').join('  ');
   const focusLines = elevatedSelectionLines(state, boundedWidth, theme);
   const titleBase = focusLines.length > 0 ? focusLines : [''];
   const titleRows =
-    capsule || focusLines.length > 0
+    titleRight || focusLines.length > 0
       ? [
-          alignedSingleRow(titleBase[0] ?? '', capsule, boundedWidth),
+          alignedSingleRow(titleBase[0] ?? '', titleRight, boundedWidth),
           ...titleBase.slice(1),
         ]
       : [];
@@ -654,12 +664,9 @@ export function renderHeaderDeck(
     .filter((segment) => segment !== '')
     .join(' ');
   // Narrow frames: git yields before progress; progress before the stage.
-  const statusRight = [
-    ...(boundedWidth >= 60 ? [progressLine(state, theme)] : []),
-    ...(boundedWidth >= 100 ? [truncateToWidth(gitRight(state, theme), 52, '…')] : []),
-  ]
-    .filter((segment) => segment !== '')
-    .join('  ');
+  // Narrow frames: git yields before the stage does.
+  const statusRight =
+    boundedWidth >= 79 ? truncateToWidth(gitRight(state, theme), 52, '…') : '';
   const status = alignedSingleRow(statusLeft, statusRight, boundedWidth);
 
   const rows = [

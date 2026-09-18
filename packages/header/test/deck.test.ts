@@ -99,8 +99,8 @@ test('renders the approved rich wide header without side borders or spacer rows'
   const statusRow = plain(lines[2] ?? '');
   assert.ok(statusRow.includes('waiting'));
   assert.ok(statusRow.includes('requesting validation or redirection'));
-  assert.ok(statusRow.includes('task 0/1'));
-  assert.ok(statusRow.includes('stps 6/16'));
+  assert.ok(titleRow.includes('task 0/1'));
+  assert.ok(titleRow.includes('stps 6/16'));
   assert.equal(statusRow.includes('idle'), false);
   assert.doesNotMatch(lines[2] ?? '', /requesting validation or redirection ⟩  task/u);
   assert.equal(plain(lines[3] ?? ''), '┈'.repeat(160));
@@ -417,10 +417,8 @@ test('colors recovery activity and direction blue while only lifecycle stays bol
 
   const lines = renderHeaderDeck(state, 160, theme as never);
 
-  assert.match(
-    lines[2] ?? '',
-    /working ⟩ recovering 󰁕 awaiting resume or redirect\s+ task/u,
-  );
+  assert.ok(plain(lines[2] ?? '').includes('working ⟩ recovering'));
+  assert.ok(plain(lines[2] ?? '').includes('awaiting resume or redirect'));
   assert.ok(colors.includes('accent:recovering'));
   assert.ok(colors.includes('accent:󰁕 awaiting resume or redirect'));
   assert.ok(bolded.includes('working'));
@@ -447,7 +445,7 @@ test('reports the WHAT with task title and step while active without a cue', () 
 
   assert.ok(status.includes('working ⟩ implementing Plan title'));
   assert.equal(status.includes('step 7/16'), false);
-  assert.ok(status.includes('stps 6/16'));
+  assert.ok(plain(lines[0] ?? '').includes('stps 6/16'));
   assert.equal(status.includes('󰁕 Plan title'), false);
 });
 
@@ -490,8 +488,12 @@ test('keeps lifecycle contextual and colors progress by completion', () => {
   colors.length = 0;
   renderHeaderDeck(state, 160, theme as never);
   // Frozen contract: absent counters remove their slots — no dash narration.
-  assert.ok(!colors.some((entry) => entry.includes('task')));
-  assert.ok(!colors.some((entry) => entry.includes('stps')));
+  assert.ok(
+    !colors.some((entry) => entry.includes('task') && !entry.startsWith('dim:')),
+  );
+  assert.ok(
+    !colors.some((entry) => entry.includes('stps') && !entry.startsWith('dim:')),
+  );
 
   state.header!.counters.tasks = { completed: 0, total: 1 };
   colors.length = 0;
@@ -639,11 +641,23 @@ test('renders unavailable optional telemetry honestly', () => {
   const all = lines.join('\n');
   // Frozen contract: absent facts remove their slots — the frame collapses
   // without a single placeholder dash or emptiness narration.
-  assert.equal(all.includes('—'), false);
+  // Gray-out amendment: dim dashes live on the title placeholder only.
+  assert.equal(
+    lines.slice(1).some((line) => line.includes('—')),
+    false,
+  );
+  assert.ok(plain(lines[0] ?? '').includes('task —'), 'dim title placeholder');
+  assert.ok(plain(lines[0] ?? '').includes('stps —'), 'dim title placeholder');
   assert.doesNotMatch(all, /next direction/u);
   assert.doesNotMatch(all, /clean/u);
-  assert.ok(!all.includes('task'), 'no task slot without counters');
-  assert.ok(!all.includes('stps'), 'no steps slot without counters');
+  assert.ok(
+    !lines.slice(1).some((line) => line.includes('task')),
+    'no task slot below the title without counters',
+  );
+  assert.ok(
+    !lines.slice(1).some((line) => line.includes('stps')),
+    'no steps slot below the title without counters',
+  );
   const status = lines.find((line) => line.includes('waiting')) ?? '';
   // Frozen contract: full silence when nothing is running or selected.
   assert.equal(status, '');
