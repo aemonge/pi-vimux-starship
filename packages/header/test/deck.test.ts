@@ -833,11 +833,9 @@ test('renders elastic span rows naming each live child run', () => {
   ];
   const lines = renderHeaderDeck(state, 120, plainTheme as never);
   const reviewer = lines.find((line) => line.includes('reviewer')) ?? '';
-  assert.match(reviewer, /├ reviewer assuring/u);
-  assert.match(reviewer, /00'41/u);
+  assert.match(reviewer, /├ \(00'41\) reviewer assuring/u);
   const bashRow = lines.find((line) => line.includes('pytest')) ?? '';
-  assert.match(bashRow, /└ .*pytest working/u);
-  assert.match(bashRow, /00'10/u);
+  assert.match(bashRow, /└ \(00'10\) pytest working/u);
 });
 
 test('span rows collapse when no child runs are live', () => {

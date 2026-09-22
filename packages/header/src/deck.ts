@@ -326,11 +326,13 @@ function spanTreeRows(state: HeaderDeckState, width: number, theme: Theme): stri
     const branch = index === spans.length - 1 ? '└' : '├';
     const who = span.agent ?? span.label ?? span.kind;
     // Gruvbox brown (dim in this theme), never bare black nor violet.
-    const left = color(theme, 'dim', `  ${branch} ${who} ${span.stage}`);
-    const right = color(theme, 'dim', spanElapsed(span.elapsedMs));
-    const fitted = truncateToWidth(left, Math.max(1, width - 8), '…');
-    const gap = Math.max(1, width - visibleWidth(fitted) - visibleWidth(right));
-    return `${fitted}${' '.repeat(gap)}${right}`;
+    // Relocation: the age rides inline beside its branch glyph.
+    const row = color(
+      theme,
+      'dim',
+      `  ${branch} (${spanElapsed(span.elapsedMs)}) ${who} ${span.stage}`,
+    );
+    return truncateToWidth(row, Math.max(1, width), '…');
   });
 }
 
