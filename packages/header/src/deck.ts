@@ -675,8 +675,8 @@ export function renderHeaderDeck(
     boundedWidth >= 79 ? truncateToWidth(gitRight(state, theme), 52, '…') : '';
   const status = alignedSingleRow(statusLeft, statusRight, boundedWidth);
 
-  // Band inversion (Human-directed): telemetry crowns the deck; the title
-  // band anchors the base beside the prompt rail. Rules keep their neighbors.
+  // Band adjacency (Human-directed): telemetry crowns the deck, the title
+  // band reads beneath it, and the status row anchors the base by the rail.
   const rows = [
     ...alignedRows(
       compactTelemetryLeft(state, theme, boundedWidth),
@@ -684,10 +684,10 @@ export function renderHeaderDeck(
       boundedWidth,
     ),
     top,
+    ...titleRows,
+    divider,
     status,
     ...spanTreeRows(state, boundedWidth, theme),
-    divider,
-    ...titleRows,
     ...(inserting ? [] : [bottom]),
   ];
   return rows.map((line) => fitWithoutDanglingSeparator(line, boundedWidth));

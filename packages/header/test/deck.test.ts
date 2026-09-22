@@ -92,18 +92,18 @@ test('renders the approved rich wide header without side borders or spacer rows'
   const lines = renderHeaderDeck(fixture(), 160, plainTheme as never);
 
   assert.equal(lines.length, 6);
-  const titleRow = plain(lines[4] ?? '');
+  const titleRow = plain(lines[2] ?? '');
   assert.ok(titleRow.startsWith("󰠭 000:07'00 ⟩ Read-only preflight"));
   assert.ok(titleRow.includes("000:07'00"));
   assert.match(lines[1] ?? '', /^─+$/u);
-  const statusRow = plain(lines[2] ?? '');
+  const statusRow = plain(lines[4] ?? '');
   assert.ok(statusRow.includes('waiting'));
   assert.ok(statusRow.includes('requesting validation or redirection'));
   assert.ok(titleRow.includes('task 0/1'));
   assert.ok(titleRow.includes('stps 6/16'));
   assert.equal(statusRow.includes('idle'), false);
   assert.match(statusRow, /^. 02 › . 01 ⟩ waiting/u);
-  assert.doesNotMatch(lines[2] ?? '', /requesting validation or redirection ⟩  task/u);
+  assert.doesNotMatch(lines[4] ?? '', /requesting validation or redirection ⟩  task/u);
   assert.equal(plain(lines[3] ?? ''), '┈'.repeat(160));
   assert.match(lines[3] ?? '', /^\u001b\[2m/u);
   assert.match(plain(lines[0] ?? ''), /^\[.\] . ~\/galactica ⟩/u);
@@ -247,11 +247,11 @@ test('keeps activity and focus distinct on the title row', () => {
   state.header!.suggestion = 'requesting-validation';
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  const statusRow = plain(lines[2] ?? '');
+  const statusRow = plain(lines[4] ?? '');
   assert.ok(statusRow.includes('assuring'));
   assert.ok(statusRow.includes('verify'));
   assert.ok(statusRow.includes('requesting validation or redirection'));
-  const titleRow = plain(lines[4] ?? '');
+  const titleRow = plain(lines[2] ?? '');
   assert.ok(titleRow.startsWith("󰠭 000:07'00 ⟩ Plan title › Current task"));
   assert.ok(titleRow.includes("000:07'00"));
   assert.equal(lines.join('\n').split('Running checks').length - 1, 0);
@@ -269,19 +269,19 @@ test('gives the complete selected scope a bounded full-width focus canvas', () =
   };
 
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.doesNotMatch(wide[2] ?? '', /Parent Plan title/u);
-  const titleRow = plain(wide[4] ?? '');
+  assert.doesNotMatch(wide[4] ?? '', /Parent Plan title/u);
+  const titleRow = plain(wide[2] ?? '');
   assert.ok(
     titleRow.startsWith(`󰠭 000:07'00 ⟩ Parent Plan title › ${expected}`.slice(0, 40)),
   );
   assert.ok(titleRow.includes("000:07'00"));
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
-  assert.match(narrow[4] ?? '', /󰠭/u);
+  assert.match(narrow[2] ?? '', /󰠭/u);
   const status = narrow.find((line) => plain(line).includes('waiting')) ?? '';
   assert.ok(status.includes('waiting'));
   assert.equal(status.includes('idle'), false);
-  const focus = narrow.slice(4, 6);
+  const focus = narrow.slice(2, 4);
   assert.equal(focus.length, 2);
   assert.ok(plain(focus[0] ?? '').startsWith("󰠭 000:07'00 ⟩ Parent Plan title"));
   assert.ok(plain(focus[1] ?? '').includes('without repeating'));
@@ -297,14 +297,14 @@ test('keeps a single selected title on the focus row only', () => {
   };
 
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.doesNotMatch(wide[2] ?? '', /One focused work title/u);
-  const titleRow = plain(wide[4] ?? '');
+  assert.doesNotMatch(wide[4] ?? '', /One focused work title/u);
+  const titleRow = plain(wide[2] ?? '');
   assert.ok(titleRow.startsWith("󰠭 000:07'00 ⟩ One focused work title"));
   assert.ok(titleRow.includes("000:07'00"));
   assert.equal(wide.join('\n').split('One focused work title').length - 1, 1);
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
-  assert.ok(plain(narrow[4] ?? '').startsWith("󰠭 000:07'00 ⟩ One focused work title"));
+  assert.ok(plain(narrow[2] ?? '').startsWith("󰠭 000:07'00 ⟩ One focused work title"));
 });
 
 test('renders the subject selection on the focus row instead of an em dash', () => {
@@ -317,13 +317,13 @@ test('renders the subject selection on the focus row instead of an em dash', () 
   };
 
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
-  const subjectRow = plain(wide[4] ?? '');
+  const subjectRow = plain(wide[2] ?? '');
   assert.ok(subjectRow.startsWith("󰠭 000:07'00 ⟩ Session subject"));
   assert.ok(subjectRow.includes("000:07'00"));
   assert.doesNotMatch(wide.join('\n'), /󰠭 ⟩ —/u);
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
-  assert.notEqual(plain(narrow[4] ?? ''), `󰠭 ⟩ —`);
+  assert.notEqual(plain(narrow[2] ?? ''), `󰠭 ⟩ —`);
 });
 
 test('bolds only current control and status anchors', () => {
@@ -421,8 +421,8 @@ test('colors recovery activity and direction blue while only lifecycle stays bol
 
   const lines = renderHeaderDeck(state, 160, theme as never);
 
-  assert.ok(plain(lines[2] ?? '').includes('working › recovering'));
-  assert.ok(plain(lines[2] ?? '').includes('awaiting resume or redirect'));
+  assert.ok(plain(lines[4] ?? '').includes('working › recovering'));
+  assert.ok(plain(lines[4] ?? '').includes('awaiting resume or redirect'));
   assert.ok(colors.includes('accent:recovering'));
   assert.ok(colors.includes('accent:awaiting resume or redirect'));
   assert.ok(bolded.includes('working'));
@@ -445,11 +445,11 @@ test('reports the WHAT with task title and step while active without a cue', () 
 
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
   // Relocation: the capsule keeps a title row alive even without selection.
-  const status = plain(lines[2] ?? '');
+  const status = plain(lines[4] ?? '');
 
   assert.ok(status.includes('working › implementing ⟩ Plan title'));
   assert.equal(status.includes('step 7/16'), false);
-  assert.ok(plain(lines[4] ?? '').includes('stps 6/16'));
+  assert.ok(plain(lines[2] ?? '').includes('stps 6/16'));
   assert.equal(status.includes('󰁕 Plan title'), false);
 });
 
@@ -565,26 +565,26 @@ test('keeps child-run and subagent counters visible and changes only their color
 
   state.header!.counters.activeRuns = { children: 0, subagents: 0 };
   let lines = renderHeaderDeck(state, 160, theme as never);
-  const counterRow = plain(lines[4] ?? '');
+  const counterRow = plain(lines[2] ?? '');
   assert.ok(counterRow.includes("000:07'00"));
   // Relocation phase: runs ride the lifecycle row, off the title band.
-  assert.match(plain(lines[2] ?? ''), /^. 00 › . 00 ⟩ waiting/u);
+  assert.match(plain(lines[4] ?? ''), /^. 00 › . 00 ⟩ waiting/u);
   assert.ok(colors.includes('dim: 00'));
   assert.doesNotMatch(lines[0] ?? '', /||󰈙/u);
 
   colors.length = 0;
   state.header!.counters.activeRuns = { children: 1, subagents: 0 };
   lines = renderHeaderDeck(state, 160, theme as never);
-  assert.ok(plain(lines[4] ?? '').includes("000:07'00"));
-  assert.match(plain(lines[2] ?? ''), /^. 01 › . 00 ⟩ waiting/u);
+  assert.ok(plain(lines[2] ?? '').includes("000:07'00"));
+  assert.match(plain(lines[4] ?? ''), /^. 01 › . 00 ⟩ waiting/u);
   assert.ok(colors.includes('accent: 01'));
   assert.ok(colors.includes('dim: 00'));
 
   colors.length = 0;
   state.header!.counters.activeRuns = { children: 3, subagents: 2 };
   lines = renderHeaderDeck(state, 160, theme as never);
-  assert.ok(plain(lines[4] ?? '').includes("000:07'00"));
-  assert.match(plain(lines[2] ?? ''), /^. 03 › . 02 ⟩ waiting/u);
+  assert.ok(plain(lines[2] ?? '').includes("000:07'00"));
+  assert.match(plain(lines[4] ?? ''), /^. 03 › . 02 ⟩ waiting/u);
   assert.ok(colors.includes('accent: 03'));
   assert.ok(colors.includes('accent: 02'));
 });
@@ -657,16 +657,16 @@ test('renders unavailable optional telemetry honestly', () => {
     lines.some((line) => line.includes('—')),
     false,
   );
-  assert.ok(plain(lines[4] ?? '').includes('task 00/00'), 'dim title placeholder');
-  assert.ok(plain(lines[4] ?? '').includes('stps 00/00'), 'dim title placeholder');
+  assert.ok(plain(lines[2] ?? '').includes('task 00/00'), 'dim title placeholder');
+  assert.ok(plain(lines[2] ?? '').includes('stps 00/00'), 'dim title placeholder');
   assert.doesNotMatch(all, /next direction/u);
   assert.doesNotMatch(all, /clean/u);
   assert.ok(
-    !lines.filter((_line, index) => index !== 4).some((line) => line.includes('task')),
+    !lines.filter((_line, index) => index !== 2).some((line) => line.includes('task')),
     'no task slot below the title without counters',
   );
   assert.ok(
-    !lines.filter((_line, index) => index !== 4).some((line) => line.includes('stps')),
+    !lines.filter((_line, index) => index !== 2).some((line) => line.includes('stps')),
     'no steps slot below the title without counters',
   );
   const status = lines.find((line) => line.includes('waiting')) ?? '';
