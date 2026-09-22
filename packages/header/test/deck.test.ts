@@ -458,6 +458,31 @@ test('reports the WHAT with task title and step while active without a cue', () 
   assert.equal(status.includes('󰁕 Plan title'), false);
 });
 
+test('silences the what when the selection band already shows it', () => {
+  const state = fixture();
+  const echoTitle = 'Git joins the project crown; model telemetry rides the row';
+  state.header!.work = {
+    lifecycle: 'working',
+    titles: [echoTitle],
+    color: 'accent',
+    activity: { kind: 'implementation' },
+  };
+  state.header!.selection = {
+    source: 'session-work',
+    titles: [echoTitle],
+    color: 'accent',
+  };
+  state.header!.suggestion = null;
+
+  const lines = renderHeaderDeck(state, 160, plainTheme as never);
+  const titleLine = plain(lines.find((line) => line.includes("000:07'00")) ?? '');
+  const statusLine = plain(lines[4] ?? '');
+  assert.ok(titleLine.includes(echoTitle), 'selection band shows the title');
+  assert.ok(statusLine.includes('working › implementing'), 'stage stays');
+  // No-echo contract: the title renders exactly once across the whole deck.
+  assert.equal(lines.join('\n').split(echoTitle).length - 1, 1);
+});
+
 test('keeps lifecycle contextual and colors progress by completion', () => {
   const state = fixture();
   state.header!.work!.color = 'warning';

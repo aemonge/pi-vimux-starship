@@ -389,7 +389,12 @@ function suggestionLine(
   const suggestion = state.header?.suggestion;
   if (!suggestion) {
     const what = lifecycle(state)?.active ? whatLine(state) : '';
-    return what ? color(theme, 'accent', what) : ''; // frozen contract: silence, no dash
+    // No-echo contract: a what the selection band already shows stays silent.
+    const selectionTitles = new Set(
+      (state.header?.selection?.titles ?? []).map((title) => safeText(title)),
+    );
+    if (!what || selectionTitles.has(what)) return '';
+    return color(theme, 'accent', what); // frozen contract: silence, no dash
   }
   const semanticColor =
     suggestion === 'requesting-redirection'
