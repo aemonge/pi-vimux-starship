@@ -77,15 +77,15 @@ function fixture(): HeaderDeckState {
 }
 
 test('formats fixed-width minute activity age with visible hundredths', () => {
-  assert.equal(formatDeckElapsed(null), "00:00'00");
-  assert.equal(formatDeckElapsed(54), "00:00'05");
-  assert.equal(formatDeckElapsed(999), "00:00'99");
-  assert.equal(formatDeckElapsed(1_000), "00:01'00");
-  assert.equal(formatDeckElapsed(62_345), "01:02'34");
-  assert.equal(formatDeckElapsed(3_600_000), "60:00'00");
-  assert.equal(formatDeckElapsed(Number.POSITIVE_INFINITY), "99:59'99");
-  assert.equal(formatDeckElapsed(Number.NaN), "00:00'00");
-  assert.equal(formatDeckElapsed(Number.NEGATIVE_INFINITY), "00:00'00");
+  assert.equal(formatDeckElapsed(null), "000:00'00");
+  assert.equal(formatDeckElapsed(54), "000:00'05");
+  assert.equal(formatDeckElapsed(999), "000:00'99");
+  assert.equal(formatDeckElapsed(1_000), "000:01'00");
+  assert.equal(formatDeckElapsed(62_345), "001:02'34");
+  assert.equal(formatDeckElapsed(3_600_000), "060:00'00");
+  assert.equal(formatDeckElapsed(Number.POSITIVE_INFINITY), "999:59'99");
+  assert.equal(formatDeckElapsed(Number.NaN), "000:00'00");
+  assert.equal(formatDeckElapsed(Number.NEGATIVE_INFINITY), "000:00'00");
 });
 
 test('renders the approved rich wide header without side borders or spacer rows', () => {
@@ -93,8 +93,8 @@ test('renders the approved rich wide header without side borders or spacer rows'
 
   assert.equal(lines.length, 6);
   const titleRow = plain(lines[0] ?? '');
-  assert.ok(titleRow.startsWith('󰠭 ⟩ Read-only preflight'));
-  assert.ok(titleRow.includes("00:07'00"));
+  assert.ok(titleRow.startsWith("󰠭 000:07'00 ⟩ Read-only preflight"));
+  assert.ok(titleRow.includes("000:07'00"));
   assert.match(lines[1] ?? '', /^─+$/u);
   const statusRow = plain(lines[2] ?? '');
   assert.ok(statusRow.includes('waiting'));
@@ -102,10 +102,12 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.ok(titleRow.includes('task 0/1'));
   assert.ok(titleRow.includes('stps 6/16'));
   assert.equal(statusRow.includes('idle'), false);
+  assert.match(statusRow, /^. 02 › . 01 ⟩ waiting/u);
   assert.doesNotMatch(lines[2] ?? '', /requesting validation or redirection ⟩  task/u);
   assert.equal(plain(lines[3] ?? ''), '┈'.repeat(160));
   assert.match(lines[3] ?? '', /^\u001b\[2m/u);
-  assert.ok(statusRow.includes('~/galactica'));
+  assert.match(plain(lines[4] ?? ''), /^\[.\] . ~\/galactica ⟩/u);
+  // Relocation phase: runs lead the lifecycle row; project heads telemetry.
   assert.match(statusRow, /feature\/review-led/u);
   assert.ok(statusRow.trimEnd().endsWith('1'));
   assert.match(
@@ -250,8 +252,8 @@ test('keeps activity and focus distinct on the title row', () => {
   assert.ok(statusRow.includes('verify'));
   assert.ok(statusRow.includes('requesting validation or redirection'));
   const titleRow = plain(lines[0] ?? '');
-  assert.ok(titleRow.startsWith('󰠭 ⟩ Plan title › Current task'));
-  assert.ok(titleRow.includes("00:07'00"));
+  assert.ok(titleRow.startsWith("󰠭 000:07'00 ⟩ Plan title › Current task"));
+  assert.ok(titleRow.includes("000:07'00"));
   assert.equal(lines.join('\n').split('Running checks').length - 1, 0);
 });
 
@@ -269,8 +271,10 @@ test('gives the complete selected scope a bounded full-width focus canvas', () =
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
   assert.doesNotMatch(wide[2] ?? '', /Parent Plan title/u);
   const titleRow = plain(wide[0] ?? '');
-  assert.ok(titleRow.startsWith(`󰠭 ⟩ Parent Plan title › ${expected}`.slice(0, 40)));
-  assert.ok(titleRow.includes("00:07'00"));
+  assert.ok(
+    titleRow.startsWith(`󰠭 000:07'00 ⟩ Parent Plan title › ${expected}`.slice(0, 40)),
+  );
+  assert.ok(titleRow.includes("000:07'00"));
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
   assert.match(narrow[0] ?? '', /󰠭/u);
@@ -279,7 +283,7 @@ test('gives the complete selected scope a bounded full-width focus canvas', () =
   assert.equal(status.includes('idle'), false);
   const focus = narrow.slice(0, 2);
   assert.equal(focus.length, 2);
-  assert.ok(plain(focus[0] ?? '').startsWith('󰠭 ⟩ Parent Plan title'));
+  assert.ok(plain(focus[0] ?? '').startsWith("󰠭 000:07'00 ⟩ Parent Plan title"));
   assert.ok(plain(focus[1] ?? '').includes('without repeating'));
 });
 
@@ -295,12 +299,12 @@ test('keeps a single selected title on the focus row only', () => {
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
   assert.doesNotMatch(wide[2] ?? '', /One focused work title/u);
   const titleRow = plain(wide[0] ?? '');
-  assert.ok(titleRow.startsWith('󰠭 ⟩ One focused work title'));
-  assert.ok(titleRow.includes("00:07'00"));
+  assert.ok(titleRow.startsWith("󰠭 000:07'00 ⟩ One focused work title"));
+  assert.ok(titleRow.includes("000:07'00"));
   assert.equal(wide.join('\n').split('One focused work title').length - 1, 1);
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
-  assert.ok(plain(narrow[0] ?? '').startsWith('󰠭 ⟩ One focused work title'));
+  assert.ok(plain(narrow[0] ?? '').startsWith("󰠭 000:07'00 ⟩ One focused work title"));
 });
 
 test('renders the subject selection on the focus row instead of an em dash', () => {
@@ -314,8 +318,8 @@ test('renders the subject selection on the focus row instead of an em dash', () 
 
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
   const subjectRow = plain(wide[0] ?? '');
-  assert.ok(subjectRow.startsWith('󰠭 ⟩ Session subject'));
-  assert.ok(subjectRow.includes("00:07'00"));
+  assert.ok(subjectRow.startsWith("󰠭 000:07'00 ⟩ Session subject"));
+  assert.ok(subjectRow.includes("000:07'00"));
   assert.doesNotMatch(wide.join('\n'), /󰠭 ⟩ —/u);
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
@@ -339,7 +343,7 @@ test('bolds only current control and status anchors', () => {
   assert.ok(bolded.includes('[󰆧]'));
   assert.ok(bolded.includes('⟩'));
   for (const regular of [
-    "( 2 ›  1 · 00:07'00)",
+    "( 2 ›  1 · 000:07'00)",
     'idle',
     'requesting validation or redirection',
     'Read-only preflight for the interrupted one-line Review ledger fix',
@@ -381,10 +385,10 @@ test('uses a bold blue lifecycle with neutral activity and green direction', () 
 
   assert.ok(colors.includes('accent:assuring'));
   assert.ok(colors.includes('text:verify'));
-  assert.ok(colors.includes('warning:󰁕 requesting validation or redirection'));
+  assert.ok(colors.includes('warning:requesting validation or redirection'));
   assert.ok(colors.includes('accent:Plan title › Current task'));
   assert.equal(colors.includes('accent:verify'), false);
-  assert.equal(colors.includes('accent:󰁕 requesting validation or redirection'), false);
+  assert.equal(colors.includes('accent:requesting validation or redirection'), false);
 });
 
 test('colors recovery activity and direction blue while only lifecycle stays bold', () => {
@@ -417,13 +421,13 @@ test('colors recovery activity and direction blue while only lifecycle stays bol
 
   const lines = renderHeaderDeck(state, 160, theme as never);
 
-  assert.ok(plain(lines[2] ?? '').includes('working ⟩ recovering'));
+  assert.ok(plain(lines[2] ?? '').includes('working › recovering'));
   assert.ok(plain(lines[2] ?? '').includes('awaiting resume or redirect'));
   assert.ok(colors.includes('accent:recovering'));
-  assert.ok(colors.includes('accent:󰁕 awaiting resume or redirect'));
+  assert.ok(colors.includes('accent:awaiting resume or redirect'));
   assert.ok(bolded.includes('working'));
   assert.equal(bolded.includes('recovering'), false);
-  assert.equal(bolded.includes('󰁕 awaiting resume or redirect'), false);
+  assert.equal(bolded.includes('awaiting resume or redirect'), false);
 });
 
 test('reports the WHAT with task title and step while active without a cue', () => {
@@ -443,7 +447,7 @@ test('reports the WHAT with task title and step while active without a cue', () 
   // Relocation: the capsule keeps a title row alive even without selection.
   const status = plain(lines[2] ?? '');
 
-  assert.ok(status.includes('working ⟩ implementing Plan title'));
+  assert.ok(status.includes('working › implementing ⟩ Plan title'));
   assert.equal(status.includes('step 7/16'), false);
   assert.ok(plain(lines[0] ?? '').includes('stps 6/16'));
   assert.equal(status.includes('󰁕 Plan title'), false);
@@ -464,9 +468,9 @@ test('keeps lifecycle contextual and colors progress by completion', () => {
   renderHeaderDeck(state, 160, theme as never);
 
   assert.ok(colors.includes('warning:waiting'));
-  assert.ok(colors.includes("accent:00:07'00"));
+  assert.ok(colors.includes("accent:000:07'00"));
   assert.ok(!colors.some((entry) => entry.endsWith(':idle')));
-  assert.ok(colors.includes('warning:󰁕 requesting validation or redirection'));
+  assert.ok(colors.includes('warning:requesting validation or redirection'));
   assert.ok(
     colors.includes(
       'accent:Read-only preflight for the interrupted one-line Review ledger fix › before further OpenSpec validation and implementation',
@@ -562,23 +566,27 @@ test('keeps child-run and subagent counters visible and changes only their color
   state.header!.counters.activeRuns = { children: 0, subagents: 0 };
   let lines = renderHeaderDeck(state, 160, theme as never);
   const counterRow = plain(lines[0] ?? '');
-  assert.ok(counterRow.includes("00:07'00"));
-  assert.ok(colors.includes('dim: 0'));
+  assert.ok(counterRow.includes("000:07'00"));
+  // Relocation phase: runs ride the lifecycle row, off the title band.
+  assert.match(plain(lines[2] ?? ''), /^. 00 › . 00 ⟩ waiting/u);
+  assert.ok(colors.includes('dim: 00'));
   assert.doesNotMatch(lines[4] ?? '', /||󰈙/u);
 
   colors.length = 0;
   state.header!.counters.activeRuns = { children: 1, subagents: 0 };
   lines = renderHeaderDeck(state, 160, theme as never);
-  assert.ok(plain(lines[0] ?? '').includes("00:07'00"));
-  assert.ok(colors.includes('accent: 1'));
-  assert.ok(colors.includes('dim: 0'));
+  assert.ok(plain(lines[0] ?? '').includes("000:07'00"));
+  assert.match(plain(lines[2] ?? ''), /^. 01 › . 00 ⟩ waiting/u);
+  assert.ok(colors.includes('accent: 01'));
+  assert.ok(colors.includes('dim: 00'));
 
   colors.length = 0;
   state.header!.counters.activeRuns = { children: 3, subagents: 2 };
   lines = renderHeaderDeck(state, 160, theme as never);
-  assert.ok(plain(lines[0] ?? '').includes("00:07'00"));
-  assert.ok(colors.includes('accent: 3'));
-  assert.ok(colors.includes('accent: 2'));
+  assert.ok(plain(lines[0] ?? '').includes("000:07'00"));
+  assert.match(plain(lines[2] ?? ''), /^. 03 › . 02 ⟩ waiting/u);
+  assert.ok(colors.includes('accent: 03'));
+  assert.ok(colors.includes('accent: 02'));
 });
 
 test('never leaves a telemetry separator dangling at narrow widths', () => {
@@ -617,7 +625,7 @@ test('preserves width and essential deck structure through responsive collapse',
     assert.match(lines[0] ?? '', /󰠭/u, String(width));
     assert.equal(lines.join('').split('󰠭').length - 1, 2, String(width));
     if (width >= 79) {
-      assert.match(lines.join('\n'), /00:07'00/u, String(width));
+      assert.match(lines.join('\n'), /000:07'00/u, String(width));
       assert.match(lines.join('\n'), /󰾆 38%/u, String(width));
     }
   }
@@ -641,13 +649,13 @@ test('renders unavailable optional telemetry honestly', () => {
   const all = lines.join('\n');
   // Frozen contract: absent facts remove their slots — the frame collapses
   // without a single placeholder dash or emptiness narration.
-  // Gray-out amendment: dim dashes live on the title placeholder only.
+  // Gray-out amendment: dim numeric zeros replace every placeholder dash.
   assert.equal(
-    lines.slice(1).some((line) => line.includes('—')),
+    lines.some((line) => line.includes('—')),
     false,
   );
-  assert.ok(plain(lines[0] ?? '').includes('task —'), 'dim title placeholder');
-  assert.ok(plain(lines[0] ?? '').includes('stps —'), 'dim title placeholder');
+  assert.ok(plain(lines[0] ?? '').includes('task 00/00'), 'dim title placeholder');
+  assert.ok(plain(lines[0] ?? '').includes('stps 00/00'), 'dim title placeholder');
   assert.doesNotMatch(all, /next direction/u);
   assert.doesNotMatch(all, /clean/u);
   assert.ok(

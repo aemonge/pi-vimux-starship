@@ -112,7 +112,7 @@ function fallbackModeRail(state: HeaderDeckState, theme: Theme): HeaderDeckModeR
 }
 
 export function formatDeckElapsed(elapsedMs: number | null): string {
-  const maximum = (99 * 60 + 59) * 1_000 + 999;
+  const maximum = (999 * 60 + 59) * 1_000 + 999;
   const observed = elapsedMs ?? 0;
   const finite = Number.isFinite(observed)
     ? observed
@@ -123,7 +123,7 @@ export function formatDeckElapsed(elapsedMs: number | null): string {
   const minutes = Math.floor(normalized / 60_000);
   const seconds = Math.floor((normalized % 60_000) / 1_000);
   const centiseconds = Math.floor((normalized % 1_000) / 10);
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}'${String(centiseconds).padStart(2, '0')}`;
+  return `${String(minutes).padStart(3, '0')}:${String(seconds).padStart(2, '0')}'${String(centiseconds).padStart(2, '0')}`;
 }
 
 export function formatDeckPercent(value: number): string {
@@ -207,7 +207,8 @@ function elevatedSelectionLines(
   width: number,
   theme: Theme,
 ): string[] {
-  const prefix = `${color(theme, 'customMessageLabel', '󰠭')} ${semanticSeparator(theme)} `;
+  // Relocation phase: the clock leads the title band; the anchor keeps its corner.
+  const prefix = `${color(theme, 'customMessageLabel', '󰠭')} ${timerTile(state, theme)} ${semanticSeparator(theme)} `;
   const indent = ' '.repeat(visibleWidth(prefix));
   const selection = state.header?.selection;
   const titles = (selection?.titles ?? [])
@@ -273,25 +274,38 @@ function progressLine(state: HeaderDeckState, theme: Theme): string {
   return `${segments[0]} ${minorSeparator(theme, 'dim')} ${segments[1]}`;
 }
 
-function titleMetrics(state: HeaderDeckState, theme: Theme): string {
-  const children = state.header?.counters.activeRuns?.children ?? 0;
-  const subagents = state.header?.counters.activeRuns?.subagents ?? 0;
+// Relocation phase (Human-directed): the clock leads the title band beside
+// the anchor, runs ride the lifecycle row, and progress keeps the title's
+// right end — real values when live, dim numeric zeros when not
+// (gray-out amendment).
+function timerTile(state: HeaderDeckState, theme: Theme): string {
   const elapsed = state.elapsedMs;
   const idle = state.idleMs;
-  // Human-directed composition: timer ⟩ runs ⟩ progress — real values when
-  // live, dim dash placeholders when not (gray-out amendment).
-  const timer =
-    elapsed != null
-      ? color(theme, 'accent', formatDeckElapsed(elapsed))
-      : color(theme, 'dim', formatDeckElapsed(idle ?? 0));
-  const runsLive = children > 0 || subagents > 0 || elapsed != null;
-  const runs = runsLive
-    ? `${color(theme, children > 0 ? 'accent' : 'dim', ` ${children}`)} ${minorSeparator(theme, 'dim')} ${color(theme, subagents > 0 ? 'accent' : 'dim', ` ${subagents}`)}`
-    : `${color(theme, 'dim', ` —`)} ${minorSeparator(theme, 'dim')} ${color(theme, 'dim', ` —`)}`;
-  const progress =
-    progressLine(state, theme) ||
-    `${color(theme, 'dim', ` task —  `)} ${minorSeparator(theme, 'dim')} ${color(theme, 'dim', ` stps —`)}`;
-  return [timer, runs, progress].join(`  ${semanticSeparator(theme)}  `);
+  return elapsed != null
+    ? color(theme, 'accent', formatDeckElapsed(elapsed))
+    : color(theme, 'dim', formatDeckElapsed(idle ?? 0));
+}
+
+function runsTile(state: HeaderDeckState, theme: Theme): string {
+  const children = state.header?.counters.activeRuns?.children ?? 0;
+  const subagents = state.header?.counters.activeRuns?.subagents ?? 0;
+  const runsLive = children > 0 || subagents > 0 || state.elapsedMs != null;
+  // Gray-out amendment: numeric zeros keep the fixed cells; color alone
+  // carries the disabled meaning, mirroring the idle clock.
+  const cell = (value: number, icon: string) =>
+    color(
+      theme,
+      runsLive && value > 0 ? 'accent' : 'dim',
+      `${icon} ${String(value).padStart(2, '0')}`,
+    );
+  return `${cell(children, '')} ${minorSeparator(theme, 'dim')} ${cell(subagents, '')}`;
+}
+
+function progressTile(state: HeaderDeckState, theme: Theme): string {
+  const live = progressLine(state, theme);
+  if (live) return live;
+  const fallback = `${color(theme, 'dim', ` task 00/00`)} ${minorSeparator(theme, 'dim')} ${color(theme, 'dim', ` stps 00/00`)}`;
+  return fallback;
 }
 
 function spanElapsed(ms: number): string {
@@ -385,7 +399,7 @@ function suggestionLine(
         : recovering
           ? 'accent'
           : 'success';
-  return color(theme, semanticColor, `󰁕 ${SUGGESTION_LABELS[suggestion]}`);
+  return color(theme, semanticColor, `${SUGGESTION_LABELS[suggestion]}`);
 }
 
 function projectLeft(state: HeaderDeckState, theme: Theme): string {
@@ -427,7 +441,11 @@ function globalLeft(state: HeaderDeckState, theme: Theme): string {
   return `${color(theme, 'accent', `󰚩 ${safeText(state.model, 80)}`)} ${minorSeparator(theme)} ${color(theme, state.thinking ? 'thinkingHigh' : 'dim', safeText(state.thinking || 'off', 16))}`;
 }
 
-function compactTelemetryLeft(state: HeaderDeckState, theme: Theme): string {
+function compactTelemetryLeft(
+  state: HeaderDeckState,
+  theme: Theme,
+  width: number,
+): string {
   const ctxColor =
     state.contextPercent !== undefined && state.contextPercent >= 85
       ? 'warning'
@@ -445,12 +463,20 @@ function compactTelemetryLeft(state: HeaderDeckState, theme: Theme): string {
   }
   const quota = simpleQuotaTile(state, theme);
   if (quota) segments.push(quota);
-  if (segments.length === 0) return globalLeft(state, theme);
-  return [
-    globalLeft(state, theme),
-    semanticSeparator(theme),
-    segments.join(` ${minorSeparator(theme, ctxColor)} `),
-  ].join(' ');
+  const core =
+    segments.length === 0
+      ? globalLeft(state, theme)
+      : [
+          globalLeft(state, theme),
+          semanticSeparator(theme),
+          segments.join(` ${minorSeparator(theme, ctxColor)} `),
+        ].join(' ');
+  // Relocation phase: the project context heads the telemetry row; narrow
+  // frames drop it before the model does.
+  const projectSegment = width >= 100 ? projectLeft(state, theme) : '';
+  return projectSegment
+    ? [projectSegment, core].join(` ${semanticSeparator(theme)} `)
+    : core;
 }
 
 function compactTelemetryRight(
@@ -618,16 +644,14 @@ export function renderHeaderDeck(
     ? color(theme, recovering ? 'accent' : 'text', activityText)
     : '';
   const suggestionSegment = suggestionLine(state, theme, recovering);
-  const trailing = [activitySegment, suggestionSegment].filter(
-    (segment) => segment !== '',
-  );
-  // Relocation phase: the capsule lives top-right on the title band; the
-  // project context merges into the status row; git composes the right side
-  // beside the progress slot.
-  // Narrow frames: the capsule yields before the selection anchor does.
-  const titleRight = boundedWidth >= 40 ? titleMetrics(state, theme) : '';
+  // Relocation phase: the clock leads the title band with progress alone on
+  // the right end; runs ride the lifecycle row; the project context heads
+  // the telemetry row.
+  // Narrow frames: the progress slot yields before the selection anchor does.
+  const titleRight = boundedWidth >= 40 ? progressTile(state, theme) : '';
   const focusLines = elevatedSelectionLines(state, boundedWidth, theme);
-  const titleBase = focusLines.length > 0 ? focusLines : [''];
+  // Relocation phase: without a selection the bare clock keeps the band alive.
+  const titleBase = focusLines.length > 0 ? focusLines : [timerTile(state, theme)];
   const titleRows =
     titleRight || focusLines.length > 0
       ? [
@@ -636,18 +660,16 @@ export function renderHeaderDeck(
         ]
       : [];
 
-  // Narrow frames: the project context yields before the stage does.
-  const projectSegment = boundedWidth >= 100 ? projectLeft(state, theme) : '';
-  const statusLeft = [
-    projectSegment,
-    ...(lifecycleSegment ? [semanticSeparator(theme)] : []),
-    lifecycleSegment,
-    ...(lifecycleSegment && trailing.length > 0 ? [semanticSeparator(theme)] : []),
-    ...trailing,
-  ]
+  // Relocation phase: runs ride the lifecycle row after leaving the title
+  // metrics; the project context now heads the telemetry row.
+  // Narrow frames: runs yield before the stage does.
+  const runsSegment = boundedWidth >= 60 ? runsTile(state, theme) : '';
+  const lifecycleGroup = [lifecycleSegment, activitySegment]
     .filter((segment) => segment !== '')
-    .join(' ');
-  // Narrow frames: git yields before progress; progress before the stage.
+    .join(` ${minorSeparator(theme)} `);
+  const statusLeft = [runsSegment, lifecycleGroup, suggestionSegment]
+    .filter((segment) => segment !== '')
+    .join(` ${semanticSeparator(theme)} `);
   // Narrow frames: git yields before the stage does.
   const statusRight =
     boundedWidth >= 79 ? truncateToWidth(gitRight(state, theme), 52, '…') : '';
@@ -660,7 +682,7 @@ export function renderHeaderDeck(
     ...spanTreeRows(state, boundedWidth, theme),
     divider,
     ...alignedRows(
-      compactTelemetryLeft(state, theme),
+      compactTelemetryLeft(state, theme, boundedWidth),
       compactTelemetryRight(state, theme),
       boundedWidth,
     ),

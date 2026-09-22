@@ -140,8 +140,8 @@ test('editor-deck publishes a renderer without registering an above-editor widge
     false,
   );
   assert.equal(
-    // Gray-out amendment: dim placeholder dashes live on the title row only.
-    lines.slice(1).some((line) => line.includes('—')),
+    // Gray-out amendment: dim numeric zeros replace every placeholder dash.
+    lines.some((line) => line.includes('—')),
     false,
   );
   assert.ok(lines.length > 0);
