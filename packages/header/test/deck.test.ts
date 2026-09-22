@@ -92,7 +92,7 @@ test('renders the approved rich wide header without side borders or spacer rows'
   const lines = renderHeaderDeck(fixture(), 160, plainTheme as never);
 
   assert.equal(lines.length, 6);
-  const titleRow = plain(lines[0] ?? '');
+  const titleRow = plain(lines[4] ?? '');
   assert.ok(titleRow.startsWith("󰠭 000:07'00 ⟩ Read-only preflight"));
   assert.ok(titleRow.includes("000:07'00"));
   assert.match(lines[1] ?? '', /^─+$/u);
@@ -106,16 +106,16 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.doesNotMatch(lines[2] ?? '', /requesting validation or redirection ⟩  task/u);
   assert.equal(plain(lines[3] ?? ''), '┈'.repeat(160));
   assert.match(lines[3] ?? '', /^\u001b\[2m/u);
-  assert.match(plain(lines[4] ?? ''), /^\[.\] . ~\/galactica ⟩/u);
+  assert.match(plain(lines[0] ?? ''), /^\[.\] . ~\/galactica ⟩/u);
   // Relocation phase: runs lead the lifecycle row; project heads telemetry.
   assert.match(statusRow, /feature\/review-led/u);
   assert.ok(statusRow.trimEnd().endsWith('1'));
   assert.match(
-    lines[4] ?? '',
+    lines[0] ?? '',
     /\u{F06A9} GPT-5\.6 Sol \u{203A} high \u{27E9} \u{F0F86} 38% \u{203A} \u{F039E} 2 \u{203A} \u{F241} 63%\s+/u,
   );
   assert.match(
-    lines[4] ?? '',
+    lines[0] ?? '',
     /48\.2% \u{203A}  268M \u{27E9}  3\/3 \u{27E9} \u{F0726} \$5\.16$/u,
   );
   assert.equal(lines.join('\n').includes('32K/128K'), false);
@@ -251,7 +251,7 @@ test('keeps activity and focus distinct on the title row', () => {
   assert.ok(statusRow.includes('assuring'));
   assert.ok(statusRow.includes('verify'));
   assert.ok(statusRow.includes('requesting validation or redirection'));
-  const titleRow = plain(lines[0] ?? '');
+  const titleRow = plain(lines[4] ?? '');
   assert.ok(titleRow.startsWith("󰠭 000:07'00 ⟩ Plan title › Current task"));
   assert.ok(titleRow.includes("000:07'00"));
   assert.equal(lines.join('\n').split('Running checks').length - 1, 0);
@@ -270,18 +270,18 @@ test('gives the complete selected scope a bounded full-width focus canvas', () =
 
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
   assert.doesNotMatch(wide[2] ?? '', /Parent Plan title/u);
-  const titleRow = plain(wide[0] ?? '');
+  const titleRow = plain(wide[4] ?? '');
   assert.ok(
     titleRow.startsWith(`󰠭 000:07'00 ⟩ Parent Plan title › ${expected}`.slice(0, 40)),
   );
   assert.ok(titleRow.includes("000:07'00"));
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
-  assert.match(narrow[0] ?? '', /󰠭/u);
+  assert.match(narrow[4] ?? '', /󰠭/u);
   const status = narrow.find((line) => plain(line).includes('waiting')) ?? '';
   assert.ok(status.includes('waiting'));
   assert.equal(status.includes('idle'), false);
-  const focus = narrow.slice(0, 2);
+  const focus = narrow.slice(4, 6);
   assert.equal(focus.length, 2);
   assert.ok(plain(focus[0] ?? '').startsWith("󰠭 000:07'00 ⟩ Parent Plan title"));
   assert.ok(plain(focus[1] ?? '').includes('without repeating'));
@@ -298,13 +298,13 @@ test('keeps a single selected title on the focus row only', () => {
 
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
   assert.doesNotMatch(wide[2] ?? '', /One focused work title/u);
-  const titleRow = plain(wide[0] ?? '');
+  const titleRow = plain(wide[4] ?? '');
   assert.ok(titleRow.startsWith("󰠭 000:07'00 ⟩ One focused work title"));
   assert.ok(titleRow.includes("000:07'00"));
   assert.equal(wide.join('\n').split('One focused work title').length - 1, 1);
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
-  assert.ok(plain(narrow[0] ?? '').startsWith("󰠭 000:07'00 ⟩ One focused work title"));
+  assert.ok(plain(narrow[4] ?? '').startsWith("󰠭 000:07'00 ⟩ One focused work title"));
 });
 
 test('renders the subject selection on the focus row instead of an em dash', () => {
@@ -317,13 +317,13 @@ test('renders the subject selection on the focus row instead of an em dash', () 
   };
 
   const wide = renderHeaderDeck(state, 160, plainTheme as never);
-  const subjectRow = plain(wide[0] ?? '');
+  const subjectRow = plain(wide[4] ?? '');
   assert.ok(subjectRow.startsWith("󰠭 000:07'00 ⟩ Session subject"));
   assert.ok(subjectRow.includes("000:07'00"));
   assert.doesNotMatch(wide.join('\n'), /󰠭 ⟩ —/u);
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
-  assert.notEqual(plain(narrow[0] ?? ''), `󰠭 ⟩ —`);
+  assert.notEqual(plain(narrow[4] ?? ''), `󰠭 ⟩ —`);
 });
 
 test('bolds only current control and status anchors', () => {
@@ -449,7 +449,7 @@ test('reports the WHAT with task title and step while active without a cue', () 
 
   assert.ok(status.includes('working › implementing ⟩ Plan title'));
   assert.equal(status.includes('step 7/16'), false);
-  assert.ok(plain(lines[0] ?? '').includes('stps 6/16'));
+  assert.ok(plain(lines[4] ?? '').includes('stps 6/16'));
   assert.equal(status.includes('󰁕 Plan title'), false);
 });
 
@@ -565,17 +565,17 @@ test('keeps child-run and subagent counters visible and changes only their color
 
   state.header!.counters.activeRuns = { children: 0, subagents: 0 };
   let lines = renderHeaderDeck(state, 160, theme as never);
-  const counterRow = plain(lines[0] ?? '');
+  const counterRow = plain(lines[4] ?? '');
   assert.ok(counterRow.includes("000:07'00"));
   // Relocation phase: runs ride the lifecycle row, off the title band.
   assert.match(plain(lines[2] ?? ''), /^. 00 › . 00 ⟩ waiting/u);
   assert.ok(colors.includes('dim: 00'));
-  assert.doesNotMatch(lines[4] ?? '', /||󰈙/u);
+  assert.doesNotMatch(lines[0] ?? '', /||󰈙/u);
 
   colors.length = 0;
   state.header!.counters.activeRuns = { children: 1, subagents: 0 };
   lines = renderHeaderDeck(state, 160, theme as never);
-  assert.ok(plain(lines[0] ?? '').includes("000:07'00"));
+  assert.ok(plain(lines[4] ?? '').includes("000:07'00"));
   assert.match(plain(lines[2] ?? ''), /^. 01 › . 00 ⟩ waiting/u);
   assert.ok(colors.includes('accent: 01'));
   assert.ok(colors.includes('dim: 00'));
@@ -583,7 +583,7 @@ test('keeps child-run and subagent counters visible and changes only their color
   colors.length = 0;
   state.header!.counters.activeRuns = { children: 3, subagents: 2 };
   lines = renderHeaderDeck(state, 160, theme as never);
-  assert.ok(plain(lines[0] ?? '').includes("000:07'00"));
+  assert.ok(plain(lines[4] ?? '').includes("000:07'00"));
   assert.match(plain(lines[2] ?? ''), /^. 03 › . 02 ⟩ waiting/u);
   assert.ok(colors.includes('accent: 03'));
   assert.ok(colors.includes('accent: 02'));
@@ -622,7 +622,10 @@ test('preserves width and essential deck structure through responsive collapse',
       lines.every((line) => visibleWidth(line) <= width),
       String(width),
     );
-    assert.match(lines[0] ?? '', /󰠭/u, String(width));
+    assert.ok(
+      lines.some((line) => plain(line).includes("󰠭 000:07'00")),
+      String(width),
+    );
     assert.equal(lines.join('').split('󰠭').length - 1, 2, String(width));
     if (width >= 79) {
       assert.match(lines.join('\n'), /000:07'00/u, String(width));
@@ -654,16 +657,16 @@ test('renders unavailable optional telemetry honestly', () => {
     lines.some((line) => line.includes('—')),
     false,
   );
-  assert.ok(plain(lines[0] ?? '').includes('task 00/00'), 'dim title placeholder');
-  assert.ok(plain(lines[0] ?? '').includes('stps 00/00'), 'dim title placeholder');
+  assert.ok(plain(lines[4] ?? '').includes('task 00/00'), 'dim title placeholder');
+  assert.ok(plain(lines[4] ?? '').includes('stps 00/00'), 'dim title placeholder');
   assert.doesNotMatch(all, /next direction/u);
   assert.doesNotMatch(all, /clean/u);
   assert.ok(
-    !lines.slice(1).some((line) => line.includes('task')),
+    !lines.filter((_line, index) => index !== 4).some((line) => line.includes('task')),
     'no task slot below the title without counters',
   );
   assert.ok(
-    !lines.slice(1).some((line) => line.includes('stps')),
+    !lines.filter((_line, index) => index !== 4).some((line) => line.includes('stps')),
     'no steps slot below the title without counters',
   );
   const status = lines.find((line) => line.includes('waiting')) ?? '';
