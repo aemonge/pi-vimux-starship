@@ -107,12 +107,12 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.equal(plain(lines[3] ?? ''), '┈'.repeat(160));
   assert.match(lines[3] ?? '', /^\u001b\[2m/u);
   assert.match(plain(lines[0] ?? ''), /^\[.\] . ~\/galactica ⟩/u);
-  // Relocation phase: runs lead the lifecycle row; project heads telemetry.
-  assert.match(statusRow, /feature\/review-led/u);
-  assert.ok(statusRow.trimEnd().endsWith('1'));
+  assert.match(plain(lines[0] ?? ''), /feature\/review-led/u);
+  assert.ok(statusRow.includes('GPT-5.6 Sol'));
+  assert.ok(statusRow.trimEnd().endsWith('63%'));
   assert.match(
-    lines[0] ?? '',
-    /\u{F06A9} GPT-5\.6 Sol \u{203A} high \u{27E9} \u{F0F86} 38% \u{203A} \u{F039E} 2 \u{203A} \u{F241} 63%\s+/u,
+    lines[4] ?? '',
+    /\u{F06A9} GPT-5\.6 Sol \u{203A} high \u{27E9} \u{F0F86} 38% \u{203A} \u{F039E} 2 \u{203A} \u{F241} 63%$/u,
   );
   assert.match(
     lines[0] ?? '',
@@ -277,11 +277,12 @@ test('gives the complete selected scope a bounded full-width focus canvas', () =
   assert.ok(titleRow.includes("000:07'00"));
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
-  assert.match(narrow[2] ?? '', /󰠭/u);
+  const focusIdx = narrow.findIndex((line) => plain(line).includes("000:07'00"));
+  assert.ok(focusIdx >= 0);
   const status = narrow.find((line) => plain(line).includes('waiting')) ?? '';
   assert.ok(status.includes('waiting'));
   assert.equal(status.includes('idle'), false);
-  const focus = narrow.slice(2, 4);
+  const focus = narrow.slice(focusIdx, focusIdx + 2);
   assert.equal(focus.length, 2);
   assert.ok(plain(focus[0] ?? '').startsWith("󰠭 000:07'00 ⟩ Parent Plan title"));
   assert.ok(plain(focus[1] ?? '').includes('without repeating'));
@@ -304,7 +305,11 @@ test('keeps a single selected title on the focus row only', () => {
   assert.equal(wide.join('\n').split('One focused work title').length - 1, 1);
 
   const narrow = renderHeaderDeck(state, 79, plainTheme as never);
-  assert.ok(plain(narrow[2] ?? '').startsWith("󰠭 000:07'00 ⟩ One focused work title"));
+  assert.ok(
+    plain(narrow.find((line) => plain(line).includes("000:07'00")) ?? '').startsWith(
+      "󰠭 000:07'00 ⟩ One focused work title",
+    ),
+  );
 });
 
 test('renders the subject selection on the focus row instead of an em dash', () => {
@@ -541,15 +546,11 @@ function escapeRegExp(value: string): string {
 }
 
 test('keeps compact telemetry islands together with one gap cell', () => {
-  const left = '󰚩 GPT-5.6 Sol › high ⟩ 󰾆 38% › 󰎞 2 ›  63%';
-  const right = '48.2% ›  268M ⟩  3/3 ⟩ 󰜦 $5.16';
-  const width = visibleWidth(left) + visibleWidth(right) + 4;
-
-  const lines = renderHeaderDeck(fixture(), width, plainTheme as never);
-  assert.match(
-    lines.join('\n'),
-    new RegExp(`${escapeRegExp(left)}\\s+${escapeRegExp(right)}`),
-  );
+  const modelGroup = '󰚩 GPT-5.6 Sol › high ⟩ 󰾆 38% › 󰎞 2 ›  63%';
+  const resources = '48.2% ›  268M ⟩  3/3 ⟩ 󰜦 $5.16';
+  const lines = renderHeaderDeck(fixture(), 120, plainTheme as never);
+  assert.match(lines.join('\n'), new RegExp(`${escapeRegExp(modelGroup)}$`, 'm'));
+  assert.match(lines.join('\n'), new RegExp(`${escapeRegExp(resources)}$`, 'm'));
 });
 
 test('keeps child-run and subagent counters visible and changes only their color', () => {
@@ -701,12 +702,17 @@ test('paints icon-native quota tiles in cost, calendar, flame order', () => {
   const telemetryLine = plain(
     lines.find((line: string) => line.includes('$5.16')) ?? '',
   );
+  const statusLine = plain(
+    lines.find((line: string) => line.includes('GPT-5.6 Sol')) ?? '',
+  );
 
-  const calendarAt = telemetryLine.indexOf(`${CAL_ICON} 12%`);
+  // Relocation phase: the calendar rides the model group; flame and cost
+  // keep the telemetry row's far end.
+  const calendarAt = statusLine.indexOf(`${CAL_ICON} 12%`);
   const flameAt = telemetryLine.indexOf(`${FLAME_ICON} 82%`);
   const costAt = telemetryLine.indexOf('$5.16');
   assert.ok(calendarAt >= 0, 'calendar tile renders');
-  assert.ok(flameAt > calendarAt, 'flame follows the calendar');
+  assert.ok(flameAt >= 0, 'flame tile renders');
   assert.ok(costAt > flameAt, 'cost anchors the far end');
   assert.ok(
     telemetryLine.includes(`${FLAME_ICON} 82% › ${CLOCK_ICON} 1:30`),
@@ -731,8 +737,11 @@ test('classifies minute and day labels and always counts down the coding window'
   const telemetryLine = plain(
     lines.find((line: string) => line.includes('$5.16')) ?? '',
   );
+  const statusLine = plain(
+    lines.find((line: string) => line.includes('GPT-5.6 Sol')) ?? '',
+  );
 
-  assert.ok(telemetryLine.includes(`${CAL_ICON} 40%`), 'day label is calendar');
+  assert.ok(statusLine.includes(`${CAL_ICON} 40%`), 'day label is calendar');
   assert.ok(
     telemetryLine.includes(`${FLAME_ICON} 52% › ${CLOCK_ICON} 0:45`),
     'cool coding window still counts down',
@@ -749,7 +758,6 @@ test('coding window without reset time paints flame without clock', () => {
   const telemetryLine = plain(
     lines.find((line: string) => line.includes('$5.16')) ?? '',
   );
-
   const tail = telemetryLine.slice(telemetryLine.indexOf(FLAME_ICON));
   assert.ok(tail.startsWith(`${FLAME_ICON} 62%`));
   assert.ok(!tail.includes(CLOCK_ICON) && !tail.includes(':'));
@@ -768,11 +776,11 @@ test('weekly-only telemetry paints the calendar tile alone', () => {
     ],
   };
   const lines = renderHeaderDeck(state, 160, plainTheme as never);
-  const telemetryLine = plain(
-    lines.find((line: string) => line.includes('$5.16')) ?? '',
+  const statusLine = plain(
+    lines.find((line: string) => line.includes('GPT-5.6 Sol')) ?? '',
   );
 
-  const tail = telemetryLine.slice(telemetryLine.indexOf(CAL_ICON));
+  const tail = statusLine.slice(statusLine.indexOf(CAL_ICON));
   assert.ok(tail.startsWith(`${CAL_ICON} 33%`));
   assert.ok(!tail.includes(FLAME_ICON));
   assert.ok(!tail.includes(CLOCK_ICON), 'calendar never carries a countdown');

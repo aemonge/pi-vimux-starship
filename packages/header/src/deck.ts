@@ -434,18 +434,14 @@ function gitRight(state: HeaderDeckState, theme: Theme): string {
       ? dirty.join(` ${minorSeparator(theme)} `)
       : color(theme, 'success', ' clean');
   if (!status) return branch;
-  return `${branch} ${semanticSeparator(theme)} ${status}`;
+  return `${branch} ${minorSeparator(theme)} ${status}`;
 }
 
 function globalLeft(state: HeaderDeckState, theme: Theme): string {
   return `${color(theme, 'accent', `󰚩 ${safeText(state.model, 80)}`)} ${minorSeparator(theme)} ${color(theme, state.thinking ? 'thinkingHigh' : 'dim', safeText(state.thinking || 'off', 16))}`;
 }
 
-function compactTelemetryLeft(
-  state: HeaderDeckState,
-  theme: Theme,
-  width: number,
-): string {
+function modelGroupLeft(state: HeaderDeckState, theme: Theme): string {
   const ctxColor =
     state.contextPercent !== undefined && state.contextPercent >= 85
       ? 'warning'
@@ -463,20 +459,29 @@ function compactTelemetryLeft(
   }
   const quota = simpleQuotaTile(state, theme);
   if (quota) segments.push(quota);
-  const core =
-    segments.length === 0
-      ? globalLeft(state, theme)
-      : [
-          globalLeft(state, theme),
-          semanticSeparator(theme),
-          segments.join(` ${minorSeparator(theme, ctxColor)} `),
-        ].join(' ');
-  // Relocation phase: the project context heads the telemetry row; narrow
-  // frames drop it before the model does.
+  // Relocation phase: model facts ride the lifecycle row's right side.
+  return segments.length === 0
+    ? globalLeft(state, theme)
+    : [
+        globalLeft(state, theme),
+        semanticSeparator(theme),
+        segments.join(` ${minorSeparator(theme, ctxColor)} `),
+      ].join(' ');
+}
+
+function compactTelemetryLeft(
+  state: HeaderDeckState,
+  theme: Theme,
+  width: number,
+): string {
+  // Relocation phase (Human-directed): repository identity joins the project
+  // at the telemetry head; narrow frames drop the project before Git facts.
   const projectSegment = width >= 100 ? projectLeft(state, theme) : '';
-  return projectSegment
-    ? [projectSegment, core].join(` ${semanticSeparator(theme)} `)
-    : core;
+  const gitSegment =
+    width >= 79 ? truncateToWidth(gitRight(state, theme), 52, '…') : '';
+  return [projectSegment, gitSegment]
+    .filter((segment) => segment !== '')
+    .join(` ${semanticSeparator(theme)} `);
 }
 
 function compactTelemetryRight(
@@ -670,9 +675,8 @@ export function renderHeaderDeck(
   const statusLeft = [runsSegment, lifecycleGroup, suggestionSegment]
     .filter((segment) => segment !== '')
     .join(` ${semanticSeparator(theme)} `);
-  // Narrow frames: git yields before the stage does.
-  const statusRight =
-    boundedWidth >= 79 ? truncateToWidth(gitRight(state, theme), 52, '…') : '';
+  // Relocation phase: model facts share the lifecycle row's right side.
+  const statusRight = modelGroupLeft(state, theme);
   const status = alignedSingleRow(statusLeft, statusRight, boundedWidth);
 
   // Band adjacency (Human-directed): telemetry crowns the deck, the title
