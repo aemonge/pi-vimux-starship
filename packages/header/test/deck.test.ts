@@ -116,7 +116,7 @@ test('renders the approved rich wide header without side borders or spacer rows'
   );
   assert.match(
     lines[0] ?? '',
-    /48\.2% \u{203A}  268M \u{27E9}  3\/3 \u{27E9} \u{F0726} \$5\.16$/u,
+    /48\.2% \u{203A} 268M \u{27E9} 3\/3 \u{27E9} \u{F0726} \$5\.16$/u,
   );
   assert.equal(lines.join('\n').includes('32K/128K'), false);
   assert.match(lines[5] ?? '', /^─ /u);
@@ -572,7 +572,7 @@ function escapeRegExp(value: string): string {
 
 test('keeps compact telemetry islands together with one gap cell', () => {
   const modelGroup = '󰚩 GPT-5.6 Sol › high ⟩ 󰾆 38% › 󰎞 2 ›  63%';
-  const resources = '48.2% ›  268M ⟩  3/3 ⟩ 󰜦 $5.16';
+  const resources = '48.2% › 268M ⟩ 3/3 ⟩ 󰜦 $5.16';
   const lines = renderHeaderDeck(fixture(), 120, plainTheme as never);
   assert.match(lines.join('\n'), new RegExp(`${escapeRegExp(modelGroup)}$`, 'm'));
   assert.match(lines.join('\n'), new RegExp(`${escapeRegExp(resources)}$`, 'm'));

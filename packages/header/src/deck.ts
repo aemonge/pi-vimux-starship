@@ -503,14 +503,14 @@ function compactTelemetryRight(
     const resourceColor =
       resources.cpuWarning || resources.memoryWarning ? 'warning' : 'accent';
     const parts = [
-      color(theme, resourceColor, ` ${formatDeckCpu(resources.cpuPercent)}`),
-      color(theme, resourceColor, ` ${formatDeckBytes(resources.memoryBytes)}`),
+      color(theme, resourceColor, `${formatDeckCpu(resources.cpuPercent)}`),
+      color(theme, resourceColor, `${formatDeckBytes(resources.memoryBytes)}`),
     ];
     resourceSegments.push(parts.join(` ${minorSeparator(theme, resourceColor)} `));
   }
   if (state.mcp) {
     resourceSegments.push(
-      color(theme, 'accent', ` ${state.mcp.healthy}/${state.mcp.total}`),
+      color(theme, 'accent', `${state.mcp.healthy}/${state.mcp.total}`),
     );
   }
   const windows = windowQuotaTiles(state, theme, nowMs);
