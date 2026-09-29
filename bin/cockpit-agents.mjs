@@ -213,9 +213,7 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
           ? snapshot.activityElapsedMs + drift
           : rootSpanElapsed >= 0
             ? rootSpanElapsed + drift
-            : Number.isFinite(snapshot.idleMs) && snapshot.idleMs > 0
-              ? snapshot.idleMs + drift
-              : 0;
+            : 0;
 
     return {
       state,
@@ -275,6 +273,13 @@ function fitLeft(value, width) {
   return ' '.repeat(width - points.length) + value;
 }
 
+function ellipsize(value, width) {
+  if (width <= 0) return '';
+  const points = [...value];
+  if (points.length <= width) return value;
+  return `${points.slice(0, width - 1).join('')}…`;
+}
+
 export function renderBoard(rows, { columns, color } = {}) {
   const width = resolveColumns(columns);
   const painters = makePainters(color ?? colorWanted());
@@ -327,7 +332,7 @@ export function renderBoard(rows, { columns, color } = {}) {
       ` ⟩ `;
     const body = [row.title, row.stage].filter(Boolean).join(' › ');
     const budget = Math.max(0, width - points(prefix) - 10);
-    const trimmed = points(body) > budget ? [...body].slice(0, budget).join('') : body;
+    const trimmed = ellipsize(body, budget);
     const gap = Math.max(1, width - points(prefix) - points(trimmed) - TIME_WIDTH);
     const paintedBody =
       row.title && row.stage && points(body) <= budget
@@ -342,7 +347,7 @@ export function renderBoard(rows, { columns, color } = {}) {
       `${' '.repeat(gap)}${painters.muted(fitLeft(row.time, TIME_WIDTH))}`;
     blocks.push(main);
     if (row.sub) {
-      blocks.push(`${' '.repeat(points(prefix))}${painters.text(row.sub)}`);
+      blocks.push(painters.dim(`↳ ${ellipsize(row.sub, Math.max(0, width - 2))}`));
       blocks.push('');
     }
   }

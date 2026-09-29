@@ -408,4 +408,21 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Started/Completed: 2026-09-29T14:42Z–14:52Z (≈10 min).
   - Check: 51/51 tooling (watcher contract: directory write → repaint);
     typecheck, eslint, prettier clean.
+  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.- **Task 4 validation feedback round 3 (2026-09-29T14:58Z):** attention row
+-  showed `009:17'04` while the deck idle face is `000:00'00` (header deck state
+-  never receives idleMs — `?? 0` fallback); subline indent read as title
+-  overflow. Human-picked fix: flush-left dim `↳` subline (preview round:
+-  indented A/B rejected, flush-left chosen), width-clamped with `…`; main
+-  title truncation gains `…`; not-busy rows render `000:00'00` (idleMs branch
+-  retired).
+- [x] Repair 3 — zeros-when-idle and flush-left sublines: not busy and no
+-      live spans renders the literal deck idle face `000:00'00`; sublines
+-      render flush-left `↳ ` dim, clamped with trailing `…`; truncated
+-      titles end in `…`.
+  - Started/Completed: 2026-09-29T14:59Z–15:12Z (≈13 min).
+  - Check: 52/52 tooling (idle-history-ignored and attention-zeros
+    contracts; golden regenerated with flush-left subline and zeroed
+    non-busy timers); typecheck, eslint, prettier, baseline, package:load,
+    composition green. One edge fix: `…` at zero budget now clamps to
+    empty instead of overflowing.
   - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.

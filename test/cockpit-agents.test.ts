@@ -162,12 +162,12 @@ async function waitFor(check: () => Promise<boolean> | boolean): Promise<void> {
 const GOLDEN_80 = [
   '󰆧 pi-vimux-starship command center                        4 agents · 1 attention',
   '',
-  "! 003f1a0 › ~/pi-vimux-starship ⟩ validation                           182:11'00",
-  '                                  Pi agent telemetry CLI for vimux-starship notifications',
+  "! 003f1a0 › ~/pi-vimux-starship ⟩ validation                           000:00'00",
+  '↳ Pi agent telemetry CLI for vimux-starship notifications',
   '',
-  "● 001c2d4 › ~/galactica ⟩ Consolidate imported Pi cockpit › working ›  012:34'00",
-  "● 002b3e5 › ~/pi-vimux-starship ⟩ Route Insert through Neovim › workin 041:07'00",
-  "◌ 004a9c3 › /home/aemonge/articles ⟩ QMD taxonomy cleanup › listening  100:00'00",
+  "● 001c2d4 › ~/galactica ⟩ Consolidate imported Pi cockpit › working ›… 012:34'00",
+  "● 002b3e5 › ~/pi-vimux-starship ⟩ Route Insert through Neovim › worki… 041:07'00",
+  "◌ 004a9c3 › /home/aemonge/articles ⟩ QMD taxonomy cleanup › listening  000:00'00",
   "× 005d7e1 › /home/aemonge/dotfiles ⟩ Shell hygiene pass                022:45'00",
 ].join('\n');
 
@@ -239,7 +239,7 @@ test('narrow-width guard keeps main rows within the terminal width', async () =>
     // Raw paths widen the prefix; the squeezable floor is now 26 columns.
     const output = renderBoard(rows, { columns: 40, color: false });
     const lines = output.split('\n');
-    const subIndent = lines.find((line) => line.startsWith('      '));
+    const subIndent = lines.find((line) => line.startsWith('↳'));
     assert.ok(subIndent, 'fixture includes a subline');
     for (const [index, line] of lines.entries()) {
       // Header (line 0) and sublines keep their natural frozen overflow;
@@ -393,7 +393,7 @@ test('ids are stable 7-char sessionId prefixes, resolvable by pi --session', () 
   assert.match(String(first?.id), /^[0-9a-f]{7}$/u);
 });
 
-test('just-idle rows mirror the deck frozen zero face when idleMs is absent', () => {
+test('idle rows mirror the deck frozen zero face when idleMs is absent', () => {
   const base = snapshotFor(FIXTURES[1]);
   const justIdle = {
     ...base,
@@ -404,6 +404,21 @@ test('just-idle rows mirror the deck frozen zero face when idleMs is absent', ()
     updatedAt: NOW - 6_000,
   };
   assert.equal(deriveAgents([justIdle], { now: NOW })[0]?.time, "000:00'00");
+});
+
+test('the deck never shows idleMs — not-busy rows render zeros even with idle history', () => {
+  const base = snapshotFor(FIXTURES[1]);
+  const idleHistory = {
+    ...base,
+    work: { ...base.work, lifecycle: 'listening' },
+    activeRunSpans: undefined,
+    activityElapsedMs: undefined,
+    idleMs: 1_713_000, // deck showed 000:28'33
+    updatedAt: NOW - 5_000,
+  };
+  const rows = deriveAgents([idleHistory], { now: NOW });
+  assert.equal(rows[0]?.state, 'parked');
+  assert.equal(rows[0]?.time, "000:00'00", 'deck idle face is always zeros');
 });
 
 test('an explicit zero idleMs is also the frozen face, never drift', () => {
@@ -471,20 +486,10 @@ test('task title falls back to selection.titles when work has none', () => {
   );
 });
 
-test('idle time column ticks with the deck idle clock via drift', () => {
-  const base = snapshotFor(FIXTURES[1]);
-  const idle = {
-    ...base,
-    work: { ...base.work, lifecycle: 'listening' },
-    activeRunSpans: undefined,
-    activityElapsedMs: undefined,
-    sessionStart: NOW - 3_600_000,
-    idleMs: 1_713_000, // deck showed 000:28'33
-    updatedAt: NOW - 5_000, // snapshot froze 5s ago
-  };
-  const rows = deriveAgents([idle], { now: NOW });
-  assert.equal(rows[0]?.state, 'parked');
-  assert.equal(rows[0]?.time, "028:38'00", 'idleMs plus snapshot age');
+test('attention rows render zeros — the deck has no busy clock while waiting', () => {
+  const rows = deriveAgents([snapshotFor(FIXTURES[0])], { now: NOW });
+  assert.equal(rows[0]?.state, 'attention');
+  assert.equal(rows[0]?.time, "000:00'00");
 });
 
 test('working time column adds snapshot-age drift to the span clock', () => {
