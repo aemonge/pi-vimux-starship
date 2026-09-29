@@ -192,11 +192,11 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     is the separate Fix.
   - Paths: ledger only.
   - Subject: `step(command-center): still-green board suite and full gates`.
-- **CHANGE (Human feedback, 2026-09-29T09:41Z):** pasted live CLI output +
-  `The CLI isn't "live" I need to call it and call it .....` and `The timer
-  don't match the timer here` (quoting the deck's 󰠭 turn timer). Canonical
-  outcome `CHANGE` — Task 2 validation stays unchecked; bounded repair
-  reopened. Human direction `yes` (09:45Z): both repair slices, sequential.
+- **CHANGE (Human feedback, recorded 2026-09-29T11:35Z):** pasted live CLI
+  output + `The CLI isn't "live" I need to call it and call it .....` and
+  `The timer don't match the timer here` (quoting the deck's 󰠭 turn timer).
+  Canonical outcome `CHANGE` — Task 2 validation stays unchecked; bounded
+  repair reopened. Human direction `yes`: both repair slices, sequential.
   Preflight correction: the deck timer is the header-private agent-turn clock;
   its semantic twin (`activeRunSpans` root-span `elapsedMs`) already flows in
   the event, so the timer slice uses span-elapsed-first with session-age
