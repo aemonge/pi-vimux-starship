@@ -1,11 +1,14 @@
 #!/usr/bin/env node
-// Mocked render of the pi-vimux-starship command center.
-// Static fixtures only: colors, spacing, and wording are up for opinion.
-// Palette borrows ramona-gruvbox-light-strong hex values directly.
-// Snapshot wiring, -w, and --json arrive in the real implementation.
+// pi-vimux-starship command center — live triage board over cockpit snapshots.
+// Render look is the Human-validated frozen contract (commit 4aa1cfa): the
+// header, row grammar, palette, and spacing below must not drift.
 // Layout: STATE → AGENT → TASK → TIME, dynamic full terminal width.
 
-const colorEnabled = process.stdout.isTTY && !process.env.NO_COLOR;
+import { createHash } from 'node:crypto';
+import { readdir, readFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const THEME = {
   accent: '#076678', // blue — attention
@@ -18,115 +21,282 @@ const THEME = {
   dim: '#796d63', // parked, gone
 };
 
-const paint = (hex) => (text) =>
-  colorEnabled
-    ? `\u001b[38;2;${parseInt(hex.slice(1, 3), 16)};${parseInt(
-        hex.slice(3, 5),
-        16,
-      )};${parseInt(hex.slice(5, 7), 16)}m${text}\u001b[39m`
-    : text;
-
-const accent = paint(THEME.accent);
-const titlePurple = paint(THEME.titlePurple);
-const cyan = paint(THEME.cyan);
-const green = paint(THEME.green);
-const yellow = paint(THEME.yellow);
-const text = paint(THEME.text);
-const muted = paint(THEME.muted);
-const dim = paint(THEME.dim);
-
-const bold = (chunk) => (colorEnabled ? `\u001b[1m${chunk}\u001b[22m` : chunk);
-
-const pad = (value, width) =>
-  value.length >= width ? value : value + ' '.repeat(width - value.length);
-
-const padStart = (value, width) =>
-  value.length >= width ? value : ' '.repeat(width - value.length) + value;
-
-const ICON = '\u{f01a7}'; // deck PWD glyph 󰆧 (matches header gauge)
+const ICON = '󰆧'; // deck PWD glyph (matches header gauge)
 const TITLE = 'pi-vimux-starship command center';
-
-const agents = [
-  {
-    marker: '!',
-    markerPaint: accent,
-    id: '003',
-    project: 'pi-vimux-starship',
-    task: 'validation',
-    taskPaint: (chunk) => bold(accent(chunk)),
-    sub: 'Pi agent telemetry CLI for vimux-starship notifications',
-    time: '3:02:11',
-  },
-  {
-    marker: '●',
-    markerPaint: green,
-    id: '001',
-    project: 'galactica',
-    task: 'Consolidate imported Pi cockpit',
-    time: '0:12:34',
-  },
-  {
-    marker: '●',
-    markerPaint: green,
-    id: '002',
-    project: 'pi-vimux-starship',
-    task: 'Route Insert through Neovim',
-    time: '0:41:07',
-  },
-  {
-    marker: '◌',
-    markerPaint: dim,
-    id: '004',
-    project: 'articles',
-    task: 'QMD taxonomy cleanup',
-    time: '1:40:00',
-  },
-  {
-    marker: '×',
-    markerPaint: dim,
-    id: '005',
-    project: 'dotfiles',
-    task: 'Shell hygiene pass',
-    time: '0:22:45',
-  },
-];
-
-const columns = process.stdout.columns ?? Number(process.env.COLUMNS ?? 80);
-const PROJECT_WIDTH = Math.max(20, ...agents.map((agent) => agent.project.length)) + 2;
 const TIME_WIDTH = 8;
-const ROW_PREFIX_WIDTH = 2 + 3 + 2 + PROJECT_WIDTH + 2;
 
-const renderRow = (agent) => {
-  const taskWidth = Math.max(10, columns - ROW_PREFIX_WIDTH - TIME_WIDTH - 2);
-  const taskPaint = agent.taskPaint ?? text;
-  const main =
-    `${agent.markerPaint(agent.marker)} ` +
-    `${muted(pad(agent.id, 3))}  ` +
-    `${cyan(pad(agent.project, PROJECT_WIDTH))}  ` +
-    `${taskPaint(pad(agent.task, taskWidth))}` +
-    `  ${muted(padStart(agent.time, TIME_WIDTH))}`;
-  if (!agent.sub) return main;
-  const indent = ' '.repeat(ROW_PREFIX_WIDTH);
-  return `${main}\n${indent}${text(agent.sub)}`;
-};
-
-const live = agents.filter((agent) => agent.marker !== '×').length;
-const attention = agents.filter((agent) => agent.marker === '!').length;
-
-const titleLeft = `${ICON} ${TITLE}`;
-const headerLeft = bold(titlePurple(titleLeft));
-const headerRightPlain = `${live} agents · ${attention} attention`;
-const headerRight = muted(`${live} agents · `) + accent(`${attention} attention`);
-const headerGap = ' '.repeat(
-  Math.max(1, columns - [...titleLeft].length - [...headerRightPlain].length),
-);
-
-const blocks = [];
-for (const agent of agents) {
-  blocks.push(renderRow(agent));
-  if (agent.sub) blocks.push('');
+export function colorWanted({
+  tty = process.stdout.isTTY ?? false,
+  env = process.env,
+} = {}) {
+  return Boolean(tty) && !env.NO_COLOR;
 }
 
-process.stdout.write(
-  `${headerLeft}${headerGap}${headerRight}\n\n${blocks.join('\n')}\n`,
-);
+export function defaultStateDir() {
+  // Mirrors packages/cockpit-telemetry/src/sink.ts — keep the two in step.
+  const override = process.env.PI_VIMUX_STARSHIP_STATE_DIR;
+  if (override) return override;
+  const base = process.env.XDG_STATE_HOME ?? path.join(homedir(), '.local', 'state');
+  return path.join(base, 'pi-vimux-starship', 'agents');
+}
+
+export async function readSnapshots(stateDir) {
+  let names;
+  try {
+    names = await readdir(stateDir);
+  } catch {
+    return [];
+  }
+  const snapshots = [];
+  for (const name of names) {
+    if (!name.endsWith('.json')) continue;
+    try {
+      const parsed = JSON.parse(await readFile(path.join(stateDir, name), 'utf8'));
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        !Array.isArray(parsed) &&
+        parsed.protocol === 1 &&
+        typeof parsed.sessionId === 'string' &&
+        typeof parsed.updatedAt === 'number'
+      ) {
+        snapshots.push(parsed);
+      }
+    } catch {
+      // Corrupt snapshot: skip it, never break the board.
+    }
+  }
+  return snapshots;
+}
+
+const ATTENTION_REASONS = {
+  'requesting-validation': 'validation',
+  'requesting-redirection': 'redirection',
+  'requesting-input': 'input',
+  'awaiting-resume': 'resume',
+};
+
+const WORKING_LIFECYCLES = new Set([
+  'understanding',
+  'working',
+  'assuring',
+  'learning',
+  'answering',
+]);
+
+const STATE_RANK = { attention: 0, working: 1, parked: 2, gone: 3 };
+const STALE_HEARTBEAT_MS = 60_000;
+
+function defaultPidAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === 'EPERM';
+  }
+}
+
+function shortId(sessionId) {
+  const digest = createHash('sha256').update(sessionId).digest();
+  return String(digest.readUInt16BE(0) % 1000).padStart(3, '0');
+}
+
+function formatClock(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(total / 3_600);
+  const minutes = Math.floor((total % 3_600) / 60);
+  const seconds = total % 60;
+  const two = (value) => String(value).padStart(2, '0');
+  return `${hours}:${two(minutes)}:${two(seconds)}`;
+}
+
+export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
+  const isPidAlive = pidAlive ?? defaultPidAlive;
+  const rows = snapshots.map((snapshot) => {
+    const lifecycle = snapshot.work?.lifecycle ?? 'listening';
+    const subject = snapshot.work?.titles?.[0] ?? '';
+    let state = 'parked';
+    let task = subject || 'parked';
+    let sub = '';
+
+    if (snapshot.blocked) {
+      state = 'attention';
+      task = 'blocked';
+      sub = subject;
+    } else {
+      const reason = ATTENTION_REASONS[snapshot.suggestion];
+      if (snapshot.approvalRequired || reason) {
+        state = 'attention';
+        task = reason ?? 'validation';
+        sub = subject;
+      } else if (
+        WORKING_LIFECYCLES.has(lifecycle) ||
+        (snapshot.activeRunSpans ?? []).length > 0
+      ) {
+        state = 'working';
+        task = subject || 'working';
+      }
+    }
+
+    const stale = now - snapshot.updatedAt > STALE_HEARTBEAT_MS;
+    const dead = typeof snapshot.pid === 'number' && !isPidAlive(snapshot.pid);
+    if (stale || dead) {
+      state = 'gone';
+      task = subject || 'gone';
+      sub = '';
+    }
+
+    return {
+      state,
+      id: shortId(snapshot.sessionId),
+      project: path.basename(snapshot.cwd ?? '') || '?',
+      task,
+      sub,
+      time: formatClock(now - (snapshot.sessionStart ?? now)),
+      updatedAt: snapshot.updatedAt,
+    };
+  });
+  rows.sort(
+    (a, b) => STATE_RANK[a.state] - STATE_RANK[b.state] || b.updatedAt - a.updatedAt,
+  );
+  return rows;
+}
+
+function makePainters(enabled) {
+  const paint = (hex) => (text) =>
+    enabled
+      ? `\u001b[38;2;${parseInt(hex.slice(1, 3), 16)};${parseInt(
+          hex.slice(3, 5),
+          16,
+        )};${parseInt(hex.slice(5, 7), 16)}m${text}\u001b[39m`
+      : text;
+  return {
+    accent: paint(THEME.accent),
+    titlePurple: paint(THEME.titlePurple),
+    cyan: paint(THEME.cyan),
+    green: paint(THEME.green),
+    text: paint(THEME.text),
+    muted: paint(THEME.muted),
+    dim: paint(THEME.dim),
+    bold: (chunk) => (enabled ? `\u001b[1m${chunk}\u001b[22m` : chunk),
+  };
+}
+
+function resolveColumns(explicit) {
+  const columns =
+    explicit ?? process.stdout.columns ?? Number(process.env.COLUMNS ?? 80);
+  return Number.isFinite(columns) && columns > 0 ? columns : 80;
+}
+
+// Narrow-width truncation guard: cells never exceed their column; the frozen
+// subline keeps its natural overflow (the validated sample overflows at 80).
+function fitRight(value, width) {
+  const points = [...value];
+  if (points.length >= width) return points.slice(0, width).join('');
+  return value + ' '.repeat(width - points.length);
+}
+
+function fitLeft(value, width) {
+  const points = [...value];
+  if (points.length >= width) return points.slice(0, width).join('');
+  return ' '.repeat(width - points.length) + value;
+}
+
+export function renderBoard(rows, { columns, color } = {}) {
+  const width = resolveColumns(columns);
+  const painters = makePainters(color ?? colorWanted());
+
+  const markers = {
+    attention: { glyph: '!', paint: painters.accent },
+    working: { glyph: '●', paint: painters.green },
+    parked: { glyph: '◌', paint: painters.dim },
+    gone: { glyph: '×', paint: painters.dim },
+  };
+
+  const live = rows.filter((row) => row.state !== 'gone').length;
+  const attention = rows.filter((row) => row.state === 'attention').length;
+
+  const titleLeft = `${ICON} ${TITLE}`;
+  const headerRightPlain = `${live} agents · ${attention} attention`;
+  const headerGap = ' '.repeat(
+    Math.max(1, width - [...titleLeft].length - [...headerRightPlain].length),
+  );
+
+  if (rows.length === 0) {
+    return (
+      `${painters.bold(painters.titlePurple(titleLeft))}${headerGap}` +
+      `${painters.muted(`${live} agents · `)}${painters.accent(`${attention} attention`)}\n\n` +
+      `${painters.dim('no live agents')}\n`
+    );
+  }
+
+  const projectWidth = Math.max(20, ...rows.map((row) => [...row.project].length)) + 2;
+  const rowPrefixWidth = 2 + 3 + 2 + projectWidth + 2;
+  const taskWidth = Math.max(2, width - rowPrefixWidth - TIME_WIDTH - 2);
+
+  const blocks = [];
+  for (const row of rows) {
+    const marker = markers[row.state];
+    const taskPaint =
+      row.state === 'attention'
+        ? (chunk) => painters.bold(painters.accent(chunk))
+        : painters.text;
+    const main =
+      `${marker.paint(marker.glyph)} ` +
+      `${painters.muted(fitRight(row.id, 3))}  ` +
+      `${painters.cyan(fitRight(row.project, projectWidth))}  ` +
+      `${taskPaint(fitRight(row.task, taskWidth))}` +
+      `  ${painters.muted(fitLeft(row.time, TIME_WIDTH))}`;
+    blocks.push(main);
+    if (row.sub) {
+      blocks.push(`${' '.repeat(rowPrefixWidth)}${painters.text(row.sub)}`);
+      blocks.push('');
+    }
+  }
+
+  return (
+    `${painters.bold(painters.titlePurple(titleLeft))}${headerGap}` +
+    `${painters.muted(`${live} agents · `)}${painters.accent(`${attention} attention`)}\n\n` +
+    `${blocks.join('\n')}\n`
+  );
+}
+
+export function renderJson(snapshots) {
+  return JSON.stringify(snapshots, null, 2);
+}
+
+async function paintOnce({ json, stateDir }) {
+  const snapshots = await readSnapshots(stateDir);
+  if (json) {
+    process.stdout.write(`${renderJson(snapshots)}\n`);
+    return;
+  }
+  const rows = deriveAgents(snapshots);
+  process.stdout.write(renderBoard(rows));
+}
+
+async function main(argv) {
+  const watch = argv.includes('-w') || argv.includes('--watch');
+  const json = argv.includes('--json');
+  const intervalFlag = argv.indexOf('--interval');
+  const intervalSeconds = intervalFlag >= 0 ? Number(argv[intervalFlag + 1] ?? 2) : 2;
+  const intervalMs =
+    (Number.isFinite(intervalSeconds) && intervalSeconds > 0 ? intervalSeconds : 2) *
+    1000;
+  const stateDir = defaultStateDir();
+
+  await paintOnce({ json, stateDir });
+  if (!watch) return;
+
+  for (;;) {
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    process.stdout.write('\u001b[2J\u001b[H');
+    await paintOnce({ json, stateDir });
+  }
+}
+
+const invokedAsScript = import.meta.url === pathToFileURL(process.argv[1] ?? '').href;
+
+if (invokedAsScript) {
+  await main(process.argv.slice(2));
+}

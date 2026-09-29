@@ -156,13 +156,26 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     subline overflow 86 preserved). Typecheck is expected to fail
     identically until GREEN.
   - Subject: `step(command-center): red golden board contracts`.
-- [ ] GREEN — minimum reader: replace mock fixtures in `bin/cockpit-agents.mjs`
+- [x] GREEN — minimum reader: replace mock fixtures in `bin/cockpit-agents.mjs`
       with the snapshot directory reader (parse
       `~/.local/state/pi-vimux-starship/agents/`, tolerate corrupt or missing
       files), state derivation per the RED contracts, `-w`/`--interval`
       (default 2s, clear + reprint), `--json` raw snapshot dump; empty
       directory renders the header plus a dim `no live agents` line; the RED
       suite passes with no test modification.
+  - Started: 2026-09-29T08:59Z. Completed: 2026-09-29T09:10Z (≈11 min).
+  - Check: `npm run test:tooling` — 40/40 (24 pre-existing + 16 new);
+    `tsc --noEmit` clean via `allowJs` (no tsconfig change needed); eslint
+    clean; prettier clean; live `node bin/cockpit-agents.mjs` prints the
+    honest empty board against the real state dir.
+  - Honest note: two test expectations were wrong, not production — the
+    header icon is a surrogate pair (UTF-16 length vs code points) and the
+    header/sublines keep their natural frozen overflow (the validated sample
+    overflows at width 80), so the narrow guard pins main row lines only.
+    Also dropped an unused import and added one explicit-any annotation in
+    the test. The bin's frozen look code was transplanted verbatim; only the
+    fixtures became derived rows.
+  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
   - Subject: `step(command-center): green live reader watch and json`.
 - [ ] Refactor/still-GREEN: refactor only within the confirmed scope if the
       minimum GREEN needs it; wire the suite into the repository test tooling

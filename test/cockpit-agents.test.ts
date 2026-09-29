@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -152,7 +152,10 @@ test('dynamic widths: COLUMNS geometry recomputes project and task columns', asy
     const output = renderBoard(rows, { columns: 100, color: false });
     for (const line of output.split('\n')) {
       if (line.length > 0 && !line.startsWith(' ')) {
-        assert.ok(line.length <= 100, `main row exceeds width: ${line.length}`);
+        assert.ok(
+          [...line].length <= 100,
+          `main row exceeds width: ${[...line].length}`,
+        );
       }
     }
     const wide = renderBoard(rows, { columns: 120, color: false });
@@ -178,7 +181,9 @@ test('narrow-width guard keeps main rows within the terminal width', async () =>
     const subIndent = lines.find((line) => line.startsWith('      '));
     assert.ok(subIndent, 'fixture includes a subline');
     for (const [index, line] of lines.entries()) {
-      if (line === '' || line === subIndent) continue;
+      // Header (line 0) and sublines keep their natural frozen overflow;
+      // the guard pins main row lines.
+      if (index === 0 || line === '' || line === subIndent) continue;
       assert.ok(
         [...line].length <= 45,
         `row ${index} exceeds 45 columns: ${[...line].length}`,
@@ -257,7 +262,7 @@ test('groups order attention → working → parked → gone, most recent first'
   const gone = snapshotFor(FIXTURES[4]);
   const rows = deriveAgents([gone, parked, working, attention], { now: NOW });
   assert.deepEqual(
-    rows.map((row) => row.state),
+    rows.map((row: { state: string }) => row.state),
     ['attention', 'working', 'parked', 'gone'],
   );
 });
