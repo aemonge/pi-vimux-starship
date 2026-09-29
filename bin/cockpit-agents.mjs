@@ -4,8 +4,7 @@
 // header, row grammar, palette, and spacing below must not drift.
 // Layout: STATE → AGENT → TASK → TIME, dynamic full terminal width.
 
-import { createHash } from 'node:crypto';
-import { readdir, readFile } from 'node:fs/promises';
+import { readdir, readFile, rm } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -24,6 +23,7 @@ const THEME = {
 const ICON = '󰆧'; // deck PWD glyph (matches header gauge)
 const TITLE = 'pi-vimux-starship command center';
 const TIME_WIDTH = 8;
+const ID_WIDTH = 7; // git-style short id: pi --session <id> resolves it
 
 export function colorWanted({
   tty = process.stdout.isTTY ?? false,
@@ -101,9 +101,21 @@ function defaultPidAlive(pid) {
   }
 }
 
-function shortId(sessionId) {
-  const digest = createHash('sha256').update(sessionId).digest();
-  return String(digest.readUInt16BE(0) % 1000).padStart(3, '0');
+export async function pruneDeadSnapshots(stateDir, { pidAlive } = {}) {
+  const isPidAlive = pidAlive ?? defaultPidAlive;
+  const removed = [];
+  for (const snapshot of await readSnapshots(stateDir)) {
+    if (typeof snapshot.pid !== 'number' || isPidAlive(snapshot.pid)) continue;
+    try {
+      await rm(path.join(stateDir, `${snapshot.sessionId}.json`), {
+        force: true,
+      });
+      removed.push(snapshot.sessionId);
+    } catch {
+      // Pruning is best-effort hygiene, never a board failure.
+    }
+  }
+  return removed;
 }
 
 function formatClock(ms) {
@@ -154,9 +166,9 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
       sub = '';
     }
 
-    // Deck-clock match: while busy the root agent span is the event's turn
-    // clock; while idle idleMs is the deck's idle clock. Both freeze at the
-    // last event, so snapshot-age drift keeps the column ticking in step.
+    // Deck-clock match: busy rows ride the root agent span; idle rows ride
+    // the deck idle clock (idleMs is omitted at zero, so absent means 0);
+    // both freeze at the last event and drift forward by snapshot age.
     // Gone rows report the session lifetime. The deck's mid-turn face
     // (since last assistant message) is header-private and cannot be carried.
     const sessionAgeMs = now - (snapshot.sessionStart ?? now);
@@ -165,13 +177,11 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
         ? sessionAgeMs
         : rootSpanElapsed >= 0
           ? rootSpanElapsed + drift
-          : Number.isFinite(snapshot.idleMs)
-            ? snapshot.idleMs + drift
-            : sessionAgeMs;
+          : (Number.isFinite(snapshot.idleMs) ? snapshot.idleMs : 0) + drift;
 
     return {
       state,
-      id: shortId(snapshot.sessionId),
+      id: String(snapshot.sessionId).slice(0, ID_WIDTH),
       project: path.basename(snapshot.cwd ?? '') || '?',
       task,
       sub,
@@ -254,7 +264,7 @@ export function renderBoard(rows, { columns, color } = {}) {
   }
 
   const projectWidth = Math.max(20, ...rows.map((row) => [...row.project].length)) + 2;
-  const rowPrefixWidth = 2 + 3 + 2 + projectWidth + 2;
+  const rowPrefixWidth = 2 + ID_WIDTH + 2 + projectWidth + 2;
   const taskWidth = Math.max(2, width - rowPrefixWidth - TIME_WIDTH - 2);
 
   const blocks = [];
@@ -266,7 +276,7 @@ export function renderBoard(rows, { columns, color } = {}) {
         : painters.text;
     const main =
       `${marker.paint(marker.glyph)} ` +
-      `${painters.muted(fitRight(row.id, 3))}  ` +
+      `${painters.muted(fitRight(row.id, ID_WIDTH))}  ` +
       `${painters.cyan(fitRight(row.project, projectWidth))}  ` +
       `${taskPaint(fitRight(row.task, taskWidth))}` +
       `  ${painters.muted(fitLeft(row.time, TIME_WIDTH))}`;
@@ -289,6 +299,7 @@ export function renderJson(snapshots) {
 }
 
 async function paintOnce({ json, stateDir }) {
+  await pruneDeadSnapshots(stateDir);
   const snapshots = await readSnapshots(stateDir);
   if (json) {
     process.stdout.write(`${renderJson(snapshots)}\n`);

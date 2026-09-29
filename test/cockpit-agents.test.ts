@@ -7,6 +7,7 @@ import path from 'node:path';
 import {
   colorWanted,
   deriveAgents,
+  pruneDeadSnapshots,
   readSnapshots,
   renderBoard,
   renderJson,
@@ -15,56 +16,63 @@ import {
 
 const NOW = 1_800_000_000_000;
 
-// Fixture sessionIds are pre-searched so the sha256-based 3-char ids derive
-// to 003/001/002/004/005, reproducing the frozen sample's id column exactly.
+// Fixture sessionIds double as the board's 7-char prefix ids (git-style
+// short SHAs, resolvable via `pi --session <id>`); first 7 chars are the
+// display ids, reproducing the frozen sample's id column shape.
 const FIXTURES: ReadonlyArray<{
   sessionId: string;
   elapsedMs: number;
   ageMs: number;
   pid?: number;
+  idleMs?: number;
+  spanMs?: number;
   cwd: string;
   suggestion: string | null;
   lifecycle: string;
   titles: readonly string[];
 }> = [
   {
-    sessionId: '0b4a-b1fe-4bd6-8f0e-session-b4',
+    sessionId: '003f1a0-session-att',
     elapsedMs: 10_931_000, // 3:02:11
     ageMs: 1_000,
+    idleMs: 10_930_000, // deck idle clock at last event
     cwd: '/home/dev/pi-vimux-starship',
     suggestion: 'requesting-validation',
     lifecycle: 'waiting',
     titles: ['Pi agent telemetry CLI for vimux-starship notifications'],
   },
   {
-    sessionId: '04e7a-b1fe-4bd6-8f0e-session-4e7',
+    sessionId: '001c2d4-session-wrk1',
     elapsedMs: 754_000, // 0:12:34
     ageMs: 5_000,
+    spanMs: 749_000, // root span at last event; drift adds the rest
     cwd: '/home/dev/galactica',
     suggestion: null,
     lifecycle: 'working',
     titles: ['Consolidate imported Pi cockpit'],
   },
   {
-    sessionId: '054ca-b1fe-4bd6-8f0e-session-54c',
+    sessionId: '002b3e5-session-wrk2',
     elapsedMs: 2_467_000, // 0:41:07
     ageMs: 9_000,
+    spanMs: 2_458_000,
     cwd: '/home/dev/pi-vimux-starship',
     suggestion: null,
     lifecycle: 'working',
     titles: ['Route Insert through Neovim'],
   },
   {
-    sessionId: '032ea-b1fe-4bd6-8f0e-session-32e',
+    sessionId: '004a9c3-session-park',
     elapsedMs: 6_000_000, // 1:40:00
     ageMs: 20_000,
+    idleMs: 5_980_000,
     cwd: '/home/aemonge/articles',
     suggestion: null,
     lifecycle: 'listening',
     titles: ['QMD taxonomy cleanup'],
   },
   {
-    sessionId: '0449a-b1fe-4bd6-8f0e-session-449',
+    sessionId: '005d7e1-session-gone',
     elapsedMs: 1_365_000, // 0:22:45
     ageMs: 120_000, // frozen heartbeat but pid dead → gone
     pid: 4194303,
@@ -92,6 +100,14 @@ function snapshotFor(fixture: (typeof FIXTURES)[number]) {
     blocked: false,
     counters: { agents: { active: 0, total: 0 } },
     progress: [],
+    ...(fixture.idleMs !== undefined ? { idleMs: fixture.idleMs } : {}),
+    ...(fixture.spanMs !== undefined
+      ? {
+          activeRunSpans: [
+            { id: 'turn-1', kind: 'agent', parent: null, elapsedMs: fixture.spanMs },
+          ],
+        }
+      : {}),
     sessionId: fixture.sessionId,
     pid: fixture.pid ?? process.pid,
     cwd: fixture.cwd,
@@ -115,13 +131,13 @@ async function fixtureDir(): Promise<string> {
 const GOLDEN_80 = [
   '󰆧 pi-vimux-starship command center                        4 agents · 1 attention',
   '',
-  '! 003  pi-vimux-starship       validation                                3:02:11',
-  '                               Pi agent telemetry CLI for vimux-starship notifications',
+  '! 003f1a0  pi-vimux-starship       validation                            3:02:11',
+  '                                   Pi agent telemetry CLI for vimux-starship notifications',
   '',
-  '● 001  galactica               Consolidate imported Pi cockpit           0:12:34',
-  '● 002  pi-vimux-starship       Route Insert through Neovim               0:41:07',
-  '◌ 004  articles                QMD taxonomy cleanup                      1:40:00',
-  '× 005  dotfiles                Shell hygiene pass                        0:22:45',
+  '● 001c2d4  galactica               Consolidate imported Pi cockpit       0:12:34',
+  '● 002b3e5  pi-vimux-starship       Route Insert through Neovim           0:41:07',
+  '◌ 004a9c3  articles                QMD taxonomy cleanup                  1:40:00',
+  '× 005d7e1  dotfiles                Shell hygiene pass                    0:22:45',
 ].join('\n');
 
 test('golden render reproduces the frozen TUI contract byte-identically', async () => {
@@ -187,7 +203,8 @@ test('narrow-width guard keeps main rows within the terminal width', async () =>
   const dir = await fixtureDir();
   try {
     const rows = deriveAgents(await readSnapshots(dir), { now: NOW });
-    const output = renderBoard(rows, { columns: 45, color: false });
+    // 7-char ids raise the squeezable floor to 47 (prefix + project + time).
+    const output = renderBoard(rows, { columns: 48, color: false });
     const lines = output.split('\n');
     const subIndent = lines.find((line) => line.startsWith('      '));
     assert.ok(subIndent, 'fixture includes a subline');
@@ -196,8 +213,8 @@ test('narrow-width guard keeps main rows within the terminal width', async () =>
       // the guard pins main row lines.
       if (index === 0 || line === '' || line === subIndent) continue;
       assert.ok(
-        [...line].length <= 45,
-        `row ${index} exceeds 45 columns: ${[...line].length}`,
+        [...line].length <= 48,
+        `row ${index} exceeds 48 columns: ${[...line].length}`,
       );
     }
   } finally {
@@ -250,9 +267,12 @@ test('working derives from active lifecycles or live run spans', () => {
 test('parked derives from listening or waiting', () => {
   const base = snapshotFor(FIXTURES[1]);
   for (const lifecycle of ['listening', 'waiting']) {
-    const rows = deriveAgents([{ ...base, work: { ...base.work, lifecycle } }], {
-      now: NOW,
-    });
+    const rows = deriveAgents(
+      [{ ...base, work: { ...base.work, lifecycle }, activeRunSpans: undefined }],
+      {
+        now: NOW,
+      },
+    );
     assert.equal(rows[0]?.state, 'parked', lifecycle);
   }
 });
@@ -262,6 +282,7 @@ test('gone derives from dead pid only; stale-but-alive parks', () => {
   const staleAlive = {
     ...base,
     work: { ...base.work, lifecycle: 'listening' },
+    activeRunSpans: undefined,
     updatedAt: NOW - 61_000,
   };
   assert.equal(deriveAgents([staleAlive], { now: NOW })[0]?.state, 'parked');
@@ -282,18 +303,60 @@ test('groups order attention → working → parked → gone, most recent first'
   );
 });
 
-test('3-char ids are stable and zero-padded from the sessionId', () => {
+test('ids are stable 7-char sessionId prefixes, resolvable by pi --session', () => {
   const base = snapshotFor(FIXTURES[0]);
   const first = deriveAgents([base], { now: NOW })[0];
   const again = deriveAgents([base], { now: NOW + 5_000 })[0];
-  assert.equal(first?.id, '003');
-  assert.equal(again?.id, '003');
-  assert.match(String(first?.id), /^\d{3}$/u);
+  assert.equal(first?.id, base.sessionId.slice(0, 7));
+  assert.equal(again?.id, first?.id);
+  assert.match(String(first?.id), /^[0-9a-f]{7}$/u);
 });
 
-test('time column falls back to session age without live spans', () => {
-  const rows = deriveAgents([snapshotFor(FIXTURES[0])], { now: NOW });
-  assert.equal(rows[0]?.time, '3:02:11');
+test('just-idle rows show the deck idle clock even when idleMs is omitted at zero', () => {
+  const base = snapshotFor(FIXTURES[1]);
+  const justIdle = {
+    ...base,
+    work: { ...base.work, lifecycle: 'listening' },
+    activeRunSpans: undefined,
+    idleMs: undefined,
+    updatedAt: NOW - 6_000,
+  };
+  assert.equal(deriveAgents([justIdle], { now: NOW })[0]?.time, '0:00:06');
+});
+
+test('gone rows report the session lifetime', () => {
+  const rows = deriveAgents([snapshotFor(FIXTURES[4])], { now: NOW });
+  assert.equal(rows[0]?.state, 'gone');
+  assert.equal(rows[0]?.time, '0:22:45');
+});
+
+test('pruneDeadSnapshots deletes dead-pid files and keeps the rest', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'cockpit-prune-'));
+  try {
+    const alive = snapshotFor(FIXTURES[1]);
+    const dead = snapshotFor(FIXTURES[4]); // dead pid fixture
+    await writeFile(
+      path.join(dir, `${alive.sessionId}.json`),
+      JSON.stringify(alive),
+      'utf8',
+    );
+    await writeFile(
+      path.join(dir, `${dead.sessionId}.json`),
+      JSON.stringify(dead),
+      'utf8',
+    );
+    await writeFile(path.join(dir, 'corrupt.json'), '{oops', 'utf8');
+
+    const removed = await pruneDeadSnapshots(dir);
+
+    assert.deepEqual(removed.sort(), [dead.sessionId].sort());
+    assert.deepEqual(
+      (await readSnapshots(dir)).map((snapshot) => snapshot.sessionId),
+      [alive.sessionId],
+    );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
 
 test('task title falls back to selection.titles when work has none', () => {
@@ -318,6 +381,7 @@ test('idle time column ticks with the deck idle clock via drift', () => {
   const idle = {
     ...base,
     work: { ...base.work, lifecycle: 'listening' },
+    activeRunSpans: undefined,
     sessionStart: NOW - 3_600_000,
     idleMs: 1_713_000, // deck showed 000:28'33
     updatedAt: NOW - 5_000, // snapshot froze 5s ago

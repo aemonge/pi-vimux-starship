@@ -216,6 +216,35 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     lifecycle stays `working` — the parked pin uses an explicit listening
     lifecycle.
   - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
+- **CHANGE round 3 (Human feedback, recorded 2026-09-29T12:31Z):** board
+  paste — `Title correct`; `time should be the same as 󰠭 000:00'00`; `what's
+  the 609 for?`; `why keep legacy closed chats there?`. Canonical `CHANGE`;
+  confirmed brief (12:31Z `yes`): parked rows always compute
+  `(idleMs ?? 0) + drift` (publisher omits idleMs at zero — session-age
+  fallback was wrong for just-idle sessions); board self-heals the state dir
+  by pruning provably dead-pid snapshots each paint (CLI becomes a state-dir
+  mutator for its own package files only); 3-char ids stay per the frozen
+  grammar.
+- [x] Repair 4 — deck-exact idle clock and state hygiene: parked/attention
+      rows show `(idleMs ?? 0) + snapshot-age drift`; gone rows keep session
+      lifetime; working rows keep span+drift; golden fixtures gain idleMs and
+      root spans so the frozen sample stays byte-identical;
+      `pruneDeadSnapshots(dir)` deletes dead-pid snapshot files, wired into
+      every CLI paint including `--json`.
+  - Amended by Human direction during confirmation (`Use defaults, seven!`):
+    ids become 7-char sessionId prefixes (git-style, resolvable via
+    `pi --session <id>`); sha256 hash removed; golden regenerated at 7-char
+    ids under this Human-directed round; narrow guard floor moves 45 → 47.
+  - Started/Completed: 2026-09-29T12:32Z–13:02Z (≈30 min).
+  - Check: RED at the module boundary (missing `pruneDeadSnapshots`), then
+    46/46 tooling; typecheck, eslint, prettier, baseline, package:load,
+    composition all clean. Live smoke: first paint pruned the four legacy
+    dead-pid snapshots (579/597/852/562) from the real state dir.
+    Honest notes: one malformed edit spliced `formatClock`'s signature during
+    GREEN (caught immediately, restored, no commit carried the damage);
+    three tests needed fixture-aware fixes after golden fixtures gained root
+    spans; the narrow test moved to 48 columns for the new floor.
+  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
 - **CHANGE round 1 (Human feedback, recorded 2026-09-29T11:35Z):** pasted live
   CLI output + `The CLI isn't "live" I need to call it and call it .....` and
   `The timer don't match the timer here` (quoting the deck's 󰠭 turn timer).
