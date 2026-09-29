@@ -2,27 +2,33 @@
 
 - **Idea:** `share-pi-vimux-starship`
 - **Method source:** predefined
-- **Method name:** Happy-path
-- **Method contract:** Deliver the smallest complete live pipeline — cockpit
-  snapshot sink, snapshot reader, validated triage render — with the frozen TUI
-  contract preserved verbatim and each Task independently Human-validatable.
+- **Method name:** TDD
+- **Method contract:** Every bounded test-only RED contract fails for its
+  discriminating expected reason before production exists; deterministic RED
+  evidence is recorded, then minimum GREEN and refactor/still-GREEN proceed
+  within each confirmed Task scope — frozen TUI contract preserved verbatim,
+  each Task independently Human-validatable, RED evidence never a Human
+  approval gate.
 - **Execution source:** native-direct
 - **Execution name:** Sequential sink-then-render slices
 - **Execution reason:** The reader cannot be validated without live snapshots,
   and both slices share the frozen TUI contract; sequential slices keep each
   boundary runnable and attributable.
-- **Execution outline:** Task 1 adds a fifth extension entrypoint that mirrors
-  `galactica-status:header` events into one JSON snapshot per live session,
-  fail-soft, with session metadata and prune-on-shutdown. Task 2 replaces the
-  committed mock's fixtures with the snapshot directory, derives the four
-  attention states, and locks the validated look behind a golden render test,
-  adding `-w` refresh and `--json`.
+- **Execution outline:** Task 1 lands the sink test-first: RED contracts for
+  payload projection, fail-soft, atomic write, and prune, then the minimum
+  GREEN fifth entrypoint mirroring `galactica-status:header` into one JSON
+  snapshot per live session with session metadata and prune-on-shutdown,
+  refactor/still-GREEN with registration and gates. Task 2 locks the board
+  test-first: RED golden render and derivation contracts from fixture
+  snapshots, then the minimum GREEN reader over the snapshot directory with
+  `-w` and `--json`, refactor/still-GREEN with full gates.
 - **Estimate basis:** The TUI contract is already Human-validated and committed
   (`4aa1cfa`); the event shape (`HeaderStatusEvent`, protocol 1) and channel
-  (`galactica-status:header`) are known from inspection; no comparable accepted
-  Plan exists for this surface, so confidence is low and both Tasks carry split
+  (`galactica-status:header`) are known from inspection; method revised to TDD
+  at Human direction (2026-09-29) with no comparable accepted evidence for the
+  test-first overhead, so confidence is low and both Tasks carry split
   triggers.
-- **Estimated implementation:** 2.5–4.5 hours across two Tasks excluding Human
+- **Estimated implementation:** 3–5.5 hours across two Tasks excluding Human
   wait; per-Task ranges and triggers live in `tasks.md`.
 
 ## Acceptance
@@ -39,6 +45,8 @@
   empty-but-honest board.
 - `npm run check:baseline`, `check:package:load`, `check:composition`,
   formatting, lint, and typecheck stay green after every Task.
+- Each Task records deterministic RED evidence — failing contracts and their
+  discriminating reasons — in its ledger before production code exists.
 
 ## Frozen TUI contract (stone)
 
