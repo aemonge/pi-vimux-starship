@@ -365,64 +365,16 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     guard gained a pwd clamp (floor now 25 + pwd); one sloppy two-line edit
     during the fix was reverted before commit.
   - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
-- [ ] Human validation: live board — rows read
-      `MARK HASH › pwd ⟩ TITLE › STAGES` with violet separators, timer hard
-      right, no padded columns; original response, canonical outcome, and
-      UTC recorded here.
+- [x] Human validation: live board — rows read
+-      `MARK HASH › pwd ⟩ TITLE › STAGES` with violet separators, timer hard
+-      right, no padded columns; original response, canonical outcome, and
+-      UTC recorded here.
+  - Original response: `FANSTATIC - VALID` (2026-09-29T15:21:28Z), after
+    three repair rounds within Task 4 (frozen idle zero; event-driven
+    fs.watch with zero polling; zeros-when-idle + flush-left `↳` sublines
+    with ellipsized truncation). Canonical outcome `VALID` closes Task 4
+    as of `41252ac`; the Human immediately added `Still feels a bit slow`,
+    which opens a latency Task rather than reopening this validation.
+  - Wait: implementation completed 15:12Z; validation 15:21Z (~9 min).
+    Task 4 complete.
   - Subject: `feat(command-center): deck grammar rows`.
-- **Task 4 validation feedback (2026-09-29T14:31Z):** grammar accepted
-  implicitly; defect reported — `on listening the timer is reseted to zeros`
-  with deck showing frozen `󰠭 000:00'00` while the board showed
-  `000:12'93`. Diagnosis (code-backed): the status heartbeat re-publishes
-  only while spans are live or `idleMs > 0`; with no ended spans the deck
-  face is frozen at zero, and the board's drift-on-zero invented phantom
-  idle. Confirmed fix (14:32Z `yes`): `idleMs > 0` keeps `idleMs + drift`;
-  absent/zero `idleMs` renders a literal frozen `000:00'00`.
-- [x] Repair — frozen idle zero: absent/zero `idleMs` renders `000:00'00`
-      with no drift (mirroring the deck's frozen face); the just-idle
-      contract premise is corrected (deck does not tick at idle-zero).
-  - Started/Completed: 2026-09-29T14:33Z–14:37Z (≈4 min).
-  - Check: 50/50 tooling (frozen-zero contract added for both absent and
-    explicit-zero idleMs); typecheck, prettier clean; the idleMs>0 drift
-    path is unchanged (heartbeat keeps those snapshots fresh anyway).
-  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
-- **Task 4 validation feedback round 2 (2026-09-29T14:41Z):** `ON idel the
--  header set timer to zeros but not the command center` (persisted after
--  restart) + `are we pollinng or event driven, feel slow as pooling`, then
--  `The idea is do to zero pulling, pure event driven is faster and more
--  stable`. Diagnosis: the span-clock branch fired for parked sessions whose
--  ended spans linger in the snapshot; the CLI polled the directory on a 2s
--  interval. Confirmed fix (14:41Z `yes`): span clock only while working;
--  watch mode becomes fs.watch event-driven with a 1s interval only as
--  filesystem-error fallback.
-- [x] Repair 2 — event-driven board: watch mode repaints on `fs.watch`
--      directory events (50ms debounce, atomic-rename friendly) with zero
--      polling; a 1s interval is the fallback only when watching fails;
--      `--interval` is retired.
-  - Honest correction: the planned span-clock reorder and its test were
-    withdrawn — `runtime-runs.snapshot()` excludes ended spans
-    (`if (span.endedAt !== undefined) continue;`), so snapshots carry
-    live spans only and `parked with lingering spans` is an unreachable
-    input; the frozen-zero fix from the prior repair already covers the
-    reported idle-zeros case once the board process is restarted.
-  - Started/Completed: 2026-09-29T14:42Z–14:52Z (≈10 min).
-  - Check: 51/51 tooling (watcher contract: directory write → repaint);
-    typecheck, eslint, prettier clean.
-  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.- **Task 4 validation feedback round 3 (2026-09-29T14:58Z):** attention row
--  showed `009:17'04` while the deck idle face is `000:00'00` (header deck state
--  never receives idleMs — `?? 0` fallback); subline indent read as title
--  overflow. Human-picked fix: flush-left dim `↳` subline (preview round:
--  indented A/B rejected, flush-left chosen), width-clamped with `…`; main
--  title truncation gains `…`; not-busy rows render `000:00'00` (idleMs branch
--  retired).
-- [x] Repair 3 — zeros-when-idle and flush-left sublines: not busy and no
--      live spans renders the literal deck idle face `000:00'00`; sublines
--      render flush-left `↳ ` dim, clamped with trailing `…`; truncated
--      titles end in `…`.
-  - Started/Completed: 2026-09-29T14:59Z–15:12Z (≈13 min).
-  - Check: 52/52 tooling (idle-history-ignored and attention-zeros
-    contracts; golden regenerated with flush-left subline and zeroed
-    non-busy timers); typecheck, eslint, prettier, baseline, package:load,
-    composition green. One edge fix: `…` at zero budget now clamps to
-    empty instead of overflowing.
-  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
