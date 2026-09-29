@@ -28,6 +28,13 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     format, lint, typecheck, 53/53 tooling green. Boundary: the sandbox
     mounts `~/.local/bin` read-only, so the symlink is a Human-run
     one-liner in validation — not bypassed.
+  - Human feedback (15:46Z): a symlink is not an install — the repo must
+    exist at `~/projects`. Real install verified in a sandbox probe:
+    `npm install -g --offline --legacy-peer-deps <tarball>` places a
+    repo-independent copy with a working `pi-agents` shim. Honest note:
+    the `bin` manifest field was lost to an atomic edit failure earlier
+    (half the edit re-applied); caught by the probe, fixed, repacked,
+    re-verified (shim links, installed bin runs).
 - [ ] Human validation: run `pi-agents` (and `pi-agents -w`) from a
       different directory; confirm the board renders; original response,
       canonical outcome, and UTC recorded here.

@@ -81,5 +81,8 @@
     "extensions": [
       "./src/index.ts"
     ]
+  },
+  "bin": {
+    "pi-agents": "bin/cockpit-agents.mjs"
   }
 }
