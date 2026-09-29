@@ -317,3 +317,24 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Wait: implementation completed 13:24Z; validation 13:49Z (~25 min,
     live two-agent checks across repair rounds). Task 2 complete.
   - Subject: `feat(command-center): live agent triage board`.
+
+## Task 3 — Deck-parity polish: activity path and timer format
+
+- **implementation_confirmed_at:** 2026-09-29T13:52Z (Human `Yes`).
+
+- [x] Deck stage and timer face: working/parked task cells append
+      `${lifecycle} › ${activityPath compact labels}`; time column renders
+      the deck face `mmm:ss'cc` (cap `999:59'99`), column width 8 → 9;
+      golden regenerated under this directed round.
+  - Started/Completed: 2026-09-29T13:52Z–14:03Z (≈11 min).
+  - Check: RED on 7 contracts, then 49/49 tooling; typecheck, eslint,
+    prettier, baseline, package:load, composition green; live smoke renders
+    the empty board. One stale test expectation updated (title fallback now
+    carries the stage suffix); ledger heading briefly misplaced during the
+    Task 3 append and repaired before commit.
+  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
+- [ ] Human validation: one fresh working agent — the row names its stage
+      (`… · understanding › interpreting`) and the timer matches the deck
+      tile digit-for-digit, centiseconds included; original response,
+      canonical outcome, and UTC recorded here.
+  - Subject: `feat(command-center): deck-parity polish`.

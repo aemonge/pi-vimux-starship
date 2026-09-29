@@ -31,6 +31,7 @@ const FIXTURES: ReadonlyArray<{
   idleMs?: number;
   spanMs?: number;
   activityMs?: number;
+  stage?: readonly string[];
   cwd: string;
   suggestion: string | null;
   lifecycle: string;
@@ -48,10 +49,11 @@ const FIXTURES: ReadonlyArray<{
   },
   {
     sessionId: '001c2d4-session-wrk1',
-    elapsedMs: 754_000, // 0:12:34
+    elapsedMs: 754_000, // 012:34'00
     ageMs: 5_000,
     spanMs: 749_000, // root span at last event; drift adds the rest
     activityMs: 749_000, // deck clock at last event — identical to the span here
+    stage: ['working', 'implementing'],
     cwd: '/home/dev/galactica',
     suggestion: null,
     lifecycle: 'working',
@@ -59,10 +61,11 @@ const FIXTURES: ReadonlyArray<{
   },
   {
     sessionId: '002b3e5-session-wrk2',
-    elapsedMs: 2_467_000, // 0:41:07
+    elapsedMs: 2_467_000, // 041:07'00
     ageMs: 9_000,
     spanMs: 2_458_000,
     activityMs: 2_458_000,
+    stage: ['working', 'planning'],
     cwd: '/home/dev/pi-vimux-starship',
     suggestion: null,
     lifecycle: 'working',
@@ -100,6 +103,15 @@ function snapshotFor(fixture: (typeof FIXTURES)[number]) {
       lifecycle: fixture.lifecycle,
       titles: [...fixture.titles],
       color: 'accent',
+      ...(fixture.stage
+        ? {
+            activityPath: fixture.stage.slice(1).map((compact, index) => ({
+              id: `seg-${index}`,
+              label: compact,
+              compact,
+            })),
+          }
+        : {}),
     },
     diagnostics: null,
     backgroundActivity: false,
@@ -141,13 +153,13 @@ async function fixtureDir(): Promise<string> {
 const GOLDEN_80 = [
   '󰆧 pi-vimux-starship command center                        4 agents · 1 attention',
   '',
-  '! 003f1a0  ~/pi-vimux-starship       validation                          3:02:11',
+  "! 003f1a0  ~/pi-vimux-starship       validation                        182:11'00",
   '                                     Pi agent telemetry CLI for vimux-starship notifications',
   '',
-  '● 001c2d4  ~/galactica               Consolidate imported Pi cockpit     0:12:34',
-  '● 002b3e5  ~/pi-vimux-starship       Route Insert through Neovim         0:41:07',
-  '◌ 004a9c3  /home/aemonge/articles    QMD taxonomy cleanup                1:40:00',
-  '× 005d7e1  /home/aemonge/dotfiles    Shell hygiene pass                  0:22:45',
+  "● 001c2d4  ~/galactica               Consolidate imported Pi cockpit   012:34'00",
+  "● 002b3e5  ~/pi-vimux-starship       Route Insert through Neovim · wo  041:07'00",
+  "◌ 004a9c3  /home/aemonge/articles    QMD taxonomy cleanup · listening  100:00'00",
+  "× 005d7e1  /home/aemonge/dotfiles    Shell hygiene pass                022:45'00",
 ].join('\n');
 
 test('golden render reproduces the frozen TUI contract byte-identically', async () => {
@@ -332,7 +344,33 @@ test('the deck activity clock wins over span and idle clocks', () => {
     activeRunSpans: [{ id: 'turn-1', kind: 'agent', parent: null, elapsedMs: 262_000 }],
     updatedAt: NOW - 2_000,
   };
-  assert.equal(deriveAgents([withAll], { now: NOW })[0]?.time, '0:00:27');
+  assert.equal(deriveAgents([withAll], { now: NOW })[0]?.time, "000:27'00");
+});
+
+test('working rows append the deck stage to the task cell', () => {
+  const base = snapshotFor(FIXTURES[1]);
+  assert.equal(
+    deriveAgents([base], { now: NOW })[0]?.task,
+    'Consolidate imported Pi cockpit · working › implementing',
+  );
+  const understanding = {
+    ...base,
+    work: {
+      ...base.work,
+      lifecycle: 'understanding',
+      activityPath: [
+        {
+          id: 'interpreting-intent',
+          label: 'interpreting intent',
+          compact: 'interpreting',
+        },
+      ],
+    },
+  };
+  assert.equal(
+    deriveAgents([understanding], { now: NOW })[0]?.task,
+    'Consolidate imported Pi cockpit · understanding › interpreting',
+  );
 });
 
 test('ids are stable 7-char sessionId prefixes, resolvable by pi --session', () => {
@@ -354,13 +392,13 @@ test('just-idle rows show the deck idle clock even when idleMs is omitted at zer
     idleMs: undefined,
     updatedAt: NOW - 6_000,
   };
-  assert.equal(deriveAgents([justIdle], { now: NOW })[0]?.time, '0:00:06');
+  assert.equal(deriveAgents([justIdle], { now: NOW })[0]?.time, "000:06'00");
 });
 
 test('gone rows report the session lifetime', () => {
   const rows = deriveAgents([snapshotFor(FIXTURES[4])], { now: NOW });
   assert.equal(rows[0]?.state, 'gone');
-  assert.equal(rows[0]?.time, '0:22:45');
+  assert.equal(rows[0]?.time, "022:45'00");
 });
 
 test('pruneDeadSnapshots deletes dead-pid files and keeps the rest', async () => {
@@ -405,7 +443,7 @@ test('task title falls back to selection.titles when work has none', () => {
   };
   assert.equal(
     deriveAgents([subjectSourced], { now: NOW })[0]?.task,
-    'Testing a 20-second sleep command',
+    'Testing a 20-second sleep command · working › implementing',
   );
 });
 
@@ -422,7 +460,7 @@ test('idle time column ticks with the deck idle clock via drift', () => {
   };
   const rows = deriveAgents([idle], { now: NOW });
   assert.equal(rows[0]?.state, 'parked');
-  assert.equal(rows[0]?.time, '0:28:38', 'idleMs plus snapshot age');
+  assert.equal(rows[0]?.time, "028:38'00", 'idleMs plus snapshot age');
 });
 
 test('working time column adds snapshot-age drift to the span clock', () => {
@@ -440,7 +478,7 @@ test('working time column adds snapshot-age drift to the span clock', () => {
   };
   const rows = deriveAgents([withSpans], { now: NOW });
   assert.equal(rows[0]?.state, 'working');
-  assert.equal(rows[0]?.time, '0:04:27', 'newest root span elapsed plus drift');
+  assert.equal(rows[0]?.time, "004:27'00", 'newest root span elapsed plus drift');
 });
 
 test('readSnapshots tolerates corrupt files, wrong protocols, and missing dirs', async () => {

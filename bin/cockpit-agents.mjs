@@ -22,7 +22,7 @@ const THEME = {
 
 const ICON = '󰆧'; // deck PWD glyph (matches header gauge)
 const TITLE = 'pi-vimux-starship command center';
-const TIME_WIDTH = 8;
+const TIME_WIDTH = 9; // deck face mmm:ss'cc
 const ID_WIDTH = 7; // git-style short id: pi --session <id> resolves it
 
 export function colorWanted({
@@ -127,13 +127,17 @@ export async function pruneDeadSnapshots(stateDir, { pidAlive } = {}) {
   return removed;
 }
 
-function formatClock(ms) {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const hours = Math.floor(total / 3_600);
-  const minutes = Math.floor((total % 3_600) / 60);
-  const seconds = total % 60;
+// Mirrors the header deck's timer face (packages/header/src/deck.ts):
+// mmm:ss'cc capped at 999:59'99.
+function formatDeckClock(ms) {
+  const maximum = (999 * 60 + 59) * 1_000 + 999;
+  const observed = Number.isFinite(ms) ? ms : 0;
+  const normalized = Math.min(maximum, Math.max(0, Math.floor(observed)));
+  const minutes = Math.floor(normalized / 60_000);
+  const seconds = Math.floor((normalized % 60_000) / 1_000);
+  const centiseconds = Math.floor((normalized % 1_000) / 10);
   const two = (value) => String(value).padStart(2, '0');
-  return `${hours}:${two(minutes)}:${two(seconds)}`;
+  return `${String(minutes).padStart(3, '0')}:${two(seconds)}'${two(centiseconds)}`;
 }
 
 export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
@@ -141,13 +145,29 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
   const rows = snapshots.map((snapshot) => {
     const lifecycle = snapshot.work?.lifecycle ?? 'listening';
     const subject = snapshot.work?.titles?.[0] ?? snapshot.selection?.titles?.[0] ?? '';
+    const stage = [
+      lifecycle,
+      ...(snapshot.work?.activityPath ?? [])
+        .map((segment) =>
+          typeof segment?.compact === 'string' && segment.compact
+            ? segment.compact
+            : typeof segment?.label === 'string'
+              ? segment.label
+              : '',
+        )
+        .filter(Boolean),
+    ].join(' › ');
     const spans = Array.isArray(snapshot.activeRunSpans) ? snapshot.activeRunSpans : [];
     const rootSpanElapsed = spans
       .filter((span) => span && !span.parent && Number.isFinite(span.elapsedMs))
       .reduce((max, span) => Math.max(max, span.elapsedMs), -1);
     const drift = Math.max(0, now - (snapshot.updatedAt ?? now));
     let state = 'parked';
-    let task = subject || 'parked';
+    let task = subject
+      ? stage
+        ? `${subject} · ${stage}`
+        : subject
+      : stage || 'parked';
     let sub = '';
 
     if (snapshot.blocked) {
@@ -162,7 +182,11 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
         sub = subject;
       } else if (WORKING_LIFECYCLES.has(lifecycle) || spans.length > 0) {
         state = 'working';
-        task = subject || 'working';
+        task = subject
+          ? stage
+            ? `${subject} · ${stage}`
+            : subject
+          : stage || 'working';
       }
     }
 
@@ -196,7 +220,7 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
       project: formatProjectPath(String(snapshot.cwd ?? '')) || '?',
       task,
       sub,
-      time: formatClock(elapsedMs),
+      time: formatDeckClock(elapsedMs),
       updatedAt: snapshot.updatedAt,
     };
   });
