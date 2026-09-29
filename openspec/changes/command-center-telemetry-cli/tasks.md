@@ -109,6 +109,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   ≈25 min vs 75–150 min estimated — overestimate driven by crisp frozen
   contracts and established package patterns; narrow the next comparable
   Task's range accordingly.
+- **implementation_confirmed_at:** 2026-09-29T08:47Z (Human `Yes` to the
+  exact Task 2 TDD brief).
 
 - **Value:** `node bin/cockpit-agents.mjs` (and `-w`) reports every live agent
   as the validated triage board from any shell, ending pane-hopping.
@@ -130,7 +132,7 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   or more than four states, or the narrow-width policy outgrows a simple
   truncation guard.
 
-- [ ] RED — test-only contracts, reader does not exist yet: a golden render
+- [x] RED — test-only contracts, reader does not exist yet: a golden render
       test over fixture snapshots reproduces the frozen TUI contract sample
       byte-identically, covering dynamic widths (including `COLUMNS`
       fallback), surrogate-safe title math, `NO_COLOR`, sublines, project
@@ -143,6 +145,16 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       group, 3-char stable id from `sessionId`, time column `now -
       sessionStart`. Each contract fails for its discriminating expected
       reason; record the deterministic RED evidence in this Step's entry.
+  - Started: 2026-09-29T08:48Z. Completed: 2026-09-29T08:58Z (≈10 min).
+  - RED evidence: `npm run test:tooling` — 16 contracts in
+    `test/cockpit-agents.test.ts` all fail with `SyntaxError: The requested
+    module '../bin/cockpit-agents.mjs' does not provide an export named
+    'colorWanted'`: the reader/derivation/render module boundary does not
+    exist; the pre-existing 24 tooling tests stay green. Fixture sessionIds
+    pre-searched so sha256-derived ids reproduce `001`–`005`; golden literals
+    computed from the frozen sample's geometry (width 80, header gap 24,
+    subline overflow 86 preserved). Typecheck is expected to fail
+    identically until GREEN.
   - Subject: `step(command-center): red golden board contracts`.
 - [ ] GREEN — minimum reader: replace mock fixtures in `bin/cockpit-agents.mjs`
       with the snapshot directory reader (parse
