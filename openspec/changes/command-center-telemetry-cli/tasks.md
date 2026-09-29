@@ -177,9 +177,20 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     fixtures became derived rows.
   - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
   - Subject: `step(command-center): green live reader watch and json`.
-- [ ] Refactor/still-GREEN: refactor only within the confirmed scope if the
+- [x] Refactor/still-GREEN: refactor only within the confirmed scope if the
       minimum GREEN needs it; wire the suite into the repository test tooling
       and run the focused gates plus full check.
+  - Started/Completed: 2026-09-29T09:11Z–09:16Z (≈5 min).
+  - No refactor needed: derivation stays ~60 lines (split trigger is 150),
+    the bin module is bounded, still-GREEN held throughout.
+  - Checks: `check:baseline` PASS (108 files — bin/test sit outside the
+    packages manifest, no refresh needed); `check:package:load` PASS
+    (76 files); `check:composition` PASS; `format:check` clean; `lint` 0;
+    `typecheck` 0; full `npm test` exit 0 (tooling + all five component
+    suites). `check:openspec` fails with the same pre-existing schema-loss
+    crash (`check-openspec.mjs:75`) recorded in the Plan — excluded, repair
+    is the separate Fix.
+  - Paths: ledger only.
   - Subject: `step(command-center): still-green board suite and full gates`.
 - [ ] Human validation: two concurrent live agents — one left awaiting
       validation (attention), one actively working — confirm states, order,
