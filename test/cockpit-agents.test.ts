@@ -17,7 +17,16 @@ const NOW = 1_800_000_000_000;
 
 // Fixture sessionIds are pre-searched so the sha256-based 3-char ids derive
 // to 003/001/002/004/005, reproducing the frozen sample's id column exactly.
-const FIXTURES = [
+const FIXTURES: ReadonlyArray<{
+  sessionId: string;
+  elapsedMs: number;
+  ageMs: number;
+  pid?: number;
+  cwd: string;
+  suggestion: string | null;
+  lifecycle: string;
+  titles: readonly string[];
+}> = [
   {
     sessionId: '0b4a-b1fe-4bd6-8f0e-session-b4',
     elapsedMs: 10_931_000, // 3:02:11
@@ -57,7 +66,8 @@ const FIXTURES = [
   {
     sessionId: '0449a-b1fe-4bd6-8f0e-session-449',
     elapsedMs: 1_365_000, // 0:22:45
-    ageMs: 120_000, // stale heartbeat → gone
+    ageMs: 120_000, // frozen heartbeat but pid dead → gone
+    pid: 4194303,
     cwd: '/home/aemonge/dotfiles',
     suggestion: null,
     lifecycle: 'listening',
@@ -83,7 +93,7 @@ function snapshotFor(fixture: (typeof FIXTURES)[number]) {
     counters: { agents: { active: 0, total: 0 } },
     progress: [],
     sessionId: fixture.sessionId,
-    pid: process.pid,
+    pid: fixture.pid ?? process.pid,
     cwd: fixture.cwd,
     sessionStart: NOW - fixture.elapsedMs,
     updatedAt: NOW - fixture.ageMs,
@@ -247,10 +257,14 @@ test('parked derives from listening or waiting', () => {
   }
 });
 
-test('gone derives from stale heartbeat or dead pid', () => {
+test('gone derives from dead pid only; stale-but-alive parks', () => {
   const base = snapshotFor(FIXTURES[1]);
-  const stale = { ...base, updatedAt: NOW - 61_000 };
-  assert.equal(deriveAgents([stale], { now: NOW })[0]?.state, 'gone');
+  const staleAlive = {
+    ...base,
+    work: { ...base.work, lifecycle: 'listening' },
+    updatedAt: NOW - 61_000,
+  };
+  assert.equal(deriveAgents([staleAlive], { now: NOW })[0]?.state, 'parked');
   const deadPid = deriveAgents([{ ...base, pid: 4194303 }], { now: NOW });
   assert.equal(deadPid[0]?.state, 'gone');
   assert.equal(deriveAgents([{ ...base }], { now: NOW })[0]?.state, 'working');
@@ -282,11 +296,43 @@ test('time column falls back to session age without live spans', () => {
   assert.equal(rows[0]?.time, '3:02:11');
 });
 
-test('time column shows the live root agent span clock when spans exist', () => {
+test('task title falls back to selection.titles when work has none', () => {
+  const base = snapshotFor(FIXTURES[1]);
+  const subjectSourced = {
+    ...base,
+    work: { ...base.work, titles: [] },
+    selection: {
+      source: 'subject',
+      titles: ['Testing a 20-second sleep command'],
+      color: 'accent',
+    },
+  };
+  assert.equal(
+    deriveAgents([subjectSourced], { now: NOW })[0]?.task,
+    'Testing a 20-second sleep command',
+  );
+});
+
+test('idle time column ticks with the deck idle clock via drift', () => {
+  const base = snapshotFor(FIXTURES[1]);
+  const idle = {
+    ...base,
+    work: { ...base.work, lifecycle: 'listening' },
+    sessionStart: NOW - 3_600_000,
+    idleMs: 1_713_000, // deck showed 000:28'33
+    updatedAt: NOW - 5_000, // snapshot froze 5s ago
+  };
+  const rows = deriveAgents([idle], { now: NOW });
+  assert.equal(rows[0]?.state, 'parked');
+  assert.equal(rows[0]?.time, '0:28:38', 'idleMs plus snapshot age');
+});
+
+test('working time column adds snapshot-age drift to the span clock', () => {
   const base = snapshotFor(FIXTURES[1]);
   const withSpans = {
     ...base,
     sessionStart: NOW - 3_600_000, // an hour old — must not win over the span
+    updatedAt: NOW - 5_000,
     activeRunSpans: [
       { id: 'call-1', kind: 'bash', parent: 'turn-1', elapsedMs: 12_000 },
       { id: 'turn-1', kind: 'agent', parent: null, elapsedMs: 262_000 },
@@ -295,7 +341,7 @@ test('time column shows the live root agent span clock when spans exist', () => 
   };
   const rows = deriveAgents([withSpans], { now: NOW });
   assert.equal(rows[0]?.state, 'working');
-  assert.equal(rows[0]?.time, '0:04:22', 'newest root agent span elapsed wins');
+  assert.equal(rows[0]?.time, '0:04:27', 'newest root span elapsed plus drift');
 });
 
 test('readSnapshots tolerates corrupt files, wrong protocols, and missing dirs', async () => {

@@ -192,8 +192,32 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     is the separate Fix.
   - Paths: ledger only.
   - Subject: `step(command-center): still-green board suite and full gates`.
-- **CHANGE (Human feedback, recorded 2026-09-29T11:35Z):** pasted live CLI
-  output + `The CLI isn't "live" I need to call it and call it .....` and
+- **CHANGE round 2 (Human feedback, recorded 2026-09-29T12:04Z):** `I'm
+  missing the title` + `timme must match identically as 󰠭 000:28'33` +
+  `Feels like we are timeing different things` — deck shows
+  `󰠭 000:15'07 ⟩ Testing a 20-second sleep command`; board showed `working`
+  and three live-idle sessions as `gone`. Canonical `CHANGE`; confirmed
+  brief: title via `selection.titles` fallback, pid-liveness-only gone,
+  deck-clock match via idleMs/span + drift compensation (12:04Z `Yes`).
+- [x] Repair 3 — match the deck: task title falls back to
+      `selection.titles[0]`; gone = dead pid only (stale-but-alive renders
+      parked); time column = root-span `elapsedMs` while working, `idleMs`
+      when idle, each plus snapshot-age drift so the column ticks with the
+      deck tile even though idle snapshots freeze; session-age fallback when
+      neither is present; gone rows report session lifetime. Busy-face
+      caveat recorded: mid-turn the deck shows its private
+      since-last-message clock, which the event cannot carry.
+  - Started/Completed: 2026-09-29T12:05Z–12:16Z (≈11 min).
+  - Check: RED on all four new/changed contracts, then 44/44 tooling;
+    typecheck (one fixtures-type annotation added), eslint, prettier,
+    baseline, package:load, composition all clean/green. Golden stayed
+    byte-identical (fixture 005 now carries a dead pid to stay `gone`).
+    One test-construction fix along the way: stale-but-alive with a working
+    lifecycle stays `working` — the parked pin uses an explicit listening
+    lifecycle.
+  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
+- **CHANGE round 1 (Human feedback, recorded 2026-09-29T11:35Z):** pasted live
+  CLI output + `The CLI isn't "live" I need to call it and call it .....` and
   `The timer don't match the timer here` (quoting the deck's 󰠭 turn timer).
   Canonical outcome `CHANGE` — Task 2 validation stays unchecked; bounded
   repair reopened. Human direction `yes`: both repair slices, sequential.

@@ -91,7 +91,6 @@ const WORKING_LIFECYCLES = new Set([
 ]);
 
 const STATE_RANK = { attention: 0, working: 1, parked: 2, gone: 3 };
-const STALE_HEARTBEAT_MS = 60_000;
 
 function defaultPidAlive(pid) {
   try {
@@ -120,11 +119,12 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
   const isPidAlive = pidAlive ?? defaultPidAlive;
   const rows = snapshots.map((snapshot) => {
     const lifecycle = snapshot.work?.lifecycle ?? 'listening';
-    const subject = snapshot.work?.titles?.[0] ?? '';
+    const subject = snapshot.work?.titles?.[0] ?? snapshot.selection?.titles?.[0] ?? '';
     const spans = Array.isArray(snapshot.activeRunSpans) ? snapshot.activeRunSpans : [];
     const rootSpanElapsed = spans
       .filter((span) => span && !span.parent && Number.isFinite(span.elapsedMs))
       .reduce((max, span) => Math.max(max, span.elapsedMs), -1);
+    const drift = Math.max(0, now - (snapshot.updatedAt ?? now));
     let state = 'parked';
     let task = subject || 'parked';
     let sub = '';
@@ -145,20 +145,29 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
       }
     }
 
-    const stale = now - snapshot.updatedAt > STALE_HEARTBEAT_MS;
+    // Liveness keys on pid only: idle sessions stop emitting header events,
+    // so a frozen heartbeat does not mean dead. Stale-but-alive parks.
     const dead = typeof snapshot.pid === 'number' && !isPidAlive(snapshot.pid);
-    if (stale || dead) {
+    if (dead) {
       state = 'gone';
       task = subject || 'gone';
       sub = '';
     }
 
-    // Turn clock: the live root agent span matches the deck's 󰠭 timer;
-    // without spans the column reports session age.
+    // Deck-clock match: while busy the root agent span is the event's turn
+    // clock; while idle idleMs is the deck's idle clock. Both freeze at the
+    // last event, so snapshot-age drift keeps the column ticking in step.
+    // Gone rows report the session lifetime. The deck's mid-turn face
+    // (since last assistant message) is header-private and cannot be carried.
+    const sessionAgeMs = now - (snapshot.sessionStart ?? now);
     const elapsedMs =
-      state !== 'gone' && rootSpanElapsed >= 0
-        ? rootSpanElapsed
-        : now - (snapshot.sessionStart ?? now);
+      state === 'gone'
+        ? sessionAgeMs
+        : rootSpanElapsed >= 0
+          ? rootSpanElapsed + drift
+          : Number.isFinite(snapshot.idleMs)
+            ? snapshot.idleMs + drift
+            : sessionAgeMs;
 
     return {
       state,
