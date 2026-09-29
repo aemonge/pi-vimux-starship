@@ -212,7 +212,9 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
           ? snapshot.activityElapsedMs + drift
           : rootSpanElapsed >= 0
             ? rootSpanElapsed + drift
-            : (Number.isFinite(snapshot.idleMs) ? snapshot.idleMs : 0) + drift;
+            : Number.isFinite(snapshot.idleMs) && snapshot.idleMs > 0
+              ? snapshot.idleMs + drift
+              : 0;
 
     return {
       state,

@@ -370,3 +370,19 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       right, no padded columns; original response, canonical outcome, and
       UTC recorded here.
   - Subject: `feat(command-center): deck grammar rows`.
+- **Task 4 validation feedback (2026-09-29T14:31Z):** grammar accepted
+  implicitly; defect reported — `on listening the timer is reseted to zeros`
+  with deck showing frozen `󰠭 000:00'00` while the board showed
+  `000:12'93`. Diagnosis (code-backed): the status heartbeat re-publishes
+  only while spans are live or `idleMs > 0`; with no ended spans the deck
+  face is frozen at zero, and the board's drift-on-zero invented phantom
+  idle. Confirmed fix (14:32Z `yes`): `idleMs > 0` keeps `idleMs + drift`;
+  absent/zero `idleMs` renders a literal frozen `000:00'00`.
+- [x] Repair — frozen idle zero: absent/zero `idleMs` renders `000:00'00`
+      with no drift (mirroring the deck's frozen face); the just-idle
+      contract premise is corrected (deck does not tick at idle-zero).
+  - Started/Completed: 2026-09-29T14:33Z–14:37Z (≈4 min).
+  - Check: 50/50 tooling (frozen-zero contract added for both absent and
+    explicit-zero idleMs); typecheck, prettier clean; the idleMs>0 drift
+    path is unchanged (heartbeat keeps those snapshots fresh anyway).
+  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.

@@ -384,7 +384,7 @@ test('ids are stable 7-char sessionId prefixes, resolvable by pi --session', () 
   assert.match(String(first?.id), /^[0-9a-f]{7}$/u);
 });
 
-test('just-idle rows show the deck idle clock even when idleMs is omitted at zero', () => {
+test('just-idle rows mirror the deck frozen zero face when idleMs is absent', () => {
   const base = snapshotFor(FIXTURES[1]);
   const justIdle = {
     ...base,
@@ -394,7 +394,20 @@ test('just-idle rows show the deck idle clock even when idleMs is omitted at zer
     idleMs: undefined,
     updatedAt: NOW - 6_000,
   };
-  assert.equal(deriveAgents([justIdle], { now: NOW })[0]?.time, "000:06'00");
+  assert.equal(deriveAgents([justIdle], { now: NOW })[0]?.time, "000:00'00");
+});
+
+test('an explicit zero idleMs is also the frozen face, never drift', () => {
+  const base = snapshotFor(FIXTURES[1]);
+  const zeroIdle = {
+    ...base,
+    work: { ...base.work, lifecycle: 'listening' },
+    activeRunSpans: undefined,
+    activityElapsedMs: undefined,
+    idleMs: 0,
+    updatedAt: NOW - 6_000,
+  };
+  assert.equal(deriveAgents([zeroIdle], { now: NOW })[0]?.time, "000:00'00");
 });
 
 test('gone rows report the session lifetime', () => {
