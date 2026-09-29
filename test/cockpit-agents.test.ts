@@ -14,6 +14,10 @@ import {
   watchWanted,
 } from '../bin/cockpit-agents.mjs';
 
+// The deck formats PWD against this home; pin it for the whole suite
+// (node --test isolates each file in its own process).
+process.env.HOME = '/home/dev';
+
 const NOW = 1_800_000_000_000;
 
 // Fixture sessionIds double as the board's 7-char prefix ids (git-style
@@ -26,6 +30,7 @@ const FIXTURES: ReadonlyArray<{
   pid?: number;
   idleMs?: number;
   spanMs?: number;
+  activityMs?: number;
   cwd: string;
   suggestion: string | null;
   lifecycle: string;
@@ -46,6 +51,7 @@ const FIXTURES: ReadonlyArray<{
     elapsedMs: 754_000, // 0:12:34
     ageMs: 5_000,
     spanMs: 749_000, // root span at last event; drift adds the rest
+    activityMs: 749_000, // deck clock at last event — identical to the span here
     cwd: '/home/dev/galactica',
     suggestion: null,
     lifecycle: 'working',
@@ -56,6 +62,7 @@ const FIXTURES: ReadonlyArray<{
     elapsedMs: 2_467_000, // 0:41:07
     ageMs: 9_000,
     spanMs: 2_458_000,
+    activityMs: 2_458_000,
     cwd: '/home/dev/pi-vimux-starship',
     suggestion: null,
     lifecycle: 'working',
@@ -108,6 +115,9 @@ function snapshotFor(fixture: (typeof FIXTURES)[number]) {
           ],
         }
       : {}),
+    ...(fixture.activityMs !== undefined
+      ? { activityElapsedMs: fixture.activityMs }
+      : {}),
     sessionId: fixture.sessionId,
     pid: fixture.pid ?? process.pid,
     cwd: fixture.cwd,
@@ -131,13 +141,13 @@ async function fixtureDir(): Promise<string> {
 const GOLDEN_80 = [
   '󰆧 pi-vimux-starship command center                        4 agents · 1 attention',
   '',
-  '! 003f1a0  pi-vimux-starship       validation                            3:02:11',
-  '                                   Pi agent telemetry CLI for vimux-starship notifications',
+  '! 003f1a0  ~/pi-vimux-starship       validation                          3:02:11',
+  '                                     Pi agent telemetry CLI for vimux-starship notifications',
   '',
-  '● 001c2d4  galactica               Consolidate imported Pi cockpit       0:12:34',
-  '● 002b3e5  pi-vimux-starship       Route Insert through Neovim           0:41:07',
-  '◌ 004a9c3  articles                QMD taxonomy cleanup                  1:40:00',
-  '× 005d7e1  dotfiles                Shell hygiene pass                    0:22:45',
+  '● 001c2d4  ~/galactica               Consolidate imported Pi cockpit     0:12:34',
+  '● 002b3e5  ~/pi-vimux-starship       Route Insert through Neovim         0:41:07',
+  '◌ 004a9c3  /home/aemonge/articles    QMD taxonomy cleanup                1:40:00',
+  '× 005d7e1  /home/aemonge/dotfiles    Shell hygiene pass                  0:22:45',
 ].join('\n');
 
 test('golden render reproduces the frozen TUI contract byte-identically', async () => {
@@ -203,8 +213,8 @@ test('narrow-width guard keeps main rows within the terminal width', async () =>
   const dir = await fixtureDir();
   try {
     const rows = deriveAgents(await readSnapshots(dir), { now: NOW });
-    // 7-char ids raise the squeezable floor to 47 (prefix + project + time).
-    const output = renderBoard(rows, { columns: 48, color: false });
+    // Raw paths widen the project column; the squeezable floor is now 49.
+    const output = renderBoard(rows, { columns: 50, color: false });
     const lines = output.split('\n');
     const subIndent = lines.find((line) => line.startsWith('      '));
     assert.ok(subIndent, 'fixture includes a subline');
@@ -213,8 +223,8 @@ test('narrow-width guard keeps main rows within the terminal width', async () =>
       // the guard pins main row lines.
       if (index === 0 || line === '' || line === subIndent) continue;
       assert.ok(
-        [...line].length <= 48,
-        `row ${index} exceeds 48 columns: ${[...line].length}`,
+        [...line].length <= 50,
+        `row ${index} exceeds 50 columns: ${[...line].length}`,
       );
     }
   } finally {
@@ -303,6 +313,28 @@ test('groups order attention → working → parked → gone, most recent first'
   );
 });
 
+test('project column shows deck-form paths, never a bare basename', () => {
+  const base = snapshotFor(FIXTURES[1]);
+  const home = { ...base, cwd: '/home/dev' };
+  assert.equal(deriveAgents([home], { now: NOW })[0]?.project, '~');
+  const nested = { ...base, cwd: '/home/dev/projects/x' };
+  assert.equal(deriveAgents([nested], { now: NOW })[0]?.project, '~/projects/x');
+  const away = { ...base, cwd: '/srv/data' };
+  assert.equal(deriveAgents([away], { now: NOW })[0]?.project, '/srv/data');
+});
+
+test('the deck activity clock wins over span and idle clocks', () => {
+  const base = snapshotFor(FIXTURES[1]);
+  const withAll = {
+    ...base,
+    activityElapsedMs: 25_000,
+    idleMs: 1_000,
+    activeRunSpans: [{ id: 'turn-1', kind: 'agent', parent: null, elapsedMs: 262_000 }],
+    updatedAt: NOW - 2_000,
+  };
+  assert.equal(deriveAgents([withAll], { now: NOW })[0]?.time, '0:00:27');
+});
+
 test('ids are stable 7-char sessionId prefixes, resolvable by pi --session', () => {
   const base = snapshotFor(FIXTURES[0]);
   const first = deriveAgents([base], { now: NOW })[0];
@@ -318,6 +350,7 @@ test('just-idle rows show the deck idle clock even when idleMs is omitted at zer
     ...base,
     work: { ...base.work, lifecycle: 'listening' },
     activeRunSpans: undefined,
+    activityElapsedMs: undefined,
     idleMs: undefined,
     updatedAt: NOW - 6_000,
   };
@@ -382,6 +415,7 @@ test('idle time column ticks with the deck idle clock via drift', () => {
     ...base,
     work: { ...base.work, lifecycle: 'listening' },
     activeRunSpans: undefined,
+    activityElapsedMs: undefined,
     sessionStart: NOW - 3_600_000,
     idleMs: 1_713_000, // deck showed 000:28'33
     updatedAt: NOW - 5_000, // snapshot froze 5s ago
@@ -395,6 +429,7 @@ test('working time column adds snapshot-age drift to the span clock', () => {
   const base = snapshotFor(FIXTURES[1]);
   const withSpans = {
     ...base,
+    activityElapsedMs: undefined,
     sessionStart: NOW - 3_600_000, // an hour old — must not win over the span
     updatedAt: NOW - 5_000,
     activeRunSpans: [

@@ -101,6 +101,15 @@ function defaultPidAlive(pid) {
   }
 }
 
+// Mirrors the header deck's path form (packages/header/src/gauge.ts):
+// `~` for home, `~/rest` under it, raw elsewhere — never a bare basename.
+function formatProjectPath(cwd, home = process.env.HOME ?? '') {
+  if (!home) return cwd;
+  if (cwd === home) return '~';
+  if (cwd.startsWith(`${home}/`)) return `~${cwd.slice(home.length)}`;
+  return cwd;
+}
+
 export async function pruneDeadSnapshots(stateDir, { pidAlive } = {}) {
   const isPidAlive = pidAlive ?? defaultPidAlive;
   const removed = [];
@@ -166,23 +175,25 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
       sub = '';
     }
 
-    // Deck-clock match: busy rows ride the root agent span; idle rows ride
-    // the deck idle clock (idleMs is omitted at zero, so absent means 0);
-    // both freeze at the last event and drift forward by snapshot age.
-    // Gone rows report the session lifetime. The deck's mid-turn face
-    // (since last assistant message) is header-private and cannot be carried.
+    // Deck-clock match: the sink's `activityElapsedMs` mirrors the header
+    // timer tile tick-for-tick; idle rows ride the deck idle clock (idleMs
+    // is omitted at zero, so absent means 0); spans are the legacy fallback.
+    // Both event clocks freeze at the last event and drift forward by
+    // snapshot age. Gone rows report the session lifetime.
     const sessionAgeMs = now - (snapshot.sessionStart ?? now);
     const elapsedMs =
       state === 'gone'
         ? sessionAgeMs
-        : rootSpanElapsed >= 0
-          ? rootSpanElapsed + drift
-          : (Number.isFinite(snapshot.idleMs) ? snapshot.idleMs : 0) + drift;
+        : Number.isFinite(snapshot.activityElapsedMs)
+          ? snapshot.activityElapsedMs + drift
+          : rootSpanElapsed >= 0
+            ? rootSpanElapsed + drift
+            : (Number.isFinite(snapshot.idleMs) ? snapshot.idleMs : 0) + drift;
 
     return {
       state,
       id: String(snapshot.sessionId).slice(0, ID_WIDTH),
-      project: path.basename(snapshot.cwd ?? '') || '?',
+      project: formatProjectPath(String(snapshot.cwd ?? '')) || '?',
       task,
       sub,
       time: formatClock(elapsedMs),

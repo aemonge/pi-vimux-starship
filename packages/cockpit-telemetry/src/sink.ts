@@ -9,6 +9,8 @@ export type SnapshotSinkOptions = {
   pid?: number;
   /** Overrides the clock (tests inject a controllable now). */
   now?: () => number;
+  /** Mirrors the header deck's activity clock; null while idle. */
+  activityClock?: () => number | null;
 };
 
 export function defaultStateDir(): string {
@@ -35,6 +37,7 @@ export function createSnapshotSink(options: SnapshotSinkOptions = {}) {
   const stateDir = options.stateDir ?? defaultStateDir();
   const pid = options.pid ?? process.pid;
   const now = options.now ?? Date.now;
+  const activityClock = options.activityClock ?? (() => null);
   let identity: {
     sessionId: string;
     cwd: string;
@@ -51,6 +54,7 @@ export function createSnapshotSink(options: SnapshotSinkOptions = {}) {
     async onHeaderEvent(event: unknown): Promise<void> {
       try {
         if (!identity || !isHeaderEvent(event)) return;
+        const activityElapsedMs = activityClock();
         const payload = {
           ...event,
           sessionId: identity.sessionId,
@@ -58,6 +62,10 @@ export function createSnapshotSink(options: SnapshotSinkOptions = {}) {
           cwd: identity.cwd,
           sessionStart: identity.sessionStart,
           updatedAt: now(),
+          ...(typeof activityElapsedMs === 'number' &&
+          Number.isFinite(activityElapsedMs)
+            ? { activityElapsedMs }
+            : {}),
         };
         await mkdir(stateDir, { recursive: true });
         const target = path.join(stateDir, `${identity.sessionId}.json`);

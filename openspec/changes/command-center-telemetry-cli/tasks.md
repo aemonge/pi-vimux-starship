@@ -245,6 +245,32 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     three tests needed fixture-aware fixes after golden fixtures gained root
     spans; the narrow test moved to 48 columns for the new floor.
   - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
+- **CHANGE round 4 (Human feedback, recorded 2026-09-29T13:07Z):** board
+  paste — project column showed the basename `aemonge` (`Not the suer, but
+  the PWD so not aemonge but ~ or $HOME or /home/aemonge … use the
+  /h/aemonge or the shorten one`), and `the timer isn't the same we get in
+  the header … should be IDENTICAL`. Canonical `CHANGE`; confirmed brief
+  (13:10Z `yes`): deck-parity PWD (`~`-form via `formatFooterPath`
+  semantics), and an exact-clock pipe — the sink mirrors the header's
+  activity-clock rule (same Pi events) and stamps `activityElapsedMs`; the
+  board prefers it. Golden regenerated under this directed round.
+- [x] Repair 5 — deck PWD and identical clock: sink hooks the header's
+      activity events (`before_agent_start` busy+mark; `turn_start`,
+      `before_provider_request`, `after_provider_response`, assistant
+      `message_start/update/end`, `tool_execution_end` mark; `agent_settled`
+      and shutdown clear) and stamps `activityElapsedMs` into each snapshot
+      while busy; board project column shows `~`-form paths; time chain
+      becomes activity → idle → span → session age (gone keeps lifetime).
+  - Started/Completed: 2026-09-29T13:11Z–13:24Z (≈13 min).
+  - Check: sink suite 13/13 (two new activity-clock contracts), tooling
+    48/48 (golden regenerated at `~`-form paths, activity-clock precedence,
+    deck-form PWD); typecheck, eslint, prettier, package:load, composition
+    green; baseline refreshed to 109 files (imported record untouched).
+    Four tests needed fixture-aware fixes (strip `activityElapsedMs` where
+    older clocks are pinned; narrow floor moves 47 → 49 with raw paths).
+  - Paths: `packages/cockpit-telemetry/index.ts`, `src/sink.ts`,
+    `test/activity-clock.test.ts`, `bin/cockpit-agents.mjs`,
+    `test/cockpit-agents.test.ts`, `baseline/source.sha256`.
 - **CHANGE round 1 (Human feedback, recorded 2026-09-29T11:35Z):** pasted live
   CLI output + `The CLI isn't "live" I need to call it and call it .....` and
   `The timer don't match the timer here` (quoting the deck's 󰠭 turn timer).
