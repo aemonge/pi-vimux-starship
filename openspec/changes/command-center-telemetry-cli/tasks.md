@@ -333,8 +333,14 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     carries the stage suffix); ledger heading briefly misplaced during the
     Task 3 append and repaired before commit.
   - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
-- [ ] Human validation: one fresh working agent — the row names its stage
+- [x] Human validation: one fresh working agent — the row names its stage
       (`… · understanding › interpreting`) and the timer matches the deck
       tile digit-for-digit, centiseconds included; original response,
       canonical outcome, and UTC recorded here.
+  - Original response: `Pefect !!` (2026-09-29T14:15:16Z) followed
+    immediately by a new grammar request (`HASH › pwd ⟩ TITLE › STATUS(ES)`
+    left, timer right, violet separators, no padded columns) — canonical
+    `VALID` closes Task 3 as of `f79f5ac`; the grammar request opens Task 4.
+  - Wait: implementation completed 14:03Z; validation 14:15Z (~12 min).
+    Task 3 complete.
   - Subject: `feat(command-center): deck-parity polish`.
