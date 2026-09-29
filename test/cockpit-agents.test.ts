@@ -276,9 +276,25 @@ test('3-char ids are stable and zero-padded from the sessionId', () => {
   assert.match(String(first?.id), /^\d{3}$/u);
 });
 
-test('time column is now - sessionStart in h:mm:ss', () => {
+test('time column falls back to session age without live spans', () => {
   const rows = deriveAgents([snapshotFor(FIXTURES[0])], { now: NOW });
   assert.equal(rows[0]?.time, '3:02:11');
+});
+
+test('time column shows the live root agent span clock when spans exist', () => {
+  const base = snapshotFor(FIXTURES[1]);
+  const withSpans = {
+    ...base,
+    sessionStart: NOW - 3_600_000, // an hour old — must not win over the span
+    activeRunSpans: [
+      { id: 'call-1', kind: 'bash', parent: 'turn-1', elapsedMs: 12_000 },
+      { id: 'turn-1', kind: 'agent', parent: null, elapsedMs: 262_000 },
+      { id: 'turn-0', kind: 'agent', parent: null, elapsedMs: 30_000 },
+    ],
+  };
+  const rows = deriveAgents([withSpans], { now: NOW });
+  assert.equal(rows[0]?.state, 'working');
+  assert.equal(rows[0]?.time, '0:04:22', 'newest root agent span elapsed wins');
 });
 
 test('readSnapshots tolerates corrupt files, wrong protocols, and missing dirs', async () => {

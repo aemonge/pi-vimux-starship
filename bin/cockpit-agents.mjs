@@ -115,6 +115,10 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
   const rows = snapshots.map((snapshot) => {
     const lifecycle = snapshot.work?.lifecycle ?? 'listening';
     const subject = snapshot.work?.titles?.[0] ?? '';
+    const spans = Array.isArray(snapshot.activeRunSpans) ? snapshot.activeRunSpans : [];
+    const rootSpanElapsed = spans
+      .filter((span) => span && !span.parent && Number.isFinite(span.elapsedMs))
+      .reduce((max, span) => Math.max(max, span.elapsedMs), -1);
     let state = 'parked';
     let task = subject || 'parked';
     let sub = '';
@@ -129,10 +133,7 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
         state = 'attention';
         task = reason ?? 'validation';
         sub = subject;
-      } else if (
-        WORKING_LIFECYCLES.has(lifecycle) ||
-        (snapshot.activeRunSpans ?? []).length > 0
-      ) {
+      } else if (WORKING_LIFECYCLES.has(lifecycle) || spans.length > 0) {
         state = 'working';
         task = subject || 'working';
       }
@@ -146,13 +147,20 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
       sub = '';
     }
 
+    // Turn clock: the live root agent span matches the deck's 󰠭 timer;
+    // without spans the column reports session age.
+    const elapsedMs =
+      state !== 'gone' && rootSpanElapsed >= 0
+        ? rootSpanElapsed
+        : now - (snapshot.sessionStart ?? now);
+
     return {
       state,
       id: shortId(snapshot.sessionId),
       project: path.basename(snapshot.cwd ?? '') || '?',
       task,
       sub,
-      time: formatClock(now - (snapshot.sessionStart ?? now)),
+      time: formatClock(elapsedMs),
       updatedAt: snapshot.updatedAt,
     };
   });

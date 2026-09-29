@@ -201,12 +201,17 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   its semantic twin (`activeRunSpans` root-span `elapsedMs`) already flows in
   the event, so the timer slice uses span-elapsed-first with session-age
   fallback instead of extending the frozen publisher.
-- [-] Repair 1 — turn-clock time column: `deriveAgents` shows the newest
+- [x] Repair 1 — turn-clock time column: `deriveAgents` shows the newest
       live root agent-span `elapsedMs` when spans exist, else `now -
       sessionStart`; derivation contracts updated accordingly (the original
       `time column is now - sessionStart` pin is superseded by this CHANGE);
       golden fixtures carry no spans so the frozen sample stays
       byte-identical.
+  - Started/Completed: 2026-09-29T11:38Z–11:44Z (≈6 min).
+  - Check: RED on the new span-clock contract, then 41/41 tooling; typecheck,
+    prettier clean. Spans update per header event, so the column trails the
+      deck's real-time clock by one event tick (seconds-level freshness).
+  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
   - Subject: `step(command-center): show the live turn clock in the time
     column`.
 - [-] Repair 2 — live by default on a TTY: watch mode becomes the default
