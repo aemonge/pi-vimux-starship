@@ -89,13 +89,26 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `src/index.ts`, `test/local-load-probe.test.ts`,
     `scripts/check-package.mjs`, `package.json`, `baseline/source.sha256`.
   - Subject: `step(telemetry-sink): register fifth entrypoint and pass gates`.
-- [ ] Human validation: isolated probe (`pi --offline --no-extensions -e
+- [x] Human validation: isolated probe (`pi --offline --no-extensions -e
       "$(pwd -P)" --list-models` pattern) then a live session — confirm the
       snapshot appears, updates during activity, and disappears on shutdown.
       RED evidence is not a Human approval gate; validation happens once here.
+  - Original response: `VALID` (2026-09-29T08:19:53Z), preceded by pasted
+    live evidence: isolated probe wrote nothing (empty, expected); live
+    session snapshot appeared with exactly `HeaderStatusEvent` facts plus
+    `sessionId`, `pid`, `cwd`, `sessionStart`, `updatedAt`; `updatedAt`
+    advanced during activity (…856247 → …861275) with nested run spans and
+    subject selection flowing; canonical outcome `VALID` closes Task 1.
+  - Wait: implementation completed 08:09Z; Human validation 08:19Z (~10 min,
+    interactive shell checks). Task 1 complete.
   - Subject: `feat(telemetry-sink): live cockpit snapshot sink`.
 
 ## Task 2 — Command center live triage board
+
+- **Estimate calibration (Task 1, Human-validated):** actual implementation
+  ≈25 min vs 75–150 min estimated — overestimate driven by crisp frozen
+  contracts and established package patterns; narrow the next comparable
+  Task's range accordingly.
 
 - **Value:** `node bin/cockpit-agents.mjs` (and `-w`) reports every live agent
   as the validated triage board from any shell, ending pane-hopping.
