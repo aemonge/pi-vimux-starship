@@ -214,10 +214,14 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
   - Subject: `step(command-center): show the live turn clock in the time
     column`.
-- [-] Repair 2 — live by default on a TTY: watch mode becomes the default
+- [x] Repair 2 — live by default on a TTY: watch mode becomes the default
       when stdout is a TTY (unless `--json`); `--once` forces a single render;
       a `watchWanted({ tty, json, once })` pure helper carries the contract;
       non-TTY stays single-shot.
+  - Started/Completed: 2026-09-29T11:46Z–11:52Z (≈6 min).
+  - Check: RED on the missing `watchWanted` export, then 42/42 tooling;
+    typecheck and eslint clean; `--once` piped renders once and exits.
+  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
   - Subject: `step(command-center): watch by default on a terminal`.
 - [ ] Human validation: two concurrent live agents — one left awaiting
       validation (attention), one actively working — confirm states, order,

@@ -10,6 +10,7 @@ import {
   readSnapshots,
   renderBoard,
   renderJson,
+  watchWanted,
 } from '../bin/cockpit-agents.mjs';
 
 const NOW = 1_800_000_000_000;
@@ -340,4 +341,16 @@ test('colorWanted honors TTY and NO_COLOR', () => {
   assert.equal(colorWanted({ tty: true, env: {} }), true);
   assert.equal(colorWanted({ tty: true, env: { NO_COLOR: '1' } }), false);
   assert.equal(colorWanted({ tty: false, env: {} }), false);
+});
+
+test('watchWanted defaults to watching on a TTY with escapes', () => {
+  assert.equal(watchWanted({ tty: true }), true, 'terminal watches by default');
+  assert.equal(watchWanted({ tty: true, json: true }), false, 'json stays single-shot');
+  assert.equal(
+    watchWanted({ tty: true, once: true }),
+    false,
+    '--once forces one render',
+  );
+  assert.equal(watchWanted({ tty: false }), false, 'pipes stay single-shot');
+  assert.equal(watchWanted({ tty: false, watch: true }), true, '-w forces watch');
 });

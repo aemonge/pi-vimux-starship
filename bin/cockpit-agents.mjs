@@ -32,6 +32,12 @@ export function colorWanted({
   return Boolean(tty) && !env.NO_COLOR;
 }
 
+export function watchWanted({ tty, watch = false, json = false, once = false }) {
+  if (watch) return true;
+  if (json || once) return false;
+  return Boolean(tty);
+}
+
 export function defaultStateDir() {
   // Mirrors packages/cockpit-telemetry/src/sink.ts — keep the two in step.
   const override = process.env.PI_VIMUX_STARSHIP_STATE_DIR;
@@ -284,14 +290,20 @@ async function paintOnce({ json, stateDir }) {
 }
 
 async function main(argv) {
-  const watch = argv.includes('-w') || argv.includes('--watch');
   const json = argv.includes('--json');
+  const once = argv.includes('--once');
   const intervalFlag = argv.indexOf('--interval');
   const intervalSeconds = intervalFlag >= 0 ? Number(argv[intervalFlag + 1] ?? 2) : 2;
   const intervalMs =
     (Number.isFinite(intervalSeconds) && intervalSeconds > 0 ? intervalSeconds : 2) *
     1000;
   const stateDir = defaultStateDir();
+  const watch = watchWanted({
+    tty: process.stdout.isTTY ?? false,
+    watch: argv.includes('-w') || argv.includes('--watch'),
+    json,
+    once,
+  });
 
   await paintOnce({ json, stateDir });
   if (!watch) return;
