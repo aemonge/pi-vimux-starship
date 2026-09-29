@@ -302,8 +302,18 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     typecheck and eslint clean; `--once` piped renders once and exits.
   - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
   - Subject: `step(command-center): watch by default on a terminal`.
-- [ ] Human validation: two concurrent live agents — one left awaiting
+- [x] Human validation: two concurrent live agents — one left awaiting
       validation (attention), one actively working — confirm states, order,
       right-flush alignment, `-w` refresh, and `NO_COLOR`; original response,
       canonical outcome, and UTC recorded here.
+  - Original response: `VALID` (2026-09-29T13:49:31Z), after four repair
+    rounds (live-by-default + turn clock; deck title/clock/liveness;
+    resolvable 7-char ids, deck-exact idle clock, snapshot pruning; deck-form
+    PWD + sink-mirrored identical activity clock). Canonical outcome `VALID`
+    closes Task 2 as of commit `3f6b02f`; the Human immediately requested two
+    further deck-parity items (activity path `understanding › interpreting`
+    and the deck timer format `000:00'00`), which open Task 3 rather than
+    reopening this validation.
+  - Wait: implementation completed 13:24Z; validation 13:49Z (~25 min,
+    live two-agent checks across repair rounds). Task 2 complete.
   - Subject: `feat(command-center): live agent triage board`.
