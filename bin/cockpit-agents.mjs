@@ -5,6 +5,7 @@
 // Layout: STATE → AGENT → TASK → TIME, dynamic full terminal width.
 
 import { readdir, readFile, rm } from 'node:fs/promises';
+import { watch } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -357,6 +358,32 @@ export function renderJson(snapshots) {
   return JSON.stringify(snapshots, null, 2);
 }
 
+export function startBoardWatch(stateDir, onRefresh) {
+  // Zero-polling watch: the sink writes atomically via rename, so directory
+  // events fire per snapshot update. Debounce coalesces rename bursts; the
+  // interval is only a fallback for filesystems that cannot watch.
+  let pending = null;
+  const debouncedRefresh = () => {
+    if (pending !== null) return;
+    pending = setTimeout(() => {
+      pending = null;
+      onRefresh();
+    }, 50);
+  };
+  try {
+    const watcher = watch(stateDir, { persistent: true }, debouncedRefresh);
+    return {
+      stop() {
+        clearTimeout(pending);
+        watcher.close();
+      },
+    };
+  } catch {
+    const timer = setInterval(onRefresh, 1_000);
+    return { stop: () => clearInterval(timer) };
+  }
+}
+
 async function paintOnce({ json, stateDir }) {
   await pruneDeadSnapshots(stateDir);
   const snapshots = await readSnapshots(stateDir);
@@ -371,11 +398,6 @@ async function paintOnce({ json, stateDir }) {
 async function main(argv) {
   const json = argv.includes('--json');
   const once = argv.includes('--once');
-  const intervalFlag = argv.indexOf('--interval');
-  const intervalSeconds = intervalFlag >= 0 ? Number(argv[intervalFlag + 1] ?? 2) : 2;
-  const intervalMs =
-    (Number.isFinite(intervalSeconds) && intervalSeconds > 0 ? intervalSeconds : 2) *
-    1000;
   const stateDir = defaultStateDir();
   const watch = watchWanted({
     tty: process.stdout.isTTY ?? false,
@@ -387,11 +409,11 @@ async function main(argv) {
   await paintOnce({ json, stateDir });
   if (!watch) return;
 
-  for (;;) {
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  const refresh = () => {
     process.stdout.write('\u001b[2J\u001b[H');
-    await paintOnce({ json, stateDir });
-  }
+    void paintOnce({ json, stateDir });
+  };
+  startBoardWatch(stateDir, refresh);
 }
 
 const invokedAsScript = import.meta.url === pathToFileURL(process.argv[1] ?? '').href;

@@ -11,6 +11,7 @@ import {
   readSnapshots,
   renderBoard,
   renderJson,
+  startBoardWatch,
   watchWanted,
 } from '../bin/cockpit-agents.mjs';
 
@@ -148,6 +149,14 @@ async function fixtureDir(): Promise<string> {
     );
   }
   return dir;
+}
+
+async function waitFor(check: () => Promise<boolean> | boolean): Promise<void> {
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    if (await check()) return;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  assert.fail('condition not reached within the wait window');
 }
 
 const GOLDEN_80 = [
@@ -533,6 +542,26 @@ test('empty board renders the header plus a dim no-live-agents line', () => {
 test('renderJson round-trips the parsed snapshots', async () => {
   const snapshots = [snapshotFor(FIXTURES[1]), snapshotFor(FIXTURES[3])];
   assert.deepEqual(JSON.parse(renderJson(snapshots)), snapshots);
+});
+
+test('startBoardWatch repaints on snapshot directory events', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'cockpit-watch-'));
+  try {
+    let refreshes = 0;
+    const board = startBoardWatch(dir, () => {
+      refreshes += 1;
+    });
+    await writeFile(
+      path.join(dir, 'sess-watch.json'),
+      JSON.stringify(snapshotFor(FIXTURES[1])),
+      'utf8',
+    );
+    await waitFor(() => Promise.resolve(refreshes > 0));
+    board.stop();
+    assert.ok(refreshes > 0, 'watch fired at least one repaint');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
 
 test('colorWanted honors TTY and NO_COLOR', () => {

@@ -386,3 +386,26 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     explicit-zero idleMs); typecheck, prettier clean; the idleMs>0 drift
     path is unchanged (heartbeat keeps those snapshots fresh anyway).
   - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
+- **Task 4 validation feedback round 2 (2026-09-29T14:41Z):** `ON idel the
+-  header set timer to zeros but not the command center` (persisted after
+-  restart) + `are we pollinng or event driven, feel slow as pooling`, then
+-  `The idea is do to zero pulling, pure event driven is faster and more
+-  stable`. Diagnosis: the span-clock branch fired for parked sessions whose
+-  ended spans linger in the snapshot; the CLI polled the directory on a 2s
+-  interval. Confirmed fix (14:41Z `yes`): span clock only while working;
+-  watch mode becomes fs.watch event-driven with a 1s interval only as
+-  filesystem-error fallback.
+- [x] Repair 2 — event-driven board: watch mode repaints on `fs.watch`
+-      directory events (50ms debounce, atomic-rename friendly) with zero
+-      polling; a 1s interval is the fallback only when watching fails;
+-      `--interval` is retired.
+  - Honest correction: the planned span-clock reorder and its test were
+    withdrawn — `runtime-runs.snapshot()` excludes ended spans
+    (`if (span.endedAt !== undefined) continue;`), so snapshots carry
+    live spans only and `parked with lingering spans` is an unreachable
+    input; the frozen-zero fix from the prior repair already covers the
+    reported idle-zeros case once the board process is restarted.
+  - Started/Completed: 2026-09-29T14:42Z–14:52Z (≈10 min).
+  - Check: 51/51 tooling (watcher contract: directory write → repaint);
+    typecheck, eslint, prettier clean.
+  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
