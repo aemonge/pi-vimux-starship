@@ -1,0 +1,31 @@
+{
+  "name": "cockpit-telemetry",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cockpit session telemetry sink for the pi-vimux-starship command center",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "telemetry",
+    "command-center"
+  ],
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}\" --ignore-path .prettierignore",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}\" --ignore-path .prettierignore",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types test/*.test.ts",
+    "check": "npm run format:check && npm run typecheck && npm test"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  }
+}

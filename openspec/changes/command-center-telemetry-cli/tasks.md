@@ -13,6 +13,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   fail-soft, atomic write, and prune fail for their discriminating expected
   reasons before production exists; deterministic RED evidence is recorded,
   then minimum GREEN and refactor/still-GREEN stay within this Task's scope.
+- **implementation_confirmed_at:** 2026-09-29T07:43Z (Human `Yes` to the exact
+  Task 1 TDD brief).
 - **Execution source:** native-direct
 - **Execution name:** Sequential sink-then-render slices
 - **Estimate basis:** Channel and event shape known from inspection; new
@@ -26,7 +28,7 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   baseline refresh, or any `galactica-status:header` contract change becomes
   necessary.
 
-- [ ] RED — test-only contracts in `packages/cockpit-telemetry/test/`, no
+- [x] RED — test-only contracts in `packages/cockpit-telemetry/test/`, no
       production code yet: the snapshot payload holds exactly the
       `HeaderStatusEvent` facts plus `sessionId`, `pid`, `cwd`, `sessionStart`
       (captured at `session_start`), `updatedAt`, and nothing else; writes are
@@ -36,6 +38,16 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       `session_shutdown`. Each contract fails for its discriminating expected
       reason; record the deterministic RED evidence (command and failing
       assertions) in this Step's entry.
+  - Started: 2026-09-29T07:44Z. Completed: 2026-09-29T07:49Z (≈5 min).
+  - RED evidence: `npm test` in `packages/cockpit-telemetry` — 2 suites,
+    10 contracts, 0 pass / 2 suite-level fails; discriminating reason
+    `ERR_MODULE_NOT_FOUND: Cannot find module
+    '.../packages/cockpit-telemetry/src/sink.ts'` (and `../index.ts` for the
+    wiring suite): production does not exist. Typecheck is expected to fail
+    identically until GREEN; format and lint are kept clean.
+  - Paths: `packages/cockpit-telemetry/package.json`, `tsconfig.json`,
+    `.prettierignore`, `test/README.md`, `test/sink.test.ts`,
+    `test/wiring.test.ts`.
   - Subject: `step(telemetry-sink): red snapshot contracts`.
 - [ ] GREEN — minimum sink in `packages/cockpit-telemetry`: extension factory
       subscribing to `GALACTICA_HEADER_CHANNEL` via `pi.events.on`, atomically
