@@ -66,13 +66,28 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `packages/cockpit-telemetry/src/sink.ts`, `index.ts`,
     `test/sink.test.ts`.
   - Subject: `step(telemetry-sink): green minimum snapshot sink`.
-- [ ] Refactor/still-GREEN and registration: refactor only within the confirmed
+- [x] Refactor/still-GREEN and registration: refactor only within the confirmed
       scope if the minimum GREEN needs it; register the package as the fifth
       entrypoint in the root package composition (`src/index.ts`, startup order
       preserved) with manifest `files` coverage as needed, refresh the baseline
       manifest (`node scripts/check-baseline.mjs --write`), and run the focused
       gates: new package tests, `check:baseline`, `check:package:load`,
       `check:composition`, format, lint, typecheck.
+  - Started: 2026-09-29T08:03Z. Completed: 2026-09-29T08:09Z (≈6 min).
+  - Refinement trigger fired (registration touches more than root manifest and
+    baseline): also `scripts/check-package.mjs` REQUIRED_FILES,
+    `src/local-load-probe.ts` expectations, `test/local-load-probe.test.ts`
+    composition, and `COCKPIT_COMPOSITION`. No split taken: all five points
+    are mechanical integrity checks (~15 lines), no new Human-validatable
+    outcome; recorded rather than silently absorbed.
+  - No refactor needed: the minimum GREEN stayed clean; still-GREEN held.
+  - Checks: `test:telemetry` 11/11; `check:baseline` PASS (108 current, 87
+    imported untouched); `check:package:load` PASS (76 files);
+    `check:composition` PASS (1 extension, 8 commands, 4 tools);
+    `format:check` clean; `lint` exit 0; `typecheck` exit 0; `test:tooling`
+    24/24.
+  - Paths: `src/index.ts`, `test/local-load-probe.test.ts`,
+    `scripts/check-package.mjs`, `package.json`, `baseline/source.sha256`.
   - Subject: `step(telemetry-sink): register fifth entrypoint and pass gates`.
 - [ ] Human validation: isolated probe (`pi --offline --no-extensions -e
       "$(pwd -P)" --list-models` pattern) then a live session — confirm the

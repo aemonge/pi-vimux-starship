@@ -25,6 +25,7 @@ test('external-only deck composition suppresses the native prompt surface', () =
     'galactica-status:provider',
     'galactica-context-header:editor-deck',
     'pi-vim:external-editor-only',
+    'cockpit-telemetry:sink',
   ]);
 });
 

@@ -2,6 +2,7 @@ import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
 import galacticaContextHeader from '../packages/header/index.js';
 import galacticaStatus from '../packages/status/index.js';
+import cockpitTelemetry from '../packages/cockpit-telemetry/index.js';
 import fancyFooter from '../packages/pi-fancy-footer-full-palette/src/index.js';
 import piVim from '../packages/pi-vim-top-border/index.js';
 import { createCockpitDeckSurface } from './deck-surface.js';
@@ -19,6 +20,7 @@ export const COCKPIT_COMPOSITION = [
   'galactica-status:provider',
   `galactica-context-header:${COCKPIT_SURFACES.contextHeader}`,
   `pi-vim:${COCKPIT_SURFACES.vim}`,
+  'cockpit-telemetry:sink',
 ] as const;
 
 export default function piVimuxStarship(pi: ExtensionAPI): void {
@@ -31,5 +33,6 @@ export default function piVimuxStarship(pi: ExtensionAPI): void {
     deckSurface,
   });
   piVim(pi, { surface: COCKPIT_SURFACES.vim, deckSurface });
+  cockpitTelemetry(pi);
   registerVimuxHealth(pi);
 }

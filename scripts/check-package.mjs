@@ -19,6 +19,7 @@ export const REQUIRED_FILES = [
   'package.json',
   'packages/header/index.ts',
   'packages/status/index.ts',
+  'packages/cockpit-telemetry/index.ts',
   'packages/pi-fancy-footer-full-palette/src/index.ts',
   'packages/pi-vim-top-border/index.ts',
   'src/deck-surface.ts',
