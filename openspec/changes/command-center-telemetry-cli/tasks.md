@@ -392,7 +392,14 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     composition green; the initial double-paint in the watch path was
     collapsed before commit.
   - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
-- [ ] Human validation: working timers glide at the render cadence while
-      idle faces stay frozen; data updates still arrive instantly via fs
-      events; original response, canonical outcome, and UTC recorded here.
+- [x] Human validation: working timers glide at the render cadence while
+-      idle faces stay frozen; data updates still arrive instantly via fs
+-      events; original response, canonical outcome, and UTC recorded here.
+  - Original response: `VALID` (2026-09-29T15:35:48Z). Canonical outcome
+    `VALID` closes Task 5 and the Plan; the Human immediately requested
+    CLI installation and naming, which is new scope (explicitly excluded
+    from this Plan) and opens a fresh slice.
+  - Wait: implementation completed 15:33Z; validation 15:35Z (~2 min).
+    Task 5 complete. All five Tasks canonical `VALID` — Plan is
+    archive-eligible.
   - Subject: `feat(command-center): fluid timers`.
