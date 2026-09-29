@@ -389,6 +389,12 @@ export function startBoardWatch(stateDir, onRefresh) {
   }
 }
 
+export function startRenderClock(render, renderMs = 150) {
+  // UI frame cadence over cached data — never touches the filesystem.
+  const timer = setInterval(render, renderMs);
+  return { stop: () => clearInterval(timer) };
+}
+
 async function paintOnce({ json, stateDir }) {
   await pruneDeadSnapshots(stateDir);
   const snapshots = await readSnapshots(stateDir);
@@ -411,14 +417,30 @@ async function main(argv) {
     once,
   });
 
-  await paintOnce({ json, stateDir });
-  if (!watch) return;
+  if (!watch) {
+    await paintOnce({ json, stateDir });
+    return;
+  }
 
-  const refresh = () => {
-    process.stdout.write('\u001b[2J\u001b[H');
-    void paintOnce({ json, stateDir });
+  // Watch mode: data arrives via fs events; the render clock only
+  // recomputes drift over the cached snapshots, so timers glide without
+  // any filesystem polling.
+  let snapshots = [];
+  const reload = async () => {
+    await pruneDeadSnapshots(stateDir);
+    snapshots = await readSnapshots(stateDir);
   };
-  startBoardWatch(stateDir, refresh);
+  const render = () => {
+    process.stdout.write('\u001b[2J\u001b[H');
+    process.stdout.write(renderBoard(deriveAgents(snapshots)));
+  };
+
+  await reload();
+  render();
+  startBoardWatch(stateDir, () => {
+    void reload().then(render);
+  });
+  startRenderClock(render);
 }
 
 const invokedAsScript = import.meta.url === pathToFileURL(process.argv[1] ?? '').href;

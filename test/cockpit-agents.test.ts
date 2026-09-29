@@ -12,6 +12,7 @@ import {
   renderBoard,
   renderJson,
   startBoardWatch,
+  startRenderClock,
   watchWanted,
 } from '../bin/cockpit-agents.mjs';
 
@@ -567,6 +568,19 @@ test('startBoardWatch repaints on snapshot directory events', async () => {
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+});
+
+test('startRenderClock fires renders on its cadence and stops cleanly', async () => {
+  let renders = 0;
+  const clock = startRenderClock(() => {
+    renders += 1;
+  }, 20);
+  await new Promise((resolve) => setTimeout(resolve, 120));
+  clock.stop();
+  const settled = renders;
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  assert.ok(renders >= 3, `expected several renders, got ${renders}`);
+  assert.equal(renders, settled, 'stop halts the clock');
 });
 
 test('colorWanted honors TTY and NO_COLOR', () => {

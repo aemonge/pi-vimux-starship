@@ -378,3 +378,21 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Wait: implementation completed 15:12Z; validation 15:21Z (~9 min).
     Task 4 complete.
   - Subject: `feat(command-center): deck grammar rows`.
+## Task 5 — Fluid render cadence
+
+- **implementation_confirmed_at:** 2026-09-29T15:23Z (Human `Yes`).
+
+- [x] Fluid render cadence: watch mode repaints on fs events and a ~150ms
+-      in-memory render tick over cached snapshots (drift recomputed from
+-      `Date.now()`); the tick never touches the filesystem; data flow
+-      stays purely event-driven; single-shot and `--json` unchanged.
+  - Started/Completed: 2026-09-29T15:23Z–15:33Z (≈10 min).
+  - Check: 53/53 tooling (render-clock contract: fires on cadence, stops
+    cleanly); typecheck, eslint, prettier, baseline, package:load,
+    composition green; the initial double-paint in the watch path was
+    collapsed before commit.
+  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
+- [ ] Human validation: working timers glide at the render cadence while
+      idle faces stay frozen; data updates still arrive instantly via fs
+      events; original response, canonical outcome, and UTC recorded here.
+  - Subject: `feat(command-center): fluid timers`.
