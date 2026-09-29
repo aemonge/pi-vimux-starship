@@ -18,6 +18,7 @@
     "docs/development.md",
     "docs/assets/pi-vimux-starship.gif",
     "demo/pi-vimux-starship.tape",
+    "bin/*.mjs",
     "licenses",
     "src/*.ts",
     "!src/local-load-probe.ts",

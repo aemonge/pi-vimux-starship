@@ -11,6 +11,7 @@ const execFileAsync = promisify(execFile);
 
 export const REQUIRED_FILES = [
   'README.md',
+  'bin/cockpit-agents.mjs',
   'demo/pi-vimux-starship.tape',
   'docs/architecture.md',
   'docs/development.md',

@@ -17,11 +17,17 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Refinement trigger:** Split if install touches more than the manifest,
   the integrity list, and the symlink.
 
-- [ ] Register and link: `"bin": { "pi-agents": "bin/cockpit-agents.mjs" }`
+- [x] Register and link: `"bin": { "pi-agents": "bin/cockpit-agents.mjs" }`
       in the root manifest with `bin/*.mjs` packed; `REQUIRED_FILES` gains
       the bin path; symlink `~/.local/bin/pi-agents` to the repo bin
       (executable); gates plus a live `command -v pi-agents` run from `$HOME`.
   - Subject: `step(pi-agents): installable bin and path symlink`.
+  - Started/Completed: 2026-09-29T15:39Z–15:43Z (≈4 min).
+  - Check: manifest `bin` + packed `bin/*.mjs`; REQUIRED_FILES gains
+    the bin (packed artifact 77 files, load PASS); baseline, composition,
+    format, lint, typecheck, 53/53 tooling green. Boundary: the sandbox
+    mounts `~/.local/bin` read-only, so the symlink is a Human-run
+    one-liner in validation — not bypassed.
 - [ ] Human validation: run `pi-agents` (and `pi-agents -w`) from a
       different directory; confirm the board renders; original response,
       canonical outcome, and UTC recorded here.
