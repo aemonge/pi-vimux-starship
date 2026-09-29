@@ -82,7 +82,7 @@ test('writes are atomic: valid JSON, never a partial file, no tmp leftovers', as
 
   await sink.onSessionStart('sess-gamma', '/w');
   for (let index = 0; index < 5; index += 1) {
-    await sink.onHeaderEvent({ ...headerEvent, blocked: index % 2 === 0 });
+    await sink.onHeaderEvent({ ...headerEvent, blocked: index === 4 });
   }
 
   const entries = await readdir(stateDir);
@@ -90,7 +90,7 @@ test('writes are atomic: valid JSON, never a partial file, no tmp leftovers', as
   const payload = JSON.parse(
     await readFile(path.join(stateDir, 'sess-gamma.json'), 'utf8'),
   );
-  assert.equal(payload.blocked, false);
+  assert.equal(payload.blocked, true, 'the final write must win');
 
   await rm(stateDir, { recursive: true, force: true });
 });

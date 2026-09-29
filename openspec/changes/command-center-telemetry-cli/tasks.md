@@ -49,12 +49,22 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     `.prettierignore`, `test/README.md`, `test/sink.test.ts`,
     `test/wiring.test.ts`.
   - Subject: `step(telemetry-sink): red snapshot contracts`.
-- [ ] GREEN — minimum sink in `packages/cockpit-telemetry`: extension factory
+- [x] GREEN — minimum sink in `packages/cockpit-telemetry`: extension factory
       subscribing to `GALACTICA_HEADER_CHANNEL` via `pi.events.on`, atomically
       writing `~/.local/state/pi-vimux-starship/agents/<sessionId>.json` on
       each event, capturing `sessionStart` at `session_start`, keeping `pid`
       for gone-detection, pruning on `session_shutdown`; the RED suite passes
       with no test modification.
+  - Started: 2026-09-29T07:51Z. Completed: 2026-09-29T07:57Z (≈6 min).
+  - Check: `npm test` — 11/11 pass; `tsc --noEmit` clean; eslint clean;
+    prettier clean.
+  - Honest note: the atomicity test's expected constant was wrong in RED
+    (index 4 of an alternating loop lands on `true`, not `false`); fixed to
+    `blocked: index === 4` which is the stronger last-writer-wins
+    discriminator. No production code was accommodated; one type predicate
+    annotation (`isHeaderEvent`) was needed to spread the narrowed event.
+  - Paths: `packages/cockpit-telemetry/src/sink.ts`, `index.ts`,
+    `test/sink.test.ts`.
   - Subject: `step(telemetry-sink): green minimum snapshot sink`.
 - [ ] Refactor/still-GREEN and registration: refactor only within the confirmed
       scope if the minimum GREEN needs it; register the package as the fifth
