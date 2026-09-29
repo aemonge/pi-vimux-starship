@@ -192,6 +192,28 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     is the separate Fix.
   - Paths: ledger only.
   - Subject: `step(command-center): still-green board suite and full gates`.
+- **CHANGE (Human feedback, 2026-09-29T09:41Z):** pasted live CLI output +
+  `The CLI isn't "live" I need to call it and call it .....` and `The timer
+  don't match the timer here` (quoting the deck's 󰠭 turn timer). Canonical
+  outcome `CHANGE` — Task 2 validation stays unchecked; bounded repair
+  reopened. Human direction `yes` (09:45Z): both repair slices, sequential.
+  Preflight correction: the deck timer is the header-private agent-turn clock;
+  its semantic twin (`activeRunSpans` root-span `elapsedMs`) already flows in
+  the event, so the timer slice uses span-elapsed-first with session-age
+  fallback instead of extending the frozen publisher.
+- [-] Repair 1 — turn-clock time column: `deriveAgents` shows the newest
+      live root agent-span `elapsedMs` when spans exist, else `now -
+      sessionStart`; derivation contracts updated accordingly (the original
+      `time column is now - sessionStart` pin is superseded by this CHANGE);
+      golden fixtures carry no spans so the frozen sample stays
+      byte-identical.
+  - Subject: `step(command-center): show the live turn clock in the time
+    column`.
+- [-] Repair 2 — live by default on a TTY: watch mode becomes the default
+      when stdout is a TTY (unless `--json`); `--once` forces a single render;
+      a `watchWanted({ tty, json, once })` pure helper carries the contract;
+      non-TTY stays single-shot.
+  - Subject: `step(command-center): watch by default on a terminal`.
 - [ ] Human validation: two concurrent live agents — one left awaiting
       validation (attention), one actively working — confirm states, order,
       right-flush alignment, `-w` refresh, and `NO_COLOR`; original response,
