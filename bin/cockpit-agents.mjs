@@ -165,7 +165,7 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
     let state = 'parked';
     let task = subject
       ? stage
-        ? `${subject} · ${stage}`
+        ? `${subject} › ${stage}`
         : subject
       : stage || 'parked';
     let sub = '';
@@ -184,7 +184,7 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
         state = 'working';
         task = subject
           ? stage
-            ? `${subject} · ${stage}`
+            ? `${subject} › ${stage}`
             : subject
           : stage || 'working';
       }
@@ -218,6 +218,8 @@ export function deriveAgents(snapshots, { now = Date.now(), pidAlive } = {}) {
       state,
       id: String(snapshot.sessionId).slice(0, ID_WIDTH),
       project: formatProjectPath(String(snapshot.cwd ?? '')) || '?',
+      title: state === 'attention' ? task : subject,
+      stage: state === 'working' || state === 'parked' ? stage : '',
       task,
       sub,
       time: formatDeckClock(elapsedMs),
@@ -298,26 +300,46 @@ export function renderBoard(rows, { columns, color } = {}) {
     );
   }
 
-  const projectWidth = Math.max(20, ...rows.map((row) => [...row.project].length)) + 2;
-  const rowPrefixWidth = 2 + ID_WIDTH + 2 + projectWidth + 2;
-  const taskWidth = Math.max(2, width - rowPrefixWidth - TIME_WIDTH - 2);
-
   const blocks = [];
+  const purple = painters.titlePurple;
+  const points = (value) => [...value].length;
   for (const row of rows) {
     const marker = markers[row.state];
     const taskPaint =
       row.state === 'attention'
         ? (chunk) => painters.bold(painters.accent(chunk))
         : painters.text;
+    // Natural-width grammar: MARK HASH › pwd ⟩ TITLE › STAGES …gap… timer.
+    // Narrow guard: the pwd clamps first, then the title/stage body.
+    const maxProject = Math.max(1, width - 25);
+    const project =
+      points(row.project) > maxProject
+        ? [...row.project].slice(0, maxProject).join('')
+        : row.project;
+    const prefix =
+      `${marker.glyph} ` +
+      `${fitRight(row.id, ID_WIDTH)}` +
+      ` › ` +
+      `${project}` +
+      ` ⟩ `;
+    const body = [row.title, row.stage].filter(Boolean).join(' › ');
+    const budget = Math.max(0, width - points(prefix) - 10);
+    const trimmed = points(body) > budget ? [...body].slice(0, budget).join('') : body;
+    const gap = Math.max(1, width - points(prefix) - points(trimmed) - TIME_WIDTH);
+    const paintedBody =
+      row.title && row.stage && points(body) <= budget
+        ? `${taskPaint(row.title)}${purple(' › ')}${taskPaint(row.stage)}`
+        : taskPaint(trimmed);
     const main =
       `${marker.paint(marker.glyph)} ` +
-      `${painters.muted(fitRight(row.id, ID_WIDTH))}  ` +
-      `${painters.cyan(fitRight(row.project, projectWidth))}  ` +
-      `${taskPaint(fitRight(row.task, taskWidth))}` +
-      `  ${painters.muted(fitLeft(row.time, TIME_WIDTH))}`;
+      `${painters.muted(fitRight(row.id, ID_WIDTH))}` +
+      `${purple(' › ')}${painters.cyan(project)}` +
+      `${purple(' ⟩ ')}` +
+      `${paintedBody}` +
+      `${' '.repeat(gap)}${painters.muted(fitLeft(row.time, TIME_WIDTH))}`;
     blocks.push(main);
     if (row.sub) {
-      blocks.push(`${' '.repeat(rowPrefixWidth)}${painters.text(row.sub)}`);
+      blocks.push(`${' '.repeat(points(prefix))}${painters.text(row.sub)}`);
       blocks.push('');
     }
   }

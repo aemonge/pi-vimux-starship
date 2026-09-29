@@ -344,3 +344,29 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Wait: implementation completed 14:03Z; validation 14:15Z (~12 min).
     Task 3 complete.
   - Subject: `feat(command-center): deck-parity polish`.
+
+## Task 4 — Natural-width row grammar
+
+- **implementation_confirmed_at:** 2026-09-29T14:18Z (Human `Yes`).
+
+- [x] Natural-width rows: `MARK HASH › pwd ⟩ TITLE › STAGES` left at
+      natural widths (no project padding), `mmm:ss'cc` right-flushed,
+      gap ≥ 1 absorbs slack; `›`/`⟩` separators in title purple `#5c5ca8`;
+      title→stage separator becomes `›`; sublines indent under their row's
+      title; narrow guard truncates the title/stage segment; golden
+      regenerated under this directed round.
+  - Started/Completed: 2026-09-29T14:18Z–14:24Z (≈6 min).
+  - Check: RED on 5 contracts, then 49/49 tooling; typecheck, eslint,
+    prettier, baseline, package:load, composition green; live smoke renders.
+    Honest notes: the attention body briefly rendered the subject instead
+    of the reason word (caught by golden, fixed via `title` field); the
+    hand-counted golden subline indent was one short (pwd is 19 code points
+    — production was right, literal corrected by computation); the narrow
+    guard gained a pwd clamp (floor now 25 + pwd); one sloppy two-line edit
+    during the fix was reverted before commit.
+  - Paths: `bin/cockpit-agents.mjs`, `test/cockpit-agents.test.ts`.
+- [ ] Human validation: live board — rows read
+      `MARK HASH › pwd ⟩ TITLE › STAGES` with violet separators, timer hard
+      right, no padded columns; original response, canonical outcome, and
+      UTC recorded here.
+  - Subject: `feat(command-center): deck grammar rows`.

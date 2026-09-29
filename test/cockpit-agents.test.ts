@@ -153,13 +153,13 @@ async function fixtureDir(): Promise<string> {
 const GOLDEN_80 = [
   '󰆧 pi-vimux-starship command center                        4 agents · 1 attention',
   '',
-  "! 003f1a0  ~/pi-vimux-starship       validation                        182:11'00",
-  '                                     Pi agent telemetry CLI for vimux-starship notifications',
+  "! 003f1a0 › ~/pi-vimux-starship ⟩ validation                           182:11'00",
+  '                                  Pi agent telemetry CLI for vimux-starship notifications',
   '',
-  "● 001c2d4  ~/galactica               Consolidate imported Pi cockpit   012:34'00",
-  "● 002b3e5  ~/pi-vimux-starship       Route Insert through Neovim · wo  041:07'00",
-  "◌ 004a9c3  /home/aemonge/articles    QMD taxonomy cleanup · listening  100:00'00",
-  "× 005d7e1  /home/aemonge/dotfiles    Shell hygiene pass                022:45'00",
+  "● 001c2d4 › ~/galactica ⟩ Consolidate imported Pi cockpit › working ›  012:34'00",
+  "● 002b3e5 › ~/pi-vimux-starship ⟩ Route Insert through Neovim › workin 041:07'00",
+  "◌ 004a9c3 › /home/aemonge/articles ⟩ QMD taxonomy cleanup › listening  100:00'00",
+  "× 005d7e1 › /home/aemonge/dotfiles ⟩ Shell hygiene pass                022:45'00",
 ].join('\n');
 
 test('golden render reproduces the frozen TUI contract byte-identically', async () => {
@@ -179,7 +179,9 @@ test('frozen colors appear when color is on, including bold accent reason', asyn
   try {
     const rows = deriveAgents(await readSnapshots(dir), { now: NOW });
     const output = renderBoard(rows, { columns: 80, color: true });
-    assert.ok(output.includes('\u001b[1m\u001b[38;2;92;92;168m'), 'bold violet title');
+    assert.ok(output.includes('\u001b[38;2;92;92;168m'), 'bold violet title');
+    assert.ok(output.includes('\u001b[38;2;92;92;168m › '), 'violet row separator');
+    assert.ok(output.includes('\u001b[38;2;92;92;168m ⟩ '), 'violet path separator');
     assert.ok(
       output.includes('\u001b[38;2;7;102;120m1 attention'),
       'accent attention count',
@@ -225,8 +227,8 @@ test('narrow-width guard keeps main rows within the terminal width', async () =>
   const dir = await fixtureDir();
   try {
     const rows = deriveAgents(await readSnapshots(dir), { now: NOW });
-    // Raw paths widen the project column; the squeezable floor is now 49.
-    const output = renderBoard(rows, { columns: 50, color: false });
+    // Raw paths widen the prefix; the squeezable floor is now 26 columns.
+    const output = renderBoard(rows, { columns: 40, color: false });
     const lines = output.split('\n');
     const subIndent = lines.find((line) => line.startsWith('      '));
     assert.ok(subIndent, 'fixture includes a subline');
@@ -235,8 +237,8 @@ test('narrow-width guard keeps main rows within the terminal width', async () =>
       // the guard pins main row lines.
       if (index === 0 || line === '' || line === subIndent) continue;
       assert.ok(
-        [...line].length <= 50,
-        `row ${index} exceeds 50 columns: ${[...line].length}`,
+        [...line].length <= 40,
+        `row ${index} exceeds 40 columns: ${[...line].length}`,
       );
     }
   } finally {
@@ -351,7 +353,7 @@ test('working rows append the deck stage to the task cell', () => {
   const base = snapshotFor(FIXTURES[1]);
   assert.equal(
     deriveAgents([base], { now: NOW })[0]?.task,
-    'Consolidate imported Pi cockpit · working › implementing',
+    'Consolidate imported Pi cockpit › working › implementing',
   );
   const understanding = {
     ...base,
@@ -369,7 +371,7 @@ test('working rows append the deck stage to the task cell', () => {
   };
   assert.equal(
     deriveAgents([understanding], { now: NOW })[0]?.task,
-    'Consolidate imported Pi cockpit · understanding › interpreting',
+    'Consolidate imported Pi cockpit › understanding › interpreting',
   );
 });
 
@@ -443,7 +445,7 @@ test('task title falls back to selection.titles when work has none', () => {
   };
   assert.equal(
     deriveAgents([subjectSourced], { now: NOW })[0]?.task,
-    'Testing a 20-second sleep command · working › implementing',
+    'Testing a 20-second sleep command › working › implementing',
   );
 });
 
