@@ -127,10 +127,43 @@ settings, endpoints, environment values, credentials, or absolute paths.
 
 ## Installation
 
-This project is currently private and `UNLICENSED`; npm publication is not authorized.
-Review extensions before installation because Pi packages execute with user permissions.
+The package is MIT-licensed and published as `@aemonge/pi-vimux-starship`.
+Review extensions before installation because Pi packages execute with user
+permissions. Both commands below work from any directory; neither requires
+cloning this repository.
 
-### Local path
+### From npm
+
+Install the cockpit extension through Pi:
+
+```bash
+pi install npm:@aemonge/pi-vimux-starship
+```
+
+Install the `pi-agents` command center on the PATH:
+
+```bash
+npm install -g @aemonge/pi-vimux-starship
+```
+
+Do not load this package alongside the four legacy component package entries.
+Inspect `pi list`, then remove or disable duplicates as one reviewed user
+action. `npm link` is not Pi's package-registration mechanism.
+
+### Publish runbook (maintainer)
+
+Publishing is a maintainer action with maintainer credentials, never part of
+automated checks. From the repository root:
+
+```bash
+npm install --package-lock-only
+npm publish --access public
+```
+
+The scoped package name requires `--access public`; the lockfile refresh
+keeps `npm ci` reproducible after an identity change.
+
+### Local path (development)
 
 From the repository root:
 
@@ -140,32 +173,30 @@ npm run check
 pi install "$(pwd -P)"
 ```
 
-Do not load this package alongside the four legacy component package entries. Inspect
-`pi list`, then remove or disable duplicates as one reviewed user action. `npm link` is
-not Pi's package-registration mechanism.
-
 ### Pinned private Git source
 
-After the repository has an authorized remote, install an immutable tag or commit:
+After the repository has an authorized remote, install an immutable tag or
+commit:
 
 ```bash
 pi install git:<host>/<owner>/pi-vimux-starship@<tag-or-commit>
 ```
 
-A pinned ref does not move during ordinary package updates. Network access, credentials,
-remote publication, and pushing are outside this repository's automated checks.
+A pinned ref does not move during ordinary package updates.
 
 ### Rollback
 
-Keep the previous source/ref before changing installation. To remove this package:
+Keep the previous source/ref before changing installation. To remove the npm
+installation:
 
 ```bash
-pi remove /absolute/path/to/pi-vimux-starship
+pi remove npm:@aemonge/pi-vimux-starship
+npm uninstall -g @aemonge/pi-vimux-starship
 ```
 
-For Git installations, pass the same `git:` package identity used during installation.
-Restore the previous package entries only after confirming this package has been removed;
-never keep both cockpit registrations active.
+For local-path installations, pass the absolute path to `pi remove` instead.
+Restore the previous package entries only after confirming this package has
+been removed; never keep both cockpit registrations active.
 
 ## Reproducible VHS demo
 

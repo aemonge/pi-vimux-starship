@@ -34,10 +34,17 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `package.json`, `LICENSE`, `baseline/source.sha256`.
   - Subject: `step(publish): scoped mit manifest at 0.1.0`.
   - Subject: `step(publish): scoped mit manifest at 0.1.0`.
-- [ ] Rewrite README installation npm-first: `pi install
+- [x] Rewrite README installation npm-first: `pi install
       npm:@aemonge/pi-vimux-starship` plus `npm install -g
       @aemonge/pi-vimux-starship` headline, local path demoted to development,
       rollback updated, Human publish runbook (`npm publish --access public`).
+  - Started/completed: 2026-09-30T12:19:30Z–12:23:10Z (≈4 min).
+  - Check: prettier green; markdownlint green for `README.md` (only
+    pre-existing `packages/*` findings remain); `check:package` PASS (78
+    files, README/VHS source PASS with pinned headings preserved);
+    `check:baseline` PASS (109 files, no refresh needed).
+  - Paths: `README.md`.
+  - Subject: `step(publish): npm-first installation docs`.
   - Subject: `step(publish): npm-first installation docs`.
 - [ ] Move gates in lockstep: `REQUIRED_FILES` gains `LICENSE`;
       `validateDemoSources` README pins require the npm install commands;
