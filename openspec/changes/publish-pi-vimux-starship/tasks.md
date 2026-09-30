@@ -120,16 +120,27 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   VHS proves flaky; reroute the CLI segment if the user-prefix install reads
   as unprofessional on screen.
 
-- [ ] Rewrite `demo/pi-vimux-starship.tape`: isolated demo `HOME`, user-prefix
+- [x] Rewrite `demo/pi-vimux-starship.tape`: isolated demo `HOME`, user-prefix
       `npm install -g @aemonge-dev/pi-vimux-starship` and a brief `pi-agents`
       board, `pi install npm:@aemonge-dev/pi-vimux-starship`, launch
       `pi --no-session --no-context-files`, then the existing `:name` and
       `:vimux-health` beats; keep provider/credential-free launch flags.
+  - Started/completed: 2026-09-30T14:23:41Z–14:33:00Z (≈9 min).
+  - Check: `check:package` PASS (78 files, new tape pins green against the
+    real tape); `test:tooling` 53/53 with reordered fixture; prettier and
+    eslint green; README demo section matches the recording.
+  - Boundary: VHS cannot render in this sandbox — its Chromium needs a
+    root-owned SUID helper (`/usr/lib/chromium/chrome-sandbox` mode 4755),
+    impossible inside the devbox user namespace; not bypassed. The render
+    moved to the Human host command in the README runbook.
+  - Paths: `demo/pi-vimux-starship.tape`, `scripts/check-package.mjs`,
+    `test/check-package.test.ts`, `README.md`.
   - Subject: `step(demo): tape records published npm install`.
-- [ ] Re-render `docs/assets/pi-vimux-starship.gif` with VHS and pin gates to
+- [-] Re-render `docs/assets/pi-vimux-starship.gif` with VHS and pin gates to
       the new tape: required commands, order, and forbidden patterns updated;
       README demo section matches the recording.
-  - Subject: `step(demo): gif and gates match published install`.
+      Started: 2026-09-30T14:33:00Z; gates and README already landed with the
+      tape Step — the remaining work is the host render plus review.
 - [ ] Human validation: review the GIF against the recorded flow, optionally
       re-run the tape on the host; original response, canonical outcome, and
       UTC recorded here.

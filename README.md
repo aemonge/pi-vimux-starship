@@ -200,20 +200,23 @@ been removed; never keep both cockpit registrations active.
 
 ## Reproducible VHS demo
 
-The checked-in tape is a header-led, credential-free demonstration. It hides routine
-startup, applies one ephemeral no-session title, then invokes `:vimux-health` through Pi
-Vim's Normal-mode EX bridge rather than sending a provider prompt. It runs Pi directly
-and requires no private Neovim bridge. From the repository root, run:
+The checked-in tape simulates a fresh machine: both published packages
+install into an isolated throwaway `HOME` with a user-local npm prefix, the
+`pi-agents` board flashes once, and a clean offline Pi session runs the
+`/vimux-health` report through Pi Vim's Normal-mode EX bridge. No provider,
+session, credential, or private editor bridge is involved. From the
+repository root, run:
 
 ```bash
 vhs demo/pi-vimux-starship.tape
 ```
 
-It writes `docs/assets/pi-vimux-starship.gif` using VHS's explicit Gruvbox Light terminal
-theme and a compact frame that keeps the cockpit prominent. Review the entire recording
-for private paths, notifications, or terminal history before committing it. The single
-reviewed GIF is the project's explicit demo-asset exception; ordinary screenshots and
-private runtime captures remain excluded.
+It writes `docs/assets/pi-vimux-starship.gif` using VHS's explicit Gruvbox
+Light terminal theme and a compact frame that keeps the cockpit prominent.
+Review the entire recording for private paths, notifications, or terminal
+history before committing it. The single reviewed GIF is the project's
+explicit demo-asset exception; ordinary screenshots and private runtime
+captures remain excluded.
 
 ## Development
 

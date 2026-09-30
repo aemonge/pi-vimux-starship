@@ -70,9 +70,15 @@ test('README and VHS source preserve the credential-free public health demo', ()
     'Set Height 520',
     'Set Padding 20',
     'Hide',
-    'Type "clear && pi --offline --no-session --no-extensions --no-context-files"',
+    'Type "npm install -g @aemonge-dev/pi-vimux-starship"',
+    'Wait+Screen /added \\d+ packages/',
+    'Type "pi-agents"',
+    'Wait+Screen /command center/',
+    'Ctrl+C',
+    'Type "pi install npm:@aemonge-dev/pi-vimux-starship"',
+    'Wait+Screen /Installed npm:@aemonge-dev\\/pi-vimux-starship/',
+    'Type "clear && pi --offline --no-session --no-context-files --tui-mode regular"',
     'Wait+Screen /waiting/',
-    'Show',
     'Type ":name Public cockpit demo"',
     'Wait+Screen /Public cockpit demo/',
     'Type ":vimux-health"',
@@ -81,8 +87,8 @@ test('README and VHS source preserve the credential-free public health demo', ()
 
   assert.deepEqual(validateDemoSources(readme, tape), []);
   const misordered = tape.replace(
-    'Wait+Screen /waiting/\nShow',
-    'Show\nWait+Screen /waiting/',
+    'Type "pi-agents"\nWait+Screen /command center/',
+    'Wait+Screen /command center/\nType "pi-agents"',
   );
   assert.match(validateDemoSources(readme, misordered).join('\n'), /order invalid/u);
 
