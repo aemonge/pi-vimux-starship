@@ -28,7 +28,7 @@ Show
 Type "npm install -g @aemonge-dev/pi-vimux-starship"
 Enter
 Hide
-Wait+Screen /added \d+ packages/
+Wait+Screen@90s /added \d+ packages/
 Sleep 1s
 Show
 Type "pi-agents"
@@ -42,7 +42,7 @@ Sleep 1s
 Type "pi install npm:@aemonge-dev/pi-vimux-starship"
 Enter
 Hide
-Wait+Screen /Installed npm:@aemonge-dev\/pi-vimux-starship/
+Wait+Screen@90s /Installed npm:@aemonge-dev\/pi-vimux-starship/
 Sleep 1s
 Show
 
@@ -50,7 +50,7 @@ Show
 Type "clear && pi --offline --no-session --no-context-files --tui-mode regular"
 Enter
 Hide
-Wait+Screen /waiting/
+Wait+Screen@60s /waiting/
 Show
 Sleep 4s
 
