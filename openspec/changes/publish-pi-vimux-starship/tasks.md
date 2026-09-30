@@ -143,7 +143,14 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       tape Step — the remaining work is the host render plus review.
       Iteration: first host render timed out on the cold-cache npm wait — the
       throwaway HOME emptied `~/.npm`; the tape now keeps the real npm cache
-      attached while preserving settings isolation.
+      attached while preserving settings isolation. Further iterations:
+      `@<time>` wait timeouts (VHS default is 15s), once-mode board beat,
+      fixed self-cleaning demo home, visible instant-match waits. Five host
+      renders failed at the board beat with no visible input echo; a probe
+      tape was prepared to isolate VHS hidden-period input loss.
+      DEFERRED by Human direction 2026-09-30 — resume with
+      `vhs demo/pi-vimux-starship.tape` on the host; `docs/assets/` still
+      holds the Sep 9 recording of the old launch flow until then.
 - [ ] Human validation: review the GIF against the recorded flow, optionally
       re-run the tape on the host; original response, canonical outcome, and
       UTC recorded here.
