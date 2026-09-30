@@ -41,4 +41,4 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Subject: `feat(pi-agents): pi-agents on the path`.
   - Rerouted 2026-09-30 by Human direction: no symlink — validation lands
     through `publish-pi-vimux-starship` Task 1's `npm install -g
-    @aemonge/pi-vimux-starship`; this Plan archives at that boundary.
+    @aemonge-dev/pi-vimux-starship`; this Plan archives at that boundary.

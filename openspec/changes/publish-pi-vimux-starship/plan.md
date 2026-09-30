@@ -27,8 +27,8 @@
 
 ## Acceptance
 
-- From any directory, `pi install npm:@aemonge/pi-vimux-starship` loads the
-  cockpit and `npm install -g @aemonge/pi-vimux-starship` puts `pi-agents` on
+- From any directory, `pi install npm:@aemonge-dev/pi-vimux-starship` loads the
+  cockpit and `npm install -g @aemonge-dev/pi-vimux-starship` puts `pi-agents` on
   the PATH — zero cloning, after Human runs the one publish.
 - Offline gates stay green: `check:package`/`check:package:load` cover the
   LICENSE and npm install docs; demo gates pin the new recording.

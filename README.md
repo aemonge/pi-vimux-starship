@@ -127,7 +127,7 @@ settings, endpoints, environment values, credentials, or absolute paths.
 
 ## Installation
 
-The package is MIT-licensed and published as `@aemonge/pi-vimux-starship`.
+The package is MIT-licensed and published as `@aemonge-dev/pi-vimux-starship`.
 Review extensions before installation because Pi packages execute with user
 permissions. Both commands below work from any directory; neither requires
 cloning this repository.
@@ -137,13 +137,13 @@ cloning this repository.
 Install the cockpit extension through Pi:
 
 ```bash
-pi install npm:@aemonge/pi-vimux-starship
+pi install npm:@aemonge-dev/pi-vimux-starship
 ```
 
 Install the `pi-agents` command center on the PATH:
 
 ```bash
-npm install -g @aemonge/pi-vimux-starship
+npm install -g @aemonge-dev/pi-vimux-starship
 ```
 
 Do not load this package alongside the four legacy component package entries.
@@ -190,8 +190,8 @@ Keep the previous source/ref before changing installation. To remove the npm
 installation:
 
 ```bash
-pi remove npm:@aemonge/pi-vimux-starship
-npm uninstall -g @aemonge/pi-vimux-starship
+pi remove npm:@aemonge-dev/pi-vimux-starship
+npm uninstall -g @aemonge-dev/pi-vimux-starship
 ```
 
 For local-path installations, pass the absolute path to `pi remove` instead.

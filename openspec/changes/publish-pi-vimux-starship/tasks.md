@@ -22,7 +22,7 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   and gate edits.
 
 - [x] Set the public identity: `LICENSE` (MIT, Andres Monge), `license: MIT`,
-      drop `private`, `name: @aemonge/pi-vimux-starship`, `version: 0.1.0`,
+      drop `private`, `name: @aemonge-dev/pi-vimux-starship`, `version: 0.1.0`,
       `pi.image: docs/assets/pi-vimux-starship.gif`; keep bundled pi-vim and
       Fancy Footer licenses in `files`.
   - Started/completed: 2026-09-30T12:12:45Z–12:13:50Z (≈1 min; timing
@@ -36,8 +36,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Subject: `step(publish): scoped mit manifest at 0.1.0`.
   - Subject: `step(publish): scoped mit manifest at 0.1.0`.
 - [x] Rewrite README installation npm-first: `pi install
-      npm:@aemonge/pi-vimux-starship` plus `npm install -g
-      @aemonge/pi-vimux-starship` headline, local path demoted to development,
+      npm:@aemonge-dev/pi-vimux-starship` plus `npm install -g
+      @aemonge-dev/pi-vimux-starship` headline, local path demoted to development,
       rollback updated, Human publish runbook (`npm publish --access public`).
   - Started/completed: 2026-09-30T12:14:00Z–12:16:00Z (≈2 min; timing
     corrected 2026-09-30 to true wall-clock stamps).
@@ -60,11 +60,29 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `scripts/check-package.mjs`, `test/check-package.test.ts`,
     `test/local-load-probe.test.ts`.
   - Subject: `step(publish): gates cover license and npm install docs`.
+- [x] Repair (Human-reported `NOT VALID` 2026-09-30): publish of
+      `@aemonge/pi-vimux-starship` failed with registry `E404` on `PUT` —
+      the `aemonge` scope is not writable by the logged-in user `aemonge`
+      (org/user namespace conflict, org taken); Human directed the
+      `aemonge-dev` org. Symptom: 404 on PUT; cause: unwritable scope;
+      rename `@aemonge/` → `@aemonge-dev/` across manifest, README, gates,
+      and test expectations.
+  - Started/completed: 2026-09-30T14:00:05Z–14:04:00Z (≈4 min).
+  - Check: registry probe `@aemonge-dev/pi-vimux-starship` free (E404 GET);
+    `test:tooling`, `check:package`, `check:package:load` green under the
+    renamed identity; prettier green.
+  - Boundary: `package-lock.json` (host-refreshed with the old scope) needs
+    one more host `npm install --package-lock-only` after this commit.
+  - Paths: `package.json`, `README.md`, `scripts/check-package.mjs`,
+    `test/check-package.test.ts`, `test/local-load-probe.test.ts`,
+    `openspec/changes/publish-pi-vimux-starship/{plan,tasks}.md`,
+    `openspec/changes/install-pi-agents-cli/tasks.md`.
+  - Subject: `step(publish): scope to aemonge-dev org`.
   - Subject: `step(publish): gates cover license and npm install docs`.
 - [ ] Human validation: publish from the repository root on the host
       (`npm publish --access public`), then from a different directory run
-      `pi install npm:@aemonge/pi-vimux-starship` and `npm install -g
-      @aemonge/pi-vimux-starship`; confirm the cockpit loads and `pi-agents`
+      `pi install npm:@aemonge-dev/pi-vimux-starship` and `npm install -g
+      @aemonge-dev/pi-vimux-starship`; confirm the cockpit loads and `pi-agents`
       runs; original response, canonical outcome, and UTC recorded here. This
       validation also satisfies and closes `install-pi-agents-cli` Task 1,
       whose acceptance (`pi-agents` from any directory) is met by the real
@@ -93,8 +111,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   as unprofessional on screen.
 
 - [ ] Rewrite `demo/pi-vimux-starship.tape`: isolated demo `HOME`, user-prefix
-      `npm install -g @aemonge/pi-vimux-starship` and a brief `pi-agents`
-      board, `pi install npm:@aemonge/pi-vimux-starship`, launch
+      `npm install -g @aemonge-dev/pi-vimux-starship` and a brief `pi-agents`
+      board, `pi install npm:@aemonge-dev/pi-vimux-starship`, launch
       `pi --no-session --no-context-files`, then the existing `:name` and
       `:vimux-health` beats; keep provider/credential-free launch flags.
   - Subject: `step(demo): tape records published npm install`.

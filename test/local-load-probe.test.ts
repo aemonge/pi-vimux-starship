@@ -32,7 +32,7 @@ test('external-only deck composition suppresses the native prompt surface', () =
 test('one package activates the root cockpit composition entrypoint', async () => {
   const result = await inspectLocalPackage();
 
-  assert.equal(result.packageName, '@aemonge/pi-vimux-starship');
+  assert.equal(result.packageName, '@aemonge-dev/pi-vimux-starship');
   assert.deepEqual(result.entrypoints, [...EXPECTED_EXTENSION_ENTRYPOINTS]);
   assert.equal(result.registrations.length, EXPECTED_EXTENSION_ENTRYPOINTS.length);
   assert.deepEqual(
