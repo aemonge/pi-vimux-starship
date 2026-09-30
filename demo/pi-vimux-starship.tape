@@ -26,13 +26,16 @@ Enter
 Wait
 Show
 
-# Install the published CLI from the registry and flash the live board.
+# Install the published CLI from the registry and print the board once.
+# Long work sleeps hidden; the visible Wait commands then match instantly
+# against output that is already on screen — nothing races the recording.
 Type "npm install -g @aemonge-dev/pi-vimux-starship"
 Enter
 Hide
-Wait+Screen@90s /added \d+ packages/
-Sleep 3s
+Sleep 75s
 Show
+Wait+Screen@30s /added \d+ packages/
+Sleep 1s
 Type "pi-agents --once"
 Enter
 Wait+Screen@30s /command center/
@@ -42,16 +45,18 @@ Sleep 3s
 Type "pi install npm:@aemonge-dev/pi-vimux-starship"
 Enter
 Hide
-Wait+Screen@90s /Installed npm:@aemonge-dev\/pi-vimux-starship/
-Sleep 1s
+Sleep 15s
 Show
+Wait+Screen@30s /Installed npm:@aemonge-dev\/pi-vimux-starship/
+Sleep 1s
 
 # Launch a clean cockpit session from the fresh install.
 Type "clear && pi --offline --no-session --no-context-files --tui-mode regular"
 Enter
 Hide
-Wait+Screen@60s /waiting/
+Sleep 12s
 Show
+Wait+Screen@60s /waiting/
 Sleep 4s
 
 # Exercise a real ephemeral title change without creating a session.
