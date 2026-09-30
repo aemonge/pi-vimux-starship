@@ -79,7 +79,7 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     `openspec/changes/install-pi-agents-cli/tasks.md`.
   - Subject: `step(publish): scope to aemonge-dev org`.
   - Subject: `step(publish): gates cover license and npm install docs`.
-- [ ] Human validation: publish from the repository root on the host
+- [x] Human validation: publish from the repository root on the host
       (`npm publish --access public`), then from a different directory run
       `pi install npm:@aemonge-dev/pi-vimux-starship` and `npm install -g
       @aemonge-dev/pi-vimux-starship`; confirm the cockpit loads and `pi-agents`
@@ -88,6 +88,16 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       whose acceptance (`pi-agents` from any directory) is met by the real
       mechanism.
   - Subject: `feat(publish): package live on npm`.
+  - Outcome: canonical `VALID` — original response `DONE TY` + `VALID`,
+    2026-09-30T14:21:20Z. Evidence: publish output
+    `+ @aemonge-dev/pi-vimux-starship@0.1.0`; `npm i -g` added 125 packages;
+    `pi remove` of the path entry and `pi install npm:` both clean; `pi-agents`
+    board renders with `~/.npm-global/bin` on PATH (Human dotfile fix);
+    registry visible (`npm view` → 0.1.0). Repair round: one (`@aemonge` →
+    `@aemonge-dev` scope, registry 404 on unwritable scope).
+  - Actual vs estimated: implementation ≈17 min (est. 30–50, incl. ≈4 min
+    repair); Human wait ≈1h55m separate (publish, PATH fix, validation).
+  - Lockfile identity commit: host `2ca5c23` by Human.
 
 ## Task 2 — Professional public demo recording
 
