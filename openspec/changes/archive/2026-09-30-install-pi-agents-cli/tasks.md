@@ -35,10 +35,14 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
     the `bin` manifest field was lost to an atomic edit failure earlier
     (half the edit re-applied); caught by the probe, fixed, repacked,
     re-verified (shim links, installed bin runs).
-- [ ] Human validation: run `pi-agents` (and `pi-agents -w`) from a
+- [x] Human validation: run `pi-agents` (and `pi-agents -w`) from a
       different directory; confirm the board renders; original response,
       canonical outcome, and UTC recorded here.
   - Subject: `feat(pi-agents): pi-agents on the path`.
   - Rerouted 2026-09-30 by Human direction: no symlink — validation lands
     through `publish-pi-vimux-starship` Task 1's `npm install -g
     @aemonge-dev/pi-vimux-starship`; this Plan archives at that boundary.
+  - Outcome: canonical `VALID` (via `publish-pi-vimux-starship` Task 1),
+    2026-09-30T14:21:20Z — original response `VALID`; `pi-agents` renders
+    from any directory with `~/.npm-global/bin` on PATH. Archived same
+    boundary.
