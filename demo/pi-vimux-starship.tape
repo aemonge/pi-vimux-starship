@@ -16,9 +16,10 @@ Set Framerate 30
 Set PlaybackSpeed 1
 
 # Simulate a fresh machine: everything installs into a throwaway HOME with a
-# user-local npm prefix. Keep the environment setup out of the recording.
+# user-local npm prefix. The real npm download cache stays attached so the
+# recording does not stall on a cold cache. Keep setup out of the recording.
 Hide
-Type "export DEMO_HOME=$(mktemp -d) && export HOME=$DEMO_HOME && export NPM_CONFIG_PREFIX=$HOME/.npm-global && export PATH=$NPM_CONFIG_PREFIX/bin:$PATH && clear"
+Type "export DEMO_HOME=$(mktemp -d) && export NPM_CACHE_KEEP=$HOME/.npm && export HOME=$DEMO_HOME && export NPM_CONFIG_PREFIX=$HOME/.npm-global && export npm_config_cache=$NPM_CACHE_KEEP && export PATH=$NPM_CONFIG_PREFIX/bin:$PATH && clear"
 Enter
 Wait
 Show

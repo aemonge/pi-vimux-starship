@@ -141,6 +141,9 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       README demo section matches the recording.
       Started: 2026-09-30T14:33:00Z; gates and README already landed with the
       tape Step — the remaining work is the host render plus review.
+      Iteration: first host render timed out on the cold-cache npm wait — the
+      throwaway HOME emptied `~/.npm`; the tape now keeps the real npm cache
+      attached while preserving settings isolation.
 - [ ] Human validation: review the GIF against the recorded flow, optionally
       re-run the tape on the host; original response, canonical outcome, and
       UTC recorded here.
