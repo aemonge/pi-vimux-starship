@@ -86,8 +86,8 @@ test('README and VHS source preserve the credential-free public health demo', ()
 
   assert.deepEqual(validateDemoSources(readme, tape), []);
   const misordered = tape.replace(
-    'Type "pi-agents"\nWait+Screen /command center/',
-    'Wait+Screen /command center/\nType "pi-agents"',
+    'Type "pi-agents --once"\nWait+Screen@30s /command center/',
+    'Wait+Screen@30s /command center/\nType "pi-agents --once"',
   );
   assert.match(validateDemoSources(readme, misordered).join('\n'), /order invalid/u);
 
