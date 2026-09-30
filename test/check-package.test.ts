@@ -76,7 +76,7 @@ test('README and VHS source preserve the credential-free public health demo', ()
     'Wait+Screen /command center/',
     'Ctrl+C',
     'Type "pi install npm:@aemonge-dev/pi-vimux-starship"',
-    'Wait+Screen@90s /Installed npm:@aemonge-dev\\/pi-vimux-starship/',,
+    'Wait+Screen@90s /Installed npm:@aemonge-dev\\/pi-vimux-starship/',
     'Type "clear && pi --offline --no-session --no-context-files --tui-mode regular"',
     'Wait+Screen@60s /waiting/',
     'Type ":name Public cockpit demo"',
