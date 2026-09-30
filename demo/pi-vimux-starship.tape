@@ -29,14 +29,12 @@ Type "npm install -g @aemonge-dev/pi-vimux-starship"
 Enter
 Hide
 Wait+Screen@90s /added \d+ packages/
-Sleep 1s
-Show
-Type "pi-agents"
-Enter
-Wait+Screen /command center/
 Sleep 3s
-Ctrl+C
-Sleep 1s
+Show
+Type "pi-agents --once"
+Enter
+Wait+Screen@30s /command center/
+Sleep 3s
 
 # Install the cockpit through Pi's package manager.
 Type "pi install npm:@aemonge-dev/pi-vimux-starship"
