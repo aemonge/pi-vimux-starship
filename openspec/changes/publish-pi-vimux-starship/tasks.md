@@ -25,7 +25,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       drop `private`, `name: @aemonge/pi-vimux-starship`, `version: 0.1.0`,
       `pi.image: docs/assets/pi-vimux-starship.gif`; keep bundled pi-vim and
       Fancy Footer licenses in `files`.
-  - Started/completed: 2026-09-30T12:13:05Z–12:17:40Z (≈5 min).
+  - Started/completed: 2026-09-30T12:12:45Z–12:13:50Z (≈1 min; timing
+    corrected 2026-09-30 to true wall-clock stamps).
   - Check: `check:package` PASS (78 files, LICENSE packed, bundled licenses
     intact); `check:baseline` refreshed and PASS (109 files); prettier green.
   - Boundary: `package-lock.json` is devbox read-only, so the lockfile
@@ -38,7 +39,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       npm:@aemonge/pi-vimux-starship` plus `npm install -g
       @aemonge/pi-vimux-starship` headline, local path demoted to development,
       rollback updated, Human publish runbook (`npm publish --access public`).
-  - Started/completed: 2026-09-30T12:19:30Z–12:23:10Z (≈4 min).
+  - Started/completed: 2026-09-30T12:14:00Z–12:16:00Z (≈2 min; timing
+    corrected 2026-09-30 to true wall-clock stamps).
   - Check: prettier green; markdownlint green for `README.md` (only
     pre-existing `packages/*` findings remain); `check:package` PASS (78
     files, README/VHS source PASS with pinned headings preserved);
@@ -46,10 +48,18 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   - Paths: `README.md`.
   - Subject: `step(publish): npm-first installation docs`.
   - Subject: `step(publish): npm-first installation docs`.
-- [ ] Move gates in lockstep: `REQUIRED_FILES` gains `LICENSE`;
+- [x] Move gates in lockstep: `REQUIRED_FILES` gains `LICENSE`;
       `validateDemoSources` README pins require the npm install commands;
       `check:package` and `check:package:load` green offline under the new
       name and version.
+  - Started/completed: 2026-09-30T12:16:30Z–12:19:43Z (≈3 min).
+  - Check: `test:tooling` green (one name assertion updated in
+    `local-load-probe.test.ts` lockstep); `check:package` PASS (78 files);
+    `check:package:load` PASS offline under the new identity; eslint and
+    prettier green on touched files.
+  - Paths: `scripts/check-package.mjs`, `test/check-package.test.ts`,
+    `test/local-load-probe.test.ts`.
+  - Subject: `step(publish): gates cover license and npm install docs`.
   - Subject: `step(publish): gates cover license and npm install docs`.
 - [ ] Human validation: publish from the repository root on the host
       (`npm publish --access public`), then from a different directory run

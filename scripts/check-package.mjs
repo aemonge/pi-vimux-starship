@@ -15,6 +15,7 @@ export const REQUIRED_FILES = [
   'demo/pi-vimux-starship.tape',
   'docs/architecture.md',
   'docs/development.md',
+  'LICENSE',
   'licenses/pi-fancy-footer-LICENSE',
   'licenses/pi-vim-LICENSE',
   'package.json',
@@ -62,6 +63,8 @@ export function validateDemoSources(readme, tape) {
     'nvim +terminal',
     '/vimux-health',
     '## Installation',
+    'pi install npm:@aemonge/pi-vimux-starship',
+    'npm install -g @aemonge/pi-vimux-starship',
     '### Rollback',
     '## Reproducible VHS demo',
   ]) {

@@ -59,6 +59,8 @@ test('README and VHS source preserve the credential-free public health demo', ()
     'nvim +terminal',
     '/vimux-health',
     '## Installation',
+    'pi install npm:@aemonge/pi-vimux-starship',
+    'npm install -g @aemonge/pi-vimux-starship',
     '### Rollback',
     '## Reproducible VHS demo',
   ].join('\n');
