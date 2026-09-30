@@ -1,7 +1,6 @@
 {
-  "name": "pi-vimux-starship",
-  "version": "0.1.0-baseline.0",
-  "private": true,
+  "name": "@aemonge/pi-vimux-starship",
+  "version": "0.1.0",
   "description": "A Vim- and tmux-inspired command deck for Pi",
   "type": "module",
   "keywords": [
@@ -11,7 +10,7 @@
     "tmux",
     "cockpit"
   ],
-  "license": "UNLICENSED",
+  "license": "MIT",
   "files": [
     "README.md",
     "docs/architecture.md",
@@ -78,6 +77,7 @@
     "typescript-eslint": "8.69.0"
   },
   "pi": {
+    "image": "docs/assets/pi-vimux-starship.gif",
     "extensions": [
       "./src/index.ts"
     ]

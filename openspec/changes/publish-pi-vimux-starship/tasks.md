@@ -21,10 +21,18 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - **Refinement trigger:** Split if readiness exceeds manifest, LICENSE, README,
   and gate edits.
 
-- [ ] Set the public identity: `LICENSE` (MIT, Andres Monge), `license: MIT`,
+- [x] Set the public identity: `LICENSE` (MIT, Andres Monge), `license: MIT`,
       drop `private`, `name: @aemonge/pi-vimux-starship`, `version: 0.1.0`,
       `pi.image: docs/assets/pi-vimux-starship.gif`; keep bundled pi-vim and
       Fancy Footer licenses in `files`.
+  - Started/completed: 2026-09-30T12:13:05Z–12:17:40Z (≈5 min).
+  - Check: `check:package` PASS (78 files, LICENSE packed, bundled licenses
+    intact); `check:baseline` refreshed and PASS (109 files); prettier green.
+  - Boundary: `package-lock.json` is devbox read-only, so the lockfile
+    identity refresh is a Human host command (`npm install
+    --package-lock-only` + its own commit) before publish — not bypassed.
+  - Paths: `package.json`, `LICENSE`, `baseline/source.sha256`.
+  - Subject: `step(publish): scoped mit manifest at 0.1.0`.
   - Subject: `step(publish): scoped mit manifest at 0.1.0`.
 - [ ] Rewrite README installation npm-first: `pi install
       npm:@aemonge/pi-vimux-starship` plus `npm install -g
