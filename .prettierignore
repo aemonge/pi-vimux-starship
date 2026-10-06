@@ -1,5 +1,6 @@
 node_modules/
 .pi/
+justfile
 .markdownlint-cli2.jsonc
 packages/pi-vim-top-border/
 baseline/*.sha256
