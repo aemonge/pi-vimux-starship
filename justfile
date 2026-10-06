@@ -16,7 +16,9 @@ build:
 
 # Full release: gates, then bump+commit+tag, publish, reinstall, confirm.
 publish VERSION: lint test build
-    npm version {{VERSION}} --message "chore(release): v%s"
+    @v=$(node -p 'require("./package.json").version'); \
+     if [ "$v" = "{{VERSION}}" ]; then echo "already at {{VERSION}}, resuming"; \
+     else npm version {{VERSION}} --message 'chore(release): v%s'; fi
     npm publish
-    npm install -g @aemonge-dev/pi-vimux-starship
+    npm install -g @aemonge-dev/pi-vimux-starship@{{VERSION}}
     pi-agents --version
