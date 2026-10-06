@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
 
 import {
   colorWanted,
@@ -599,4 +602,56 @@ test('watchWanted defaults to watching on a TTY with escapes', () => {
   );
   assert.equal(watchWanted({ tty: false }), false, 'pipes stay single-shot');
   assert.equal(watchWanted({ tty: false, watch: true }), true, '-w forces watch');
+});
+
+const execFileAsync = promisify(execFile);
+const BIN_PATH = fileURLToPath(new URL('../bin/cockpit-agents.mjs', import.meta.url));
+
+// Runs the real bin as a child process with a hermetic empty state dir,
+// so spawned assertions never touch live session snapshots.
+async function runBin(
+  args: readonly string[],
+  binPath: string = BIN_PATH,
+): Promise<string> {
+  const stateDir = await mkdtemp(path.join(tmpdir(), 'cockpit-cli-'));
+  try {
+    const { stdout } = await execFileAsync(process.execPath, [binPath, ...args], {
+      env: {
+        ...process.env,
+        NO_COLOR: '1',
+        PI_VIMUX_STARSHIP_STATE_DIR: stateDir,
+      },
+    });
+    return stdout;
+  } finally {
+    await rm(stateDir, { recursive: true, force: true });
+  }
+}
+
+test('pi-agents runs through a symlinked bin (npm global install shape)', async () => {
+  const linkDir = await mkdtemp(path.join(tmpdir(), 'cockpit-link-'));
+  try {
+    const linkPath = path.join(linkDir, 'pi-agents');
+    await symlink(BIN_PATH, linkPath);
+    const stdout = await runBin(['--once'], linkPath);
+    assert.match(stdout, /pi-vimux-starship command center/);
+    assert.match(stdout, /no live agents/);
+  } finally {
+    await rm(linkDir, { recursive: true, force: true });
+  }
+});
+
+test('--version prints the package version', async () => {
+  const manifest = JSON.parse(
+    await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'),
+  ) as { version: string };
+  const stdout = await runBin(['--version']);
+  assert.equal(stdout.trim(), manifest.version);
+});
+
+test('--help names the flag surface', async () => {
+  const stdout = await runBin(['--help']);
+  for (const flag of ['--json', '--once', '--watch', '--version', '--help']) {
+    assert.ok(stdout.includes(flag), `usage names ${flag}`);
+  }
 });

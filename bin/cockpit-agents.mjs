@@ -5,7 +5,7 @@
 // Layout: STATE → AGENT → TASK → TIME, dynamic full terminal width.
 
 import { readdir, readFile, rm } from 'node:fs/promises';
-import { watch } from 'node:fs';
+import { realpathSync, watch } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -406,7 +406,39 @@ async function paintOnce({ json, stateDir }) {
   process.stdout.write(renderBoard(rows));
 }
 
+const USAGE = `usage: pi-agents [--json] [--once] [-w|--watch] [-v|--version] [-h|--help]
+
+Renders the pi-vimux-starship command center. Watches by default when stdout
+is a TTY; prints one render otherwise.
+
+options:
+  --json         print raw agent snapshots as JSON and exit
+  --once         print one board render and exit
+  -w, --watch    keep watching, even when stdout is not a TTY
+  -v, --version  print the package version and exit
+  -h, --help     print this usage and exit
+
+environment:
+  PI_VIMUX_STARSHIP_STATE_DIR  override the snapshot state directory
+  NO_COLOR                     disable ANSI colors
+`;
+
+async function readPackageVersion() {
+  const manifest = JSON.parse(
+    await readFile(new URL('../package.json', import.meta.url), 'utf8'),
+  );
+  return String(manifest.version);
+}
+
 async function main(argv) {
+  if (argv.includes('--help') || argv.includes('-h')) {
+    process.stdout.write(USAGE);
+    return;
+  }
+  if (argv.includes('--version') || argv.includes('-v')) {
+    process.stdout.write(`${await readPackageVersion()}\n`);
+    return;
+  }
   const json = argv.includes('--json');
   const once = argv.includes('--once');
   const stateDir = defaultStateDir();
@@ -443,8 +475,16 @@ async function main(argv) {
   startRenderClock(render);
 }
 
-const invokedAsScript = import.meta.url === pathToFileURL(process.argv[1] ?? '').href;
+// npm global bins are symlinks: argv[1] stays the link path while
+// import.meta.url resolves the real file, so resolve argv[1] first.
+function invokedAsScript() {
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
+  } catch {
+    return false;
+  }
+}
 
-if (invokedAsScript) {
+if (invokedAsScript()) {
   await main(process.argv.slice(2));
 }
