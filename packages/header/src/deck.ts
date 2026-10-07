@@ -415,7 +415,7 @@ function projectLeft(state: HeaderDeckState, theme: Theme, statusIcons = ''): st
   if (statusIcons === '') {
     return `${devbox}${color(theme, 'success', ` ${safeText(state.cwd)}`)}`;
   }
-  return `${devbox}${statusIcons} ${semanticSeparator(theme)} ${color(
+  return `${devbox}${statusIcons} ${minorSeparator(theme, 'dim')} ${color(
     theme,
     'success',
     ` ${safeText(state.cwd)}`,
