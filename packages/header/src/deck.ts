@@ -492,10 +492,27 @@ function compactTelemetryLeft(
     .join(` ${semanticSeparator(theme)} `);
 }
 
+const EXTENSION_STATUS_ICONS: Record<string, string> = {
+  engram: '\u{F09E0}',
+  graphify: '\u{F08BE}',
+  openappa: '\u{F05A6}',
+  appa: '\u{F05A6}',
+};
+
+function extensionStatusIcons(state: HeaderDeckState, theme: Theme): string {
+  const items = (state.piStatus?.nativeStatuses ?? []).filter(
+    (item) => item.key !== 'goal',
+  );
+  if (items.length === 0) return '';
+  const glyphs = items.map((item) => EXTENSION_STATUS_ICONS[item.key] ?? '\u{F01B2}');
+  return color(theme, 'text', glyphs.join(' '));
+}
+
 function compactTelemetryRight(
   state: HeaderDeckState,
   theme: Theme,
   nowMs = Date.now(),
+  width?: number,
 ): string {
   const resources = state.resources;
   // Relocation: resources left-to-right, cost anchors the far end.
@@ -518,6 +535,12 @@ function compactTelemetryRight(
   if (windows) resourceSegments.unshift(windows);
   const cost = costTile(state, theme);
   if (cost) resourceSegments.push(cost);
+  // Extension statuses ride the telemetry tail as icons; they yield first
+  // on narrow frames. The footnote row is gone.
+  if (width === undefined || width >= 72) {
+    const statusIcons = extensionStatusIcons(state, theme);
+    if (statusIcons) resourceSegments.push(statusIcons);
+  }
   return resourceSegments.join(` ${semanticSeparator(theme)} `);
 }
 
@@ -601,47 +624,6 @@ function topRailPrefix(
   const severity = errors > 0 ? 'error' : 'warning';
   const icon = errors > 0 ? '󰅙' : '';
   return `${color(theme, lineColor, '─ ')}${loud(theme, severity, `${icon} ${total}`)} `;
-}
-
-function extensionStatusLines(
-  state: HeaderDeckState,
-  width: number,
-  theme: Theme,
-): string[] {
-  const items = (state.piStatus?.nativeStatuses ?? []).filter(
-    (item) => item.key !== 'goal',
-  );
-  if (items.length === 0 || width < 48) return [];
-
-  // The project segment duplicates the telemetry row's PWD — drop it.
-  // A bare trailing "ready" is noise: the item's presence already means
-  // healthy, so it renders as the key alone.
-  const cleanText = (text: string): string => {
-    const cleaned = text.replace(/\u{1F9E0}[^·]*·\s*/u, '').trim();
-    return /^ready$/iu.test(cleaned) ? '' : cleaned;
-  };
-
-  const label = (parts: typeof items): string =>
-    parts
-      .map((item) => {
-        const cleaned = cleanText(item.text);
-        return cleaned === ''
-          ? color(theme, 'text', item.key)
-          : `${color(theme, 'text', item.key)}${color(theme, 'dim', ` · ${cleaned}`)}`;
-      })
-      .join(color(theme, 'dim', ' · '));
-
-  const footnote = (text: string): string => {
-    const fill = Math.max(0, width - visibleWidth(text) - 1);
-    return `\u001b[2m${color(theme, 'text', `${'┈'.repeat(fill)} `)}\u001b[22m${text}`;
-  };
-
-  const full = label(items);
-  if (visibleWidth(full) + 10 <= width) return [footnote(full)];
-
-  const first = label([items[0]!]);
-  if (visibleWidth(first) + 10 <= width) return [footnote(first)];
-  return [];
 }
 
 function formatGoalElapsed(seconds: number): string {
@@ -801,7 +783,7 @@ export function renderHeaderDeck(
   const rows = [
     ...alignedRows(
       compactTelemetryLeft(state, theme, boundedWidth),
-      compactTelemetryRight(state, theme),
+      compactTelemetryRight(state, theme, Date.now(), boundedWidth),
       boundedWidth,
     ),
     top,
@@ -811,7 +793,6 @@ export function renderHeaderDeck(
     ...(goalDetail ? goalTreeLines(goalDetail, boundedWidth, theme) : []),
     ...spanTreeRows(state, boundedWidth, theme),
     ...(inserting ? [] : [bottom]),
-    ...extensionStatusLines(state, boundedWidth, theme),
   ];
   return rows.map((line) => fitWithoutDanglingSeparator(line, boundedWidth));
 }

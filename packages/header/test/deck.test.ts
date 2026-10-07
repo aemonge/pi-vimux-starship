@@ -175,72 +175,6 @@ test('drops the footer count; diagnostics stay on the top rule', () => {
   assert.doesNotMatch(empty[1] ?? '', /·0/u);
 });
 
-test('renders extension status items in a soft bottom row', () => {
-  const state = fixture();
-  state.piStatus = {
-    errors: 0,
-    warnings: 0,
-    nativeStatusCount: 2,
-    nativeStatuses: [
-      { key: 'engram', text: 'ready' },
-      { key: 'graphify', text: 'active' },
-    ],
-  };
-
-  const lines = renderHeaderDeck(state, 120, plainTheme as never).map(plain);
-  const row = lines.at(-1) ?? '';
-  assert.match(row, /^┈+ engram · graphify · active$/u);
-  const dottedDivider = lines.findIndex((line) => /^┈┈┈┈┈/u.test(line));
-  assert.ok(lines.length - 1 > dottedDivider);
-  assert.ok(lines.every((line) => visibleWidth(line) <= 120));
-});
-
-test('degrades extension status items to the first item when narrow', () => {
-  const state = fixture();
-  state.piStatus = {
-    errors: 0,
-    warnings: 0,
-    nativeStatusCount: 2,
-    nativeStatuses: [
-      { key: 'graphify', text: 'graphify active' },
-      { key: 'lsp', text: '3 servers healthy' },
-    ],
-  };
-
-  const lines = renderHeaderDeck(state, 48, plainTheme as never).map(plain);
-  const row = lines.at(-1) ?? '';
-  assert.match(row, /^┈+ graphify · graphify active$/u);
-  assert.equal(row.includes('3 servers healthy'), false);
-  assert.ok(lines.every((line) => visibleWidth(line) <= 48));
-});
-
-test('strips the duplicated project segment from item text', () => {
-  const state = fixture();
-  state.piStatus = {
-    errors: 0,
-    warnings: 0,
-    nativeStatusCount: 1,
-    nativeStatuses: [{ key: 'engram', text: '\u{1F9E0} pi-vimux-starship · ready' }],
-  };
-  const lines = renderHeaderDeck(state, 120, plainTheme as never).map(plain);
-  assert.match(lines.at(-1) ?? '', /┈+ engram$/u);
-});
-
-test('drops the goal status item from the footnote', () => {
-  const state = fixture();
-  state.piStatus = {
-    errors: 0,
-    warnings: 0,
-    nativeStatusCount: 1,
-    nativeStatuses: [{ key: 'goal', text: 'unfocused [1 open] - /goal-focus' }],
-  };
-  const lines = renderHeaderDeck(state, 120, plainTheme as never);
-  assert.equal(
-    lines.some((line) => line.includes('/goal-focus')),
-    false,
-  );
-});
-
 test('goal selection owns the title row with badge and tree rows', () => {
   const state = fixture();
   state.header = {
@@ -277,12 +211,47 @@ test('goal selection owns the title row with badge and tree rows', () => {
   assert.match(narrowTitle, /● paused/u);
 });
 
-test('hides the extension status row when no items are published', () => {
+test('extension statuses ride the telemetry tail as icons', () => {
   const state = fixture();
-  const baseline = renderHeaderDeck(state, 120, plainTheme as never);
-  state.piStatus = { errors: 0, warnings: 0, nativeStatusCount: 0, nativeStatuses: [] };
-  const without = renderHeaderDeck(state, 120, plainTheme as never);
-  assert.equal(without.length, baseline.length);
+  state.piStatus = {
+    errors: 0,
+    warnings: 0,
+    nativeStatusCount: 2,
+    nativeStatuses: [
+      { key: 'engram', text: '\u{1F9E0} pi-vimux-starship · ready' },
+      { key: 'graphify', text: 'graphify active · report available' },
+    ],
+  };
+
+  const lines = renderHeaderDeck(state, 120, plainTheme as never).map(plain);
+  const telemetry = lines[0] ?? '';
+  assert.match(telemetry, /\u{F09E0} \u{F08BE}$/u);
+  assert.equal(telemetry.includes('engram'), false);
+  assert.equal(telemetry.includes('graphify'), false);
+  assert.equal(
+    lines.some((line) => /^┈+ /u.test(line) && line.includes('engram')),
+    false,
+    'footnote row is gone',
+  );
+});
+
+test('extension status icons drop on narrow frames and filter the goal key', () => {
+  const state = fixture();
+  state.piStatus = {
+    errors: 0,
+    warnings: 0,
+    nativeStatusCount: 2,
+    nativeStatuses: [
+      { key: 'engram', text: 'ready' },
+      { key: 'goal', text: 'unfocused [1 open] - /goal-focus' },
+    ],
+  };
+  const narrow = renderHeaderDeck(state, 60, plainTheme as never).map(plain);
+  assert.equal((narrow[0] ?? '').includes('\u{F09E0}'), false);
+  assert.equal(
+    narrow.some((line) => line.includes('/goal-focus')),
+    false,
+  );
 });
 
 test('hides the bottom rail while inserting', () => {
