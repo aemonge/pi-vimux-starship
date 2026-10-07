@@ -188,10 +188,10 @@ test('renders extension status items in a soft bottom row', () => {
   };
 
   const lines = renderHeaderDeck(state, 120, plainTheme as never).map(plain);
-  const row = lines.find((line) => line.includes('graphify')) ?? '';
-  assert.match(row, /┈ engram · ready\s+graphify · active/u);
+  const row = lines.at(-1) ?? '';
+  assert.match(row, /^┈+ engram · ready · graphify · active$/u);
   const dottedDivider = lines.findIndex((line) => /^┈┈┈┈┈/u.test(line));
-  assert.ok(lines.indexOf(row) > dottedDivider);
+  assert.ok(lines.length - 1 > dottedDivider);
   assert.ok(lines.every((line) => visibleWidth(line) <= 120));
 });
 
@@ -202,16 +202,43 @@ test('degrades extension status items to the first item when narrow', () => {
     warnings: 0,
     nativeStatusCount: 2,
     nativeStatuses: [
-      { key: 'graphify', text: 'graphify active · wiki + report available' },
+      { key: 'graphify', text: 'graphify active' },
       { key: 'lsp', text: '3 servers healthy' },
     ],
   };
 
   const lines = renderHeaderDeck(state, 48, plainTheme as never).map(plain);
-  const row = lines.find((line) => line.includes('graphify')) ?? '';
-  assert.match(row, /┈ graphify · graphify active/u);
+  const row = lines.at(-1) ?? '';
+  assert.match(row, /^┈+ graphify · graphify active$/u);
   assert.equal(row.includes('3 servers healthy'), false);
   assert.ok(lines.every((line) => visibleWidth(line) <= 48));
+});
+
+test('strips the duplicated project segment from item text', () => {
+  const state = fixture();
+  state.piStatus = {
+    errors: 0,
+    warnings: 0,
+    nativeStatusCount: 1,
+    nativeStatuses: [{ key: 'engram', text: '\u{1F9E0} pi-vimux-starship · ready' }],
+  };
+  const lines = renderHeaderDeck(state, 120, plainTheme as never).map(plain);
+  assert.match(lines.at(-1) ?? '', /┈+ engram · ready$/u);
+});
+
+test('drops the goal status item from the footnote', () => {
+  const state = fixture();
+  state.piStatus = {
+    errors: 0,
+    warnings: 0,
+    nativeStatusCount: 1,
+    nativeStatuses: [{ key: 'goal', text: 'unfocused [1 open] - /goal-focus' }],
+  };
+  const lines = renderHeaderDeck(state, 120, plainTheme as never);
+  assert.equal(
+    lines.some((line) => line.includes('/goal-focus')),
+    false,
+  );
 });
 
 test('hides the extension status row when no items are published', () => {

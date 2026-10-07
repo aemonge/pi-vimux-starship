@@ -607,24 +607,34 @@ function extensionStatusLines(
   width: number,
   theme: Theme,
 ): string[] {
-  const items = state.piStatus?.nativeStatuses ?? [];
-  if (items.length === 0 || width < 40) return [];
+  const items = (state.piStatus?.nativeStatuses ?? []).filter(
+    (item) => item.key !== 'goal',
+  );
+  if (items.length === 0 || width < 48) return [];
 
-  const render = (parts: string[]): string => {
-    const body = parts.join('   ');
-    return `\u001b[2m${color(theme, 'text', `┈ ${body}`)}\u001b[22m`;
+  // The project segment duplicates the telemetry row's PWD — drop it.
+  const cleanText = (text: string): string =>
+    text.replace(/\u{1F9E0}[^·]*·\s*/u, '').trim();
+
+  const label = (parts: typeof items): string =>
+    parts
+      .map(
+        (item) =>
+          `${color(theme, 'text', item.key)}${color(theme, 'dim', ` · ${cleanText(item.text)}`)}`,
+      )
+      .join(color(theme, 'dim', ' · '));
+
+  const footnote = (text: string): string => {
+    const fill = Math.max(0, width - visibleWidth(text) - 1);
+    return `\u001b[2m${color(theme, 'text', `${'┈'.repeat(fill)} `)}\u001b[22m${text}`;
   };
 
-  const styled = items.map(
-    (item) =>
-      `${color(theme, 'text', item.key)}${color(theme, 'dim', ` · ${item.text}`)}`,
-  );
-  const full = render(styled);
-  if (visibleWidth(full) <= width) return [full];
+  const full = label(items);
+  if (visibleWidth(full) + 10 <= width) return [footnote(full)];
 
-  const first = render([styled[0]!]);
-  if (visibleWidth(first) <= width) return [first];
-  return [truncateToWidth(first, width, '…')];
+  const first = label([items[0]!]);
+  if (visibleWidth(first) + 10 <= width) return [footnote(first)];
+  return [];
 }
 
 export function renderHeaderDeck(
@@ -724,8 +734,8 @@ export function renderHeaderDeck(
     divider,
     status,
     ...spanTreeRows(state, boundedWidth, theme),
-    ...extensionStatusLines(state, boundedWidth, theme),
     ...(inserting ? [] : [bottom]),
+    ...extensionStatusLines(state, boundedWidth, theme),
   ];
   return rows.map((line) => fitWithoutDanglingSeparator(line, boundedWidth));
 }
