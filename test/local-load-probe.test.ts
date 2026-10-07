@@ -18,13 +18,12 @@ const EXPECTED_COMMANDS = [
 ];
 const EXPECTED_TOOLS = ['openspec_focus', 'stage', 'subject', 'work_focus'];
 
-test('external-only deck composition suppresses the native prompt surface', () => {
-  assert.equal(COCKPIT_SURFACES.vim, 'external-editor-only');
+test('chrome-only deck composition activates header footer and status', () => {
+  assert.equal(COCKPIT_SURFACES.contextHeader, 'editor-deck');
   assert.deepEqual(COCKPIT_COMPOSITION, [
     'fancy-footer:telemetry',
     'galactica-status:provider',
     'galactica-context-header:editor-deck',
-    'pi-vim:external-editor-only',
     'cockpit-telemetry:sink',
   ]);
 });
