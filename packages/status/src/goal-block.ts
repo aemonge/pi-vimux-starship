@@ -329,7 +329,7 @@ export function installGoalBlockTakeover(pi: ExtensionAPI): () => void {
   const register = (ctx: ExtensionContext): void => {
     if (stopped || ctx.mode !== 'tui' || !ctx.hasUI) return;
     if (typeof ctx.ui.setWidget !== 'function') return;
-    ctx.ui.setWidget(GOAL_WIDGET_KEY, (tui, theme: Theme) => {
+    ctx.ui.setWidget(GOAL_WIDGET_KEY, (tui, _theme: Theme) => {
       const requestRender = (): void => tui.requestRender();
       return {
         render(width: number): string[] {
