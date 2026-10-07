@@ -159,6 +159,7 @@ export type PiStatusSnapshot = {
   errors: number;
   warnings: number;
   nativeStatusCount: number;
+  nativeStatuses?: ReadonlyArray<{ key: string; text: string }>;
 };
 
 export type VimMode = 'insert' | 'normal' | 'visual' | 'visual-line' | 'ex';
@@ -876,10 +877,25 @@ export function parsePiStatusSnapshot(raw: unknown): PiStatusSnapshot | null {
   ) {
     return null;
   }
+  const nativeStatuses: Array<{ key: string; text: string }> = [];
+  if (Array.isArray(message.nativeStatuses)) {
+    for (const entry of message.nativeStatuses.slice(0, 8)) {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+      const candidate = entry as Record<string, unknown>;
+      if (typeof candidate.key !== 'string' || typeof candidate.text !== 'string') {
+        continue;
+      }
+      nativeStatuses.push({
+        key: candidate.key.slice(0, 24),
+        text: candidate.text.slice(0, 160),
+      });
+    }
+  }
   return {
     errors: Number(message.errors),
     warnings: Number(message.warnings),
     nativeStatusCount: Number(message.nativeStatusCount),
+    ...(nativeStatuses.length > 0 ? { nativeStatuses } : {}),
   };
 }
 

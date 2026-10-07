@@ -602,6 +602,32 @@ function topRailPrefix(
   return `${color(theme, lineColor, '─ ')}${loud(theme, severity, `${icon} ${total}`)} `;
 }
 
+function extensionStatusLines(
+  state: HeaderDeckState,
+  width: number,
+  theme: Theme,
+  lineColor: string,
+): string[] {
+  const items = state.piStatus?.nativeStatuses ?? [];
+  if (items.length === 0 || width < 40) return [];
+
+  const render = (parts: string[]): string => {
+    const body = parts.join(color(theme, lineColor, ' │ '));
+    return `${color(theme, lineColor, '─ ')}${body}${color(theme, lineColor, ' ')}`;
+  };
+
+  const styled = items.map(
+    (item) =>
+      `${color(theme, 'accent', item.key)}${color(theme, lineColor, ' · ')}${color(theme, 'dim', item.text)}`,
+  );
+  const full = render(styled);
+  if (visibleWidth(full) <= width) return [full];
+
+  const first = render([styled[0]!]);
+  if (visibleWidth(first) <= width) return [first];
+  return [truncateToWidth(first, width, '…')];
+}
+
 export function renderHeaderDeck(
   state: HeaderDeckState,
   width: number,
@@ -695,6 +721,7 @@ export function renderHeaderDeck(
       boundedWidth,
     ),
     top,
+    ...extensionStatusLines(state, boundedWidth, theme, lineColor),
     ...titleRows,
     divider,
     status,

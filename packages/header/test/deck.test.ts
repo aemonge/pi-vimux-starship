@@ -175,6 +175,53 @@ test('drops the footer count; diagnostics stay on the top rule', () => {
   assert.doesNotMatch(empty[1] ?? '', /·0/u);
 });
 
+test('renders extension status items beneath the top rule', () => {
+  const state = fixture();
+  state.piStatus = {
+    errors: 0,
+    warnings: 0,
+    nativeStatusCount: 1,
+    nativeStatuses: [
+      {
+        key: 'graphify',
+        text: 'graphify active · wiki + report available · update recommended',
+      },
+    ],
+  };
+
+  const lines = renderHeaderDeck(state, 120, plainTheme as never).map(plain);
+  const row = lines[2] ?? '';
+  assert.match(row, /─ graphify · graphify active · wiki \+ report available/u);
+  assert.ok(lines.every((line) => visibleWidth(line) <= 120));
+});
+
+test('degrades extension status items to the first item when narrow', () => {
+  const state = fixture();
+  state.piStatus = {
+    errors: 0,
+    warnings: 0,
+    nativeStatusCount: 2,
+    nativeStatuses: [
+      { key: 'graphify', text: 'graphify active · wiki + report available' },
+      { key: 'lsp', text: '3 servers healthy' },
+    ],
+  };
+
+  const lines = renderHeaderDeck(state, 48, plainTheme as never).map(plain);
+  const row = lines[2] ?? '';
+  assert.match(row, /graphify/u);
+  assert.equal(row.includes('3 servers healthy'), false);
+  assert.ok(lines.every((line) => visibleWidth(line) <= 48));
+});
+
+test('hides the extension status row when no items are published', () => {
+  const state = fixture();
+  const baseline = renderHeaderDeck(state, 120, plainTheme as never);
+  state.piStatus = { errors: 0, warnings: 0, nativeStatusCount: 0, nativeStatuses: [] };
+  const without = renderHeaderDeck(state, 120, plainTheme as never);
+  assert.equal(without.length, baseline.length);
+});
+
 test('hides the bottom rail while inserting', () => {
   const state = fixture();
   state.mode = 'insert';
