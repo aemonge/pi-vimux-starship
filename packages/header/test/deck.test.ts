@@ -91,7 +91,7 @@ test('formats fixed-width minute activity age with visible hundredths', () => {
 test('renders the approved rich wide header without side borders or spacer rows', () => {
   const lines = renderHeaderDeck(fixture(), 160, plainTheme as never);
 
-  assert.equal(lines.length, 6);
+  assert.equal(lines.length, 5);
   const titleRow = plain(lines[2] ?? '');
   assert.ok(titleRow.startsWith("󰠭 000:07'00 ⟩ Read-only preflight"));
   assert.ok(titleRow.includes("000:07'00"));
@@ -122,11 +122,9 @@ test('renders the approved rich wide header without side borders or spacer rows'
     /48\.2% \u{203A} 268M \u{27E9} 3\/3 \u{27E9} \u{F0726} \$5\.16$/u,
   );
   assert.equal(lines.join('\n').includes('32K/128K'), false);
-  assert.match(lines[5] ?? '', /^─ /u);
-  assert.match(lines[5] ?? '', /‹ 󰠭 ─$/u);
   assert.ok(lines.every((line) => line.length > 0));
   assert.ok(lines.every((line) => !line.startsWith('│') && !line.endsWith('│')));
-  assert.equal(lines.join('').split('󰠭').length - 1, 2);
+  assert.equal(lines.join('').split('󰠭').length - 1, 1);
   assert.equal(lines.join('').includes('󰒋 LSP'), false);
 });
 
@@ -293,43 +291,6 @@ test('extension status icons drop on narrow frames and filter the goal key', () 
     narrow.some((line) => line.includes('/goal-focus')),
     false,
   );
-});
-
-test('hides the bottom rail while inserting', () => {
-  const state = fixture();
-  state.mode = 'insert';
-
-  const hidden = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.equal(hidden.length, 5);
-  assert.doesNotMatch(hidden.join('\n'), /‹ 󰠭/u);
-
-  const suppliedHidden = renderHeaderDeck(state, 160, plainTheme as never, {
-    plain: '󰏫',
-    styled: '󰏫',
-  });
-  assert.equal(suppliedHidden.length, 5);
-  assert.doesNotMatch(suppliedHidden.join('\n'), /‹ 󰠭/u);
-
-  state.mode = 'normal';
-  const visible = renderHeaderDeck(state, 160, plainTheme as never);
-  assert.equal(visible.length, 6);
-  assert.match(visible.at(-1) ?? '', /‹ 󰠭 ─$/u);
-});
-
-test('places a supplied live styled mode icon on the bottom separator', () => {
-  const renderWithModeRail = renderHeaderDeck as unknown as (
-    state: HeaderDeckState,
-    width: number,
-    theme: typeof plainTheme,
-    modeRail: { plain: string; styled: string },
-  ) => string[];
-  const modeRail = { plain: 'VIS', styled: '\u001b[35mVIS\u001b[0m' };
-
-  const lines = renderWithModeRail(fixture(), 80, plainTheme, modeRail);
-  const bottom = lines.at(-1) ?? '';
-
-  assert.match(plain(bottom), /^─ VIS ─+ ‹ 󰠭 ─$/u);
-  assert.equal(bottom.includes(modeRail.styled), true);
 });
 
 test('drops the status command before severity counts at narrow widths', () => {
@@ -677,9 +638,8 @@ test('uses prompt-line color for rules and major separators with violet ladybugs
 
   assert.ok(colors.some((entry) => entry.startsWith('thinkingHigh:─')));
   assert.ok(colors.includes('thinkingHigh:⟩'));
-  assert.ok(colors.includes('borderAccent:󰆾'));
   assert.equal(colors.filter((entry) => entry.startsWith('text:┈')).length, 1);
-  assert.equal(colors.filter((entry) => entry === 'customMessageLabel:󰠭').length, 2);
+  assert.equal(colors.filter((entry) => entry === 'customMessageLabel:󰠭').length, 1);
   assert.equal(
     colors.some((entry) => entry.startsWith('thinkingMax:')),
     false,
@@ -772,7 +732,7 @@ test('preserves width and essential deck structure through responsive collapse',
       lines.some((line) => plain(line).includes("󰠭 000:07'00")),
       String(width),
     );
-    assert.equal(lines.join('').split('󰠭').length - 1, 2, String(width));
+    assert.equal(lines.join('').split('󰠭').length - 1, 1, String(width));
     if (width >= 79) {
       assert.match(lines.join('\n'), /000:07'00/u, String(width));
       assert.match(lines.join('\n'), /󰾆 38%/u, String(width));

@@ -91,27 +91,6 @@ function fitWithoutDanglingSeparator(line: string, width: number): string {
   }
 }
 
-const MODE_ICONS: Record<VimMode, string> = {
-  insert: '󰏫',
-  normal: '󰆾',
-  visual: '󰒅',
-  'visual-line': '󰒅',
-  ex: '󰆍',
-};
-
-const MODE_COLORS: Record<VimMode, string> = {
-  insert: 'borderMuted',
-  normal: 'borderAccent',
-  visual: 'customMessageLabel',
-  'visual-line': 'customMessageLabel',
-  ex: 'warning',
-};
-
-function fallbackModeRail(state: HeaderDeckState, theme: Theme): HeaderDeckModeRail {
-  const plain = MODE_ICONS[state.mode];
-  return { plain, styled: color(theme, MODE_COLORS[state.mode], plain) };
-}
-
 export function formatDeckElapsed(elapsedMs: number | null): string {
   const maximum = (999 * 60 + 59) * 1_000 + 999;
   const observed = elapsedMs ?? 0;
@@ -732,7 +711,6 @@ export function renderHeaderDeck(
   state: HeaderDeckState,
   width: number,
   theme: Theme,
-  suppliedModeRail?: HeaderDeckModeRail,
 ): string[] {
   const boundedWidth = Math.max(0, Math.floor(width));
   if (boundedWidth === 0) return [];
@@ -744,24 +722,6 @@ export function renderHeaderDeck(
     lineColor,
     '─'.repeat(Math.max(0, boundedWidth - visibleWidth(topPrefix))),
   )}`;
-  const modeRail = suppliedModeRail ?? fallbackModeRail(state, theme);
-  const inserting = suppliedModeRail
-    ? suppliedModeRail.plain === MODE_ICONS.insert
-    : state.mode === 'insert';
-  const bottomPrefix = `${color(theme, lineColor, '─ ')}${modeRail.styled}${color(theme, lineColor, ' ')}`;
-  // Relocation phase: the footer count is deleted — diagnostics live on the
-  // top rule; the bottom rail keeps only the mode icon and the anchor echo.
-  const bottomSuffix = `${color(theme, lineColor, ' ')}${color(theme, lineColor, '‹ ')}${color(theme, 'customMessageLabel', '󰠭')}${color(theme, lineColor, ' ─')}`;
-  const bottom = `${bottomPrefix}${color(
-    theme,
-    lineColor,
-    '─'.repeat(
-      Math.max(
-        0,
-        boundedWidth - visibleWidth(bottomPrefix) - visibleWidth(bottomSuffix),
-      ),
-    ),
-  )}${bottomSuffix}`;
   const divider = `\u001b[2m${color(theme, 'text', '┈'.repeat(boundedWidth))}\u001b[22m`;
   const current = lifecycle(state);
   const activityText = activityLabel(state);
@@ -835,7 +795,6 @@ export function renderHeaderDeck(
     status,
     ...(goalDetail ? goalTreeLines(goalDetail, boundedWidth, theme) : []),
     ...spanTreeRows(state, boundedWidth, theme),
-    ...(inserting ? [] : [bottom]),
   ];
   return rows.map((line) => fitWithoutDanglingSeparator(line, boundedWidth));
 }

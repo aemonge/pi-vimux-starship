@@ -585,7 +585,6 @@ export default function galacticaContextHeader(
         },
         width,
         theme,
-        modeRail,
       );
     };
 
