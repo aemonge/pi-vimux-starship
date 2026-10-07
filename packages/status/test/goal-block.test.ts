@@ -7,6 +7,7 @@ import { visibleWidth } from '@earendil-works/pi-tui';
 
 import {
   formatGoalElapsed,
+  readGoalHeadline,
   type GoalBlockState,
   readGoalBlockState,
   renderGoalBlock,
@@ -90,6 +91,20 @@ test('falls back to the legacy session record when no pool exists', () => {
   const state = readGoalBlockState(ctx as never);
   assert.ok(state);
   assert.equal(state.objective, 'Ship the chrome-only cockpit');
+});
+
+test('readGoalHeadline maps the disk state into the rich header shape', () => {
+  const project = mkdtempSync(join(tmpdir(), 'goal-block-'));
+  writePool(join(project, '.pi/goals'), [SAMPLE_GOAL]);
+  const ctx = fakeCtx([focusEntry('goal-1')], project);
+  const headline = readGoalHeadline(ctx as never);
+  assert.ok(headline);
+  assert.equal(headline.objective, 'Ship the chrome-only cockpit');
+  assert.equal(headline.status, 'active');
+  assert.equal(headline.waiting, true);
+  assert.equal(headline.tasksDone, 2);
+  assert.equal(headline.tasksTotal, 4);
+  assert.equal(headline.tokensUsed, 24_300);
 });
 
 test('returns null when the focused goal is not the one on record', () => {

@@ -497,10 +497,21 @@ export const HEADER_SELECTION_SOURCES = [
   'subject',
 ] as const;
 
+export type HeaderSelectionGoalDetail = {
+  status: string;
+  elapsedSeconds?: number;
+  tasksDone?: number;
+  tasksActive?: number;
+  tasksTotal?: number;
+  tokensUsed?: number;
+  tokenBudget?: number;
+};
+
 export type HeaderSelection = {
   source: (typeof HEADER_SELECTION_SOURCES)[number];
   titles: string[];
   color: WidgetColor;
+  goal?: HeaderSelectionGoalDetail;
 };
 
 export const HEADER_SUGGESTIONS = [
@@ -578,10 +589,23 @@ export function headerSelection(options: {
     };
   }
   if (options.goal) {
+    const goal = options.goal;
+    const detail = {
+      status: goal.status,
+      ...(goal.elapsedSeconds !== undefined
+        ? { elapsedSeconds: goal.elapsedSeconds }
+        : {}),
+      ...(goal.tasksDone !== undefined ? { tasksDone: goal.tasksDone } : {}),
+      ...(goal.tasksActive !== undefined ? { tasksActive: goal.tasksActive } : {}),
+      ...(goal.tasksTotal !== undefined ? { tasksTotal: goal.tasksTotal } : {}),
+      ...(goal.tokensUsed !== undefined ? { tokensUsed: goal.tokensUsed } : {}),
+      ...(goal.tokenBudget !== undefined ? { tokenBudget: goal.tokenBudget } : {}),
+    };
     return {
       source: 'goal',
-      titles: ['Goal'],
-      color: goalHeaderColor(options.goal),
+      titles: [goal.objective ? normalizeInline(goal.objective) : 'Goal'],
+      color: goalHeaderColor(goal),
+      goal: detail,
     };
   }
   if (options.workFocus && options.workFocus.state !== 'clear') {

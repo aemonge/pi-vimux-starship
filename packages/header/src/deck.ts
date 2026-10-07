@@ -2,6 +2,7 @@ import type { Theme } from '@earendil-works/pi-coding-agent';
 import { truncateToWidth, visibleWidth } from '@earendil-works/pi-tui';
 
 import type { LspCapability, McpCapability } from './capabilities.ts';
+import type { HeaderSelection } from './gauge.ts';
 import type {
   FooterTelemetrySnapshot,
   GitStatusSummary,
@@ -643,6 +644,65 @@ function extensionStatusLines(
   return [];
 }
 
+function formatGoalElapsed(seconds: number): string {
+  if (seconds < 60) return `${Math.floor(seconds)}s`;
+  const totalMinutes = Math.floor(seconds / 60);
+  if (totalMinutes < 60) return `${totalMinutes}m ${Math.floor(seconds % 60)}s`;
+  return `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`;
+}
+
+function formatTokens(tokens: number): string {
+  if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(1)}M`;
+  if (tokens >= 1_000) return `${(tokens / 1_000).toFixed(1)}k`;
+  return `${Math.floor(tokens)}`;
+}
+
+const GOAL_STATUS_COLORS: Record<string, string> = {
+  active: 'accent',
+  complete: 'success',
+  paused: 'warning',
+  blocked: 'error',
+  usage_limited: 'warning',
+  budget_limited: 'warning',
+  queued: 'dim',
+};
+
+function goalBadgeTile(
+  goal: NonNullable<HeaderSelection['goal']>,
+  theme: Theme,
+): string {
+  const semantic = GOAL_STATUS_COLORS[goal.status] ?? 'text';
+  const elapsed =
+    goal.elapsedSeconds !== undefined
+      ? ` · ${formatGoalElapsed(goal.elapsedSeconds)}`
+      : '';
+  return `${color(theme, semantic, `● ${goal.status}`)}${color(theme, 'dim', elapsed)}`;
+}
+
+function goalTreeLines(
+  goal: NonNullable<HeaderSelection['goal']>,
+  width: number,
+  theme: Theme,
+): string[] {
+  if (width < 56) return [];
+  const rows: string[] = [];
+  if (goal.tasksTotal !== undefined && goal.tasksDone !== undefined) {
+    const active =
+      goal.tasksActive !== undefined && goal.tasksActive > 0
+        ? ` · ${goal.tasksActive} active`
+        : '';
+    rows.push(`  ├ tasks ${goal.tasksDone}/${goal.tasksTotal} done${active}`);
+  }
+  if (goal.tokensUsed !== undefined) {
+    const budget =
+      goal.tokenBudget !== undefined && goal.tokenBudget > 0
+        ? ` · budget ${Math.min(999, Math.round((goal.tokensUsed / goal.tokenBudget) * 100))}%`
+        : '';
+    rows.push(`  └ usage ${formatTokens(goal.tokensUsed)} tokens${budget}`);
+  }
+  return rows.map((line) => color(theme, 'dim', line));
+}
+
 export function renderHeaderDeck(
   state: HeaderDeckState,
   width: number,
@@ -701,7 +761,16 @@ export function renderHeaderDeck(
   // the right end; runs ride the lifecycle row; the project context heads
   // the telemetry row.
   // Narrow frames: the progress slot yields before the selection anchor does.
-  const titleRight = boundedWidth >= 40 ? progressTile(state, theme) : '';
+  const goalDetail =
+    state.header?.selection?.source === 'goal'
+      ? state.header.selection.goal
+      : undefined;
+  const titleRight =
+    boundedWidth >= 40
+      ? goalDetail
+        ? goalBadgeTile(goalDetail, theme)
+        : progressTile(state, theme)
+      : '';
   const focusLines = elevatedSelectionLines(state, boundedWidth, theme);
   // Relocation phase: without a selection the bare clock keeps the band alive.
   const titleBase = focusLines.length > 0 ? focusLines : [timerTile(state, theme)];
@@ -739,6 +808,7 @@ export function renderHeaderDeck(
     ...titleRows,
     divider,
     status,
+    ...(goalDetail ? goalTreeLines(goalDetail, boundedWidth, theme) : []),
     ...spanTreeRows(state, boundedWidth, theme),
     ...(inserting ? [] : [bottom]),
     ...extensionStatusLines(state, boundedWidth, theme),

@@ -7,6 +7,8 @@ import { truncateToWidth, visibleWidth } from '@earendil-works/pi-tui';
 import { readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import type { GoalHeaderState } from './goal.ts';
+import { GOAL_HEADER_STATUSES } from './goal.ts';
 
 /**
  * Goal-block takeover for pi-goal-x: replaces its persistent aboveEditor
@@ -193,6 +195,32 @@ export function readGoalBlockState(ctx: ExtensionContext): GoalBlockState | null
     return null;
   }
   return state;
+}
+
+export function readGoalHeadline(ctx: ExtensionContext): GoalHeaderState | null {
+  const state = readGoalBlockState(ctx);
+  if (!state) return null;
+  return {
+    id: state.id,
+    status: (GOAL_HEADER_STATUSES as readonly string[]).includes(state.status)
+      ? (state.status as GoalHeaderState['status'])
+      : 'active',
+    automaticModelTurns: 0,
+    waiting: state.status === 'active',
+    ...(state.objective !== undefined ? { objective: state.objective } : {}),
+    ...(state.activeSeconds !== undefined
+      ? { elapsedSeconds: state.activeSeconds }
+      : {}),
+    ...(state.tasks
+      ? {
+          tasksDone: state.tasks.complete,
+          tasksActive: state.tasks.active,
+          tasksTotal: state.tasks.total,
+        }
+      : {}),
+    ...(state.tokensUsed !== undefined ? { tokensUsed: state.tokensUsed } : {}),
+    ...(state.tokenBudget !== undefined ? { tokenBudget: state.tokenBudget } : {}),
+  };
 }
 
 export function countOpenGoals(ctx: ExtensionContext): number {

@@ -241,6 +241,42 @@ test('drops the goal status item from the footnote', () => {
   );
 });
 
+test('goal selection owns the title row with badge and tree rows', () => {
+  const state = fixture();
+  state.header = {
+    ...(state.header as NonNullable<typeof state.header>),
+    selection: {
+      source: 'goal',
+      titles: ['Ship the chrome-only cockpit'],
+      color: 'accent',
+      goal: {
+        status: 'paused',
+        elapsedSeconds: 195,
+        tasksDone: 1,
+        tasksActive: 1,
+        tasksTotal: 3,
+        tokensUsed: 363_500,
+        tokenBudget: 600_000,
+      },
+    },
+  };
+
+  const lines = renderHeaderDeck(state, 100, plainTheme as never).map(plain);
+  const titleRow =
+    lines.find((line) => line.includes('Ship the chrome-only cockpit')) ?? '';
+  assert.match(titleRow, /Ship the chrome-only cockpit.*● paused · 3m 15s/u);
+  assert.ok(lines.some((line) => /├ tasks 1\/3 done · 1 active/u.test(line)));
+  assert.ok(lines.some((line) => /└ usage 363\.5k tokens · budget 61%/u.test(line)));
+
+  const narrow = renderHeaderDeck(state, 50, plainTheme as never).map(plain);
+  assert.equal(
+    narrow.some((line) => line.includes('tasks 1/3')),
+    false,
+  );
+  const narrowTitle = narrow.find((line) => line.includes('Ship the chrome')) ?? '';
+  assert.match(narrowTitle, /● paused/u);
+});
+
 test('hides the extension status row when no items are published', () => {
   const state = fixture();
   const baseline = renderHeaderDeck(state, 120, plainTheme as never);

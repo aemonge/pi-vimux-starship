@@ -21,6 +21,13 @@ export interface GoalHeaderState {
   status: GoalHeaderStatus;
   automaticModelTurns: number;
   waiting: boolean;
+  objective?: string;
+  elapsedSeconds?: number;
+  tasksDone?: number;
+  tasksActive?: number;
+  tasksTotal?: number;
+  tokensUsed?: number;
+  tokenBudget?: number;
 }
 
 const STATUS_SET = new Set<string>(GOAL_HEADER_STATUSES);
@@ -47,11 +54,50 @@ function parseGoalHeaderState(value: unknown): GoalHeaderState | null {
     value.automaticModelTurns >= 0
       ? Math.min(value.automaticModelTurns, MAX_HEADER_PROGRESS)
       : 0;
+  const boundedCount = (input: unknown): number | undefined =>
+    typeof input === 'number' &&
+    Number.isSafeInteger(input) &&
+    input >= 0 &&
+    input <= 9_999
+      ? input
+      : undefined;
+  const objective =
+    typeof value.objective === 'string' && value.objective.trim() !== ''
+      ? value.objective.replace(/\s+/gu, ' ').trim().slice(0, 160)
+      : undefined;
+  const elapsedSeconds =
+    typeof value.elapsedSeconds === 'number' &&
+    Number.isFinite(value.elapsedSeconds) &&
+    value.elapsedSeconds >= 0
+      ? Math.min(value.elapsedSeconds, 3_600_000)
+      : undefined;
+  const tokensUsed =
+    typeof value.tokensUsed === 'number' &&
+    Number.isFinite(value.tokensUsed) &&
+    value.tokensUsed >= 0
+      ? Math.min(value.tokensUsed, 9_999_999_999)
+      : undefined;
   return {
     id: value.id,
     status: value.status as GoalHeaderStatus,
     automaticModelTurns,
     waiting: value.status === 'active' && isRecord(value.waiting),
+    ...(objective !== undefined ? { objective } : {}),
+    ...(elapsedSeconds !== undefined ? { elapsedSeconds } : {}),
+    ...(boundedCount(value.tasksDone) !== undefined
+      ? { tasksDone: boundedCount(value.tasksDone) }
+      : {}),
+    ...(boundedCount(value.tasksActive) !== undefined
+      ? { tasksActive: boundedCount(value.tasksActive) }
+      : {}),
+    ...(boundedCount(value.tasksTotal) !== undefined
+      ? { tasksTotal: boundedCount(value.tasksTotal) }
+      : {}),
+    ...(tokensUsed !== undefined ? { tokensUsed } : {}),
+    ...(boundedCount(value.tokenBudget) !== undefined &&
+    (boundedCount(value.tokenBudget) ?? 0) > 0
+      ? { tokenBudget: boundedCount(value.tokenBudget) }
+      : {}),
   };
 }
 
@@ -88,7 +134,15 @@ export function sameGoalHeaderState(
       left.id === right.id &&
       left.status === right.status &&
       left.automaticModelTurns === right.automaticModelTurns &&
-      left.waiting === right.waiting)
+      left.waiting === right.waiting &&
+      left.objective === right.objective &&
+      left.tasksDone === right.tasksDone &&
+      left.tasksActive === right.tasksActive &&
+      left.tasksTotal === right.tasksTotal &&
+      left.tokensUsed === right.tokensUsed &&
+      left.tokenBudget === right.tokenBudget &&
+      Math.floor((left.elapsedSeconds ?? 0) / 10) ===
+        Math.floor((right.elapsedSeconds ?? 0) / 10))
   );
 }
 

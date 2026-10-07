@@ -38,7 +38,7 @@ import {
   restoreGoalHeaderState,
   sameGoalHeaderState,
 } from './src/goal.ts';
-import { installGoalBlockTakeover } from './src/goal-block.ts';
+import { installGoalBlockTakeover, readGoalHeadline } from './src/goal-block.ts';
 import { collectOpenSpec, collectOpenSpecOverview } from './src/openspec.ts';
 import { collectOrchestration } from './src/orchestration.ts';
 import {
@@ -735,7 +735,10 @@ class GalacticaStatusRuntime {
   }
 
   syncGoalFromSession(): void {
-    this.setGoal(restoreGoalHeaderState(this.ctx.sessionManager.getBranch()));
+    this.setGoal(
+      readGoalHeadline(this.ctx) ??
+        restoreGoalHeaderState(this.ctx.sessionManager.getBranch()),
+    );
   }
 
   private ensureGoalPolling(): void {
@@ -1278,7 +1281,7 @@ export default function galacticaStatus(pi: ExtensionAPI): void {
     const focus = restoreOpenSpecFocus(branch);
     const workFocus = restoreSessionWorkFocus(branch);
     const subject = restoreSessionSubject(branch);
-    const goal = restoreGoalHeaderState(branch);
+    const goal = readGoalHeadline(ctx) ?? restoreGoalHeaderState(branch);
     const sessionName = pi.getSessionName() ?? ctx.sessionManager.getSessionName();
     runtime = new GalacticaStatusRuntime(
       pi,
@@ -1302,7 +1305,7 @@ export default function galacticaStatus(pi: ExtensionAPI): void {
     runtime?.setFocus(restoreOpenSpecFocus(branch));
     runtime?.setWorkFocus(restoreSessionWorkFocus(branch));
     runtime?.setSubject(restoreSessionSubject(branch));
-    runtime?.setGoal(restoreGoalHeaderState(branch));
+    runtime?.setGoal(readGoalHeadline(ctx) ?? restoreGoalHeaderState(branch));
     runtime?.settle();
   });
 
