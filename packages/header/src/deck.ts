@@ -470,7 +470,7 @@ function compactTelemetryLeft(
 ): string {
   // Relocation phase (Human-directed): repository identity joins the project
   // at the telemetry head; narrow frames drop the project before Git facts.
-  const statusIcons = width >= 72 ? extensionStatusIcons(state, theme) : '';
+  const statusIcons = width >= 72 ? extensionStatusCodes(state, theme) : '';
   const projectSegment = width >= 100 ? projectLeft(state, theme, statusIcons) : '';
   const gitSegment =
     width >= 79 ? truncateToWidth(gitRight(state, theme), 52, '…') : '';
@@ -479,21 +479,13 @@ function compactTelemetryLeft(
     .join(` ${semanticSeparator(theme)} `);
 }
 
-const EXTENSION_STATUS_ICONS: Record<string, string> = {
-  engram: '\u{F09E0}',
-  graphify: '\u{F08BE}',
-  openappa: '\u{F05A6}',
-  appa: '\u{F05A6}',
-};
-
-const KNOWN_COMPANION_KEYS: ReadonlyArray<{
+const KNOWN_COMPANION_CODES: ReadonlyArray<{
   keys: readonly string[];
-  glyph: string;
+  code: string;
 }> = [
-  // Human-picked compound glyphs: each companion is a tight pair.
-  { keys: ['engram'], glyph: '\u{F09E0}\u{E73E}' },
-  { keys: ['graphify'], glyph: '\u{232C}\u{2318}' },
-  { keys: ['appa', 'openappa'], glyph: '\u{F05A6}\u{F0770}' },
+  { keys: ['engram'], code: 'egm' },
+  { keys: ['graphify'], code: 'gpy' },
+  { keys: ['appa', 'openappa'], code: 'apa' },
 ];
 
 const COMPANION_WARNING_PATTERN =
@@ -508,14 +500,14 @@ function companionIconColor(text: string | undefined, active: boolean): string {
     : 'accent';
 }
 
-function extensionStatusIcons(state: HeaderDeckState, theme: Theme): string {
+function extensionStatusCodes(state: HeaderDeckState, theme: Theme): string {
   const texts = new Map<string, string>();
   for (const item of state.piStatus?.nativeStatuses ?? []) {
     if (item.key === 'goal' || texts.has(item.key)) continue;
     texts.set(item.key, item.text);
   }
   const parts: string[] = [];
-  for (const companion of KNOWN_COMPANION_KEYS) {
+  for (const companion of KNOWN_COMPANION_CODES) {
     const published = companion.keys
       .map((key) => texts.get(key))
       .find((text) => text !== undefined);
@@ -524,18 +516,12 @@ function extensionStatusIcons(state: HeaderDeckState, theme: Theme): string {
       color(
         theme,
         companionIconColor(published, published !== undefined),
-        companion.glyph,
+        companion.code,
       ),
     );
   }
   for (const [key, text] of texts) {
-    parts.push(
-      color(
-        theme,
-        companionIconColor(text, true),
-        EXTENSION_STATUS_ICONS[key] ?? '\u{F0726}',
-      ),
-    );
+    parts.push(color(theme, companionIconColor(text, true), 'ukn'));
   }
   return parts.join(' ');
 }

@@ -108,7 +108,7 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.match(lines[3] ?? '', /^\u001b\[2m/u);
   assert.match(
     plain(lines[0] ?? ''),
-    /^\[.\] \u{F09E0}\u{E73E} \u{232C}\u{2318} \u{F05A6}\u{F0770} \u{203A} [\u{E000}-\u{F8FF}] ~\/galactica ⟩/u,
+    /^\[.\] egm gpy apa \u{203A} [\u{E000}-\u{F8FF}] ~\/galactica ⟩/u,
   );
   assert.match(plain(lines[0] ?? ''), /feature\/review-led/u);
   assert.ok(statusRow.includes('GPT-5.6 Sol'));
@@ -226,10 +226,7 @@ test('extension statuses ride the telemetry tail as icons', () => {
 
   const lines = renderHeaderDeck(state, 120, plainTheme as never).map(plain);
   const telemetry = lines[0] ?? '';
-  assert.match(
-    telemetry,
-    /^\[.\] \u{F09E0}\u{E73E} \u{232C}\u{2318} \u{F05A6}\u{F0770} \u{203A} [\u{E000}-\u{F8FF}] ~/u,
-  );
+  assert.match(telemetry, /^\[.\] egm gpy apa \u{203A} [\u{E000}-\u{F8FF}] ~/u);
   assert.ok(telemetry.indexOf('~/') > telemetry.indexOf('\u{F08BE}'));
   assert.equal(telemetry.includes('engram'), false);
   assert.equal(telemetry.includes('graphify'), false);
@@ -261,9 +258,9 @@ test('companion icon colors encode health severity', () => {
   };
 
   renderHeaderDeck(state, 120, spyTheme);
-  const brain = seen.find((entry) => entry.text === '\u{F09E0}\u{E73E}');
-  const graph = seen.find((entry) => entry.text === '\u{232C}\u{2318}');
-  const shield = seen.find((entry) => entry.text === '\u{F05A6}\u{F0770}');
+  const brain = seen.find((entry) => entry.text === 'egm');
+  const graph = seen.find((entry) => entry.text === 'gpy');
+  const shield = seen.find((entry) => entry.text === 'apa');
   assert.equal(brain?.color, 'accent');
   assert.equal(graph?.color, 'warning');
   assert.equal(shield?.color, 'warning');
@@ -271,7 +268,7 @@ test('companion icon colors encode health severity', () => {
 
 test('known companion icons are always present', () => {
   const bare = renderHeaderDeck(fixture(), 120, plainTheme as never).map(plain);
-  assert.match(bare[0] ?? '', /\u{F09E0}\u{E73E} \u{232C}\u{2318} \u{F05A6}\u{F0770}/u);
+  assert.match(bare[0] ?? '', /egm gpy apa/u);
 });
 
 test('extension status icons drop on narrow frames and filter the goal key', () => {
@@ -286,7 +283,7 @@ test('extension status icons drop on narrow frames and filter the goal key', () 
     ],
   };
   const narrow = renderHeaderDeck(state, 60, plainTheme as never).map(plain);
-  assert.equal((narrow[0] ?? '').includes('\u{F09E0}'), false);
+  assert.equal((narrow[0] ?? '').includes('egm'), false);
   assert.equal(
     narrow.some((line) => line.includes('/goal-focus')),
     false,
