@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 import { visibleWidth } from '@earendil-works/pi-tui';
 
@@ -7,6 +10,7 @@ import {
   type GoalBlockState,
   readGoalBlockState,
   renderGoalBlock,
+  resolveGoalRoot,
 } from '../src/goal-block.ts';
 
 const plainTheme = {
@@ -14,35 +18,57 @@ const plainTheme = {
   bold: (text: string) => text,
 } as never;
 
-function fakeCtx(entries: readonly unknown[]): {
+function fakeCtx(
+  entries: readonly unknown[],
+  cwd?: string,
+): {
+  cwd?: string;
   sessionManager: { getBranch: () => readonly unknown[] };
 } {
-  return { sessionManager: { getBranch: () => entries } };
+  return {
+    ...(cwd !== undefined ? { cwd } : {}),
+    sessionManager: { getBranch: () => entries },
+  };
 }
 
-function goalEntry(goal: Record<string, unknown>): unknown {
-  return { type: 'custom', customType: 'pi-goal-state', data: { goal } };
+function focusEntry(goalId: string | null): unknown {
+  return {
+    type: 'custom',
+    customType: 'pi-goal-focus',
+    data: { focusedGoalId: goalId },
+  };
 }
 
-test('reads a focused goal record with nested task counts', () => {
-  const ctx = fakeCtx([
-    goalEntry({
-      id: 'goal-1',
-      objective: 'Ship the chrome-only cockpit',
-      status: 'active',
-      usage: { tokensUsed: 24_300, activeSeconds: 381 },
-      taskList: {
-        tasks: [
-          {
-            status: 'complete',
-            subtasks: [{ status: 'complete' }, { status: 'pending' }],
-          },
-          { status: 'active' },
-        ],
+const SAMPLE_GOAL = {
+  id: 'goal-1',
+  objective: 'Ship the chrome-only cockpit',
+  status: 'active',
+  usage: { tokensUsed: 24_300, activeSeconds: 381 },
+  tokenBudget: 50_000,
+  taskList: {
+    tasks: [
+      {
+        status: 'complete',
+        subtasks: [{ status: 'complete' }, { status: 'pending' }],
       },
-    }),
-    { type: 'custom', customType: 'pi-goal-focus', data: { focusedGoalId: 'goal-1' } },
-  ]);
+      { status: 'active' },
+    ],
+  },
+};
+
+function writePool(root: string, goals: unknown[]): void {
+  mkdirSync(join(root, '.metadata'), { recursive: true });
+  writeFileSync(
+    join(root, '.metadata', '.goals-pool-snapshot.json'),
+    JSON.stringify({ version: 1, dirMtimeMs: 0, goals }),
+    'utf8',
+  );
+}
+
+test('reads a focused goal from the disk pool snapshot with nested task counts', () => {
+  const project = mkdtempSync(join(tmpdir(), 'goal-block-'));
+  writePool(join(project, '.pi/goals'), [SAMPLE_GOAL]);
+  const ctx = fakeCtx([focusEntry('goal-1')], project);
 
   const state = readGoalBlockState(ctx as never);
   assert.ok(state);
@@ -52,18 +78,49 @@ test('reads a focused goal record with nested task counts', () => {
   assert.equal(state.tokensUsed, 24_300);
 });
 
-test('returns null when the focused goal differs from the state record', () => {
-  const ctx = fakeCtx([
-    goalEntry({ id: 'goal-1', objective: 'Other goal', status: 'queued' }),
-    { type: 'custom', customType: 'pi-goal-focus', data: { focusedGoalId: 'goal-9' } },
-  ]);
+test('falls back to the legacy session record when no pool exists', () => {
+  const project = mkdtempSync(join(tmpdir(), 'goal-block-'));
+  const ctx = fakeCtx(
+    [
+      { type: 'custom', customType: 'pi-goal-state', data: { goal: SAMPLE_GOAL } },
+      focusEntry('goal-1'),
+    ],
+    project,
+  );
+  const state = readGoalBlockState(ctx as never);
+  assert.ok(state);
+  assert.equal(state.objective, 'Ship the chrome-only cockpit');
+});
+
+test('returns null when the focused goal is not the one on record', () => {
+  const project = mkdtempSync(join(tmpdir(), 'goal-block-'));
+  writePool(join(project, '.pi/goals'), [SAMPLE_GOAL]);
+  const ctx = fakeCtx([focusEntry('goal-9')], project);
   assert.equal(readGoalBlockState(ctx as never), null);
 });
 
-test('returns null without a goal state entry', () => {
-  assert.equal(readGoalBlockState(fakeCtx([]) as never), null);
-  const malformed = fakeCtx([goalEntry({ id: 'x' })]);
+test('returns null when unfocused or empty', () => {
+  const project = mkdtempSync(join(tmpdir(), 'goal-block-'));
+  writePool(join(project, '.pi/goals'), [SAMPLE_GOAL]);
+  assert.equal(readGoalBlockState(fakeCtx([focusEntry(null)], project) as never), null);
+  assert.equal(readGoalBlockState(fakeCtx([], project) as never), null);
+  const malformed = fakeCtx(
+    [
+      { type: 'custom', customType: 'pi-goal-state', data: { goal: { id: 'x' } } },
+      focusEntry('x'),
+    ],
+    project,
+  );
   assert.equal(readGoalBlockState(malformed as never), null);
+});
+
+test('resolveGoalRoot skips broken symlinks', () => {
+  const project = mkdtempSync(join(tmpdir(), 'goal-block-'));
+  const agentGoals = join(project, 'fake-home', '.pi', 'goals');
+  mkdirSync(join(project, 'fake-home', '.pi'), { recursive: true });
+  symlinkSync(join(project, 'nowhere'), agentGoals);
+  const resolved = resolveGoalRoot(fakeCtx([], project) as never);
+  assert.notEqual(resolved, agentGoals);
 });
 
 test('renders the full block on wide frames with degradation ladder', () => {
@@ -91,7 +148,13 @@ test('renders the full block on wide frames with degradation ladder', () => {
   assert.equal(narrow.length, 1);
 
   assert.deepEqual(renderGoalBlock(state, 30, plainTheme), []);
-  assert.deepEqual(renderGoalBlock(null, 80, plainTheme), []);
+});
+
+test('renders an unfocused hint when open goals exist', () => {
+  const hint = renderGoalBlock(null, 60, plainTheme, 2);
+  assert.deepEqual(hint, ['◆ 2 open goals · /goal-focus']);
+  assert.deepEqual(renderGoalBlock(null, 60, plainTheme, 0), []);
+  assert.deepEqual(renderGoalBlock(null, 44, plainTheme, 2), []);
 });
 
 test('formats elapsed durations', () => {

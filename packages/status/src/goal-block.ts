@@ -4,6 +4,9 @@ import type {
   Theme,
 } from '@earendil-works/pi-coding-agent';
 import { truncateToWidth, visibleWidth } from '@earendil-works/pi-tui';
+import { readFileSync, statSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 
 /**
  * Goal-block takeover for pi-goal-x: replaces its persistent aboveEditor
@@ -88,8 +91,11 @@ function parseGoalRecord(value: unknown): GoalBlockState | null {
   };
 }
 
-export function readGoalBlockState(ctx: ExtensionContext): GoalBlockState | null {
-  const entries: readonly unknown[] = ctx.sessionManager.getBranch();
+function readGoalBlockRecord(entries: readonly unknown[]): {
+  focusedGoalId: string | null | undefined;
+  record: unknown;
+  recordSeen: boolean;
+} {
   let focusedGoalId: string | null | undefined;
   let record: unknown;
   let recordSeen = false;
@@ -114,8 +120,70 @@ export function readGoalBlockState(ctx: ExtensionContext): GoalBlockState | null
     }
     if (focusedGoalId !== undefined && recordSeen) break;
   }
-  if (!recordSeen) return null;
-  const state = parseGoalRecord(record);
+  return { focusedGoalId, record, recordSeen };
+}
+
+function isDirectorySafe(path: string): boolean {
+  try {
+    return statSync(path).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+/** Mirror pi-goal-x storage resolution: env root, project root, then the
+ * agent-level fallback. Broken symlinks are skipped, never followed. */
+export function resolveGoalRoot(ctx: ExtensionContext): string | undefined {
+  const candidates: string[] = [];
+  if (process.env.PI_GOAL_ROOT) candidates.push(resolve(process.env.PI_GOAL_ROOT));
+  if (typeof ctx.cwd === 'string') {
+    candidates.push(resolve(ctx.cwd, '.pi/goals'));
+  }
+  candidates.push(join(homedir(), '.pi', 'goals'));
+  return candidates.find((candidate) => isDirectorySafe(candidate));
+}
+
+const poolCache = new Map<string, { mtimeMs: number; goals: unknown[] }>();
+
+function snapshotPaths(root: string): string[] {
+  return [
+    join(root, '.metadata', '.goals-pool-snapshot.json'),
+    join(dirname(root), '.goals-pool-snapshot.json'),
+  ];
+}
+
+export function loadPoolGoals(root: string): unknown[] {
+  for (const snapshotPath of snapshotPaths(root)) {
+    try {
+      const stats = statSync(snapshotPath);
+      if (!stats.isFile()) continue;
+      const cached = poolCache.get(snapshotPath);
+      if (cached && cached.mtimeMs === stats.mtimeMs) return cached.goals;
+      const parsed: unknown = JSON.parse(readFileSync(snapshotPath, 'utf8'));
+      if (!isRecord(parsed) || !Array.isArray(parsed.goals)) continue;
+      const goals = parsed.goals.filter(isRecord);
+      poolCache.set(snapshotPath, { mtimeMs: stats.mtimeMs, goals });
+      return goals;
+    } catch {
+      continue;
+    }
+  }
+  return [];
+}
+
+export function readGoalBlockState(ctx: ExtensionContext): GoalBlockState | null {
+  const { focusedGoalId, record, recordSeen } = readGoalBlockRecord(
+    ctx.sessionManager.getBranch(),
+  );
+  if (focusedGoalId === null) return null;
+  let candidate: unknown = recordSeen ? record : undefined;
+  const root = resolveGoalRoot(ctx);
+  if (root) {
+    const goals = loadPoolGoals(root);
+    const fromPool = goals.find((goal) => isRecord(goal) && goal.id === focusedGoalId);
+    if (fromPool !== undefined) candidate = fromPool;
+  }
+  const state = parseGoalRecord(candidate);
   if (!state) return null;
   if (
     focusedGoalId !== undefined &&
@@ -125,6 +193,14 @@ export function readGoalBlockState(ctx: ExtensionContext): GoalBlockState | null
     return null;
   }
   return state;
+}
+
+export function countOpenGoals(ctx: ExtensionContext): number {
+  const root = resolveGoalRoot(ctx);
+  if (!root) return 0;
+  return loadPoolGoals(root).filter(
+    (goal) => isRecord(goal) && goal.status !== 'complete',
+  ).length;
 }
 
 export function formatGoalElapsed(seconds: number): string {
@@ -159,10 +235,23 @@ export function renderGoalBlock(
   state: GoalBlockState | null,
   width: number,
   theme: Theme,
+  openGoals = 0,
 ): string[] {
-  if (!state || width < 40) return [];
+  if (width < 40) return [];
   const fg = (semantic: string, text: string): string =>
     theme.fg(semantic as never, text);
+
+  if (!state) {
+    if (openGoals > 0 && width >= 48) {
+      return [
+        fg(
+          'dim',
+          `◆ ${openGoals} open goal${openGoals === 1 ? '' : 's'} · /goal-focus`,
+        ),
+      ];
+    }
+    return [];
+  }
 
   const badge = fg(STATUS_COLORS[state.status] ?? 'text', `● ${state.status}`);
   const elapsed =
@@ -216,7 +305,12 @@ export function installGoalBlockTakeover(pi: ExtensionAPI): () => void {
       const requestRender = (): void => tui.requestRender();
       return {
         render(width: number): string[] {
-          const lines = renderGoalBlock(readGoalBlockState(ctx), width, theme);
+          const lines = renderGoalBlock(
+            readGoalBlockState(ctx),
+            width,
+            theme,
+            countOpenGoals(ctx),
+          );
           return lines.every((line) => visibleWidth(line) <= width)
             ? lines
             : lines.map((line) => truncateToWidth(line, width, '…'));
