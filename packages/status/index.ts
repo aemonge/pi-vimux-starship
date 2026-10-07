@@ -38,6 +38,7 @@ import {
   restoreGoalHeaderState,
   sameGoalHeaderState,
 } from './src/goal.ts';
+import { installGoalBlockTakeover } from './src/goal-block.ts';
 import { collectOpenSpec, collectOpenSpecOverview } from './src/openspec.ts';
 import { collectOrchestration } from './src/orchestration.ts';
 import {
@@ -1627,4 +1628,8 @@ export default function galacticaStatus(pi: ExtensionAPI): void {
       ctx.ui.notify(runtime?.debug() ?? 'galactica-status is not active', 'info');
     },
   });
+
+  // Registered last: the goal widget takeover must never precede the
+  // status publisher's synchronous session-start publication order.
+  void installGoalBlockTakeover(pi);
 }
