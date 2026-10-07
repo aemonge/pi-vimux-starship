@@ -516,20 +516,44 @@ const KNOWN_COMPANION_KEYS: ReadonlyArray<{
   { keys: ['appa', 'openappa'], glyph: '\u{F05A6}' },
 ];
 
+const COMPANION_WARNING_PATTERN =
+  /(warn|error|stale|unreachable|down|fail|update recommended|needs attention|unhealthy)/iu;
+
+function companionIconColor(text: string | undefined, active: boolean): string {
+  if (!active) return 'dim';
+  return text !== undefined && COMPANION_WARNING_PATTERN.test(text)
+    ? 'warning'
+    : 'accent';
+}
+
 function extensionStatusIcons(state: HeaderDeckState, theme: Theme): string {
-  const publishing = new Set(
-    (state.piStatus?.nativeStatuses ?? [])
-      .filter((item) => item.key !== 'goal')
-      .map((item) => item.key),
-  );
+  const texts = new Map<string, string>();
+  for (const item of state.piStatus?.nativeStatuses ?? []) {
+    if (item.key === 'goal' || texts.has(item.key)) continue;
+    texts.set(item.key, item.text);
+  }
   const parts: string[] = [];
   for (const companion of KNOWN_COMPANION_KEYS) {
-    const active = companion.keys.some((key) => publishing.has(key));
-    for (const key of companion.keys) publishing.delete(key);
-    parts.push(color(theme, active ? 'text' : 'dim', companion.glyph));
+    const published = companion.keys
+      .map((key) => texts.get(key))
+      .find((text) => text !== undefined);
+    for (const key of companion.keys) texts.delete(key);
+    parts.push(
+      color(
+        theme,
+        companionIconColor(published, published !== undefined),
+        companion.glyph,
+      ),
+    );
   }
-  for (const key of publishing) {
-    parts.push(color(theme, 'text', EXTENSION_STATUS_ICONS[key] ?? '\u{F01B2}'));
+  for (const [key, text] of texts) {
+    parts.push(
+      color(
+        theme,
+        companionIconColor(text, true),
+        EXTENSION_STATUS_ICONS[key] ?? '\u{F01B2}',
+      ),
+    );
   }
   return parts.join(' ');
 }

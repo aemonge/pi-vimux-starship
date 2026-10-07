@@ -242,6 +242,35 @@ test('extension statuses ride the telemetry tail as icons', () => {
   );
 });
 
+test('companion icon colors encode health severity', () => {
+  const seen: Array<{ color: string; text: string }> = [];
+  const spyTheme = {
+    fg: (semantic: string, text: string) => {
+      seen.push({ color: semantic, text });
+      return text;
+    },
+    bold: (text: string) => text,
+  } as never;
+  const state = fixture();
+  state.piStatus = {
+    errors: 0,
+    warnings: 0,
+    nativeStatusCount: 2,
+    nativeStatuses: [
+      { key: 'engram', text: 'ready' },
+      { key: 'graphify', text: 'graphify active · update recommended' },
+    ],
+  };
+
+  renderHeaderDeck(state, 120, spyTheme);
+  const brain = seen.find((entry) => entry.text === '\u{F09E0}');
+  const graph = seen.find((entry) => entry.text === '\u{F08BE}');
+  const shield = seen.find((entry) => entry.text === '\u{F05A6}');
+  assert.equal(brain?.color, 'accent');
+  assert.equal(graph?.color, 'warning');
+  assert.equal(shield?.color, 'dim');
+});
+
 test('known companion icons are always present', () => {
   const bare = renderHeaderDeck(fixture(), 120, plainTheme as never).map(plain);
   assert.match(bare[0] ?? '', /\u{F09E0} \u{F08BE} \u{F05A6}/u);
