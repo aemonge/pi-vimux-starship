@@ -176,6 +176,22 @@ test('drops the footer count; diagnostics stay on the top rule', () => {
   assert.doesNotMatch(empty[1] ?? '', /·0/u);
 });
 
+test('unfocused open goals ride the title row as an inline hint', () => {
+  const state = fixture();
+  state.header = {
+    ...(state.header as NonNullable<typeof state.header>),
+    openGoals: 1,
+  };
+
+  const lines = renderHeaderDeck(state, 120, plainTheme as never).map(plain);
+  const titleRow = lines.find((line) => line.includes("000:07'00")) ?? '';
+  assert.match(titleRow, /000:07'00 ⟩ \(1 open goal · \/goal-focus\)/u);
+  assert.equal(
+    lines.some((line) => /^◆ /u.test(line)),
+    false,
+  );
+});
+
 test('goal selection owns the title row with badge and tree rows', () => {
   const state = fixture();
   state.header = {

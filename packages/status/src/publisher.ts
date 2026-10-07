@@ -544,6 +544,7 @@ export type HeaderStatusEvent = {
   backgroundActivity: boolean;
   approvalRequired: boolean;
   blocked: boolean;
+  openGoals?: number;
   activeRunSpans?: ActiveRunSpanView[];
   counters: {
     agents: { active: number; total: number };
@@ -1024,6 +1025,7 @@ export function buildHeaderStatusEvent(
     taskflowPhase?: string;
     fallbackTitles?: string[];
     goal?: GoalHeaderState | null;
+    openGoals?: number;
     goalAutomaticTurnLimit?: number;
     activeRuns?: ActiveRuntimeRuns;
     activeRunSpans?: ActiveRunSpanView[];
@@ -1148,6 +1150,7 @@ export function buildHeaderStatusEvent(
 
   return {
     protocol: 1,
+    ...(options.openGoals ? { openGoals: options.openGoals } : {}),
     ...(options.activeRunSpans ? { activeRunSpans: options.activeRunSpans } : {}),
     ...(options.idleMs ? { idleMs: options.idleMs } : {}),
     activity: activity ?? null,

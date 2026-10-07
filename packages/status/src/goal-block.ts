@@ -333,9 +333,9 @@ export function installGoalBlockTakeover(pi: ExtensionAPI): () => void {
       const requestRender = (): void => tui.requestRender();
       return {
         render(width: number): string[] {
-          // Suppression-only when a goal is focused: the deck's title row and
-          // tree lines own the display. The unfocused hint stays here.
-          const lines = renderGoalBlock(null, width, theme, countOpenGoals(ctx));
+          // Pure suppression: the deck owns every goal display, including
+          // the unfocused open-goal hint in its title row.
+          const lines: string[] = [];
           return lines.every((line) => visibleWidth(line) <= width)
             ? lines
             : lines.map((line) => truncateToWidth(line, width, '…'));

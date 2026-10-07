@@ -197,11 +197,16 @@ function elevatedSelectionLines(
   if (!selection || titles.length === 0) {
     return []; // frozen contract: no selection means no slot
   }
+  const openGoals = selection.source !== 'goal' ? (state.header?.openGoals ?? 0) : 0;
+  const goalHint =
+    openGoals > 0
+      ? `(${openGoals} open goal${openGoals === 1 ? '' : 's'} · /goal-focus) `
+      : '';
   const contentWidth = Math.max(1, width - visibleWidth(prefix));
   const selectionColor = ['accent', 'success'].includes(selection.color)
     ? 'accent'
     : selection.color;
-  return wrapFocus(titles.join(' › '), contentWidth, 2).map(
+  return wrapFocus(`${goalHint}${titles.join(' › ')}`, contentWidth, 2).map(
     (line, index) =>
       `${index === 0 ? prefix : indent}${color(theme, selectionColor, line)}`,
   );

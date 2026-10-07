@@ -122,6 +122,7 @@ export const HEADER_SUGGESTIONS = [
 export type HeaderSuggestion = (typeof HEADER_SUGGESTIONS)[number];
 
 export type HeaderSnapshot = {
+  openGoals?: number;
   activity?: HeaderActivity | null;
   selection?: HeaderSelection | null;
   suggestion?: HeaderSuggestion | null;
@@ -1052,6 +1053,13 @@ export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const message = raw as Record<string, unknown>;
   if (message.protocol !== 1) return null;
+  const openGoals =
+    typeof message.openGoals === 'number' &&
+    Number.isInteger(message.openGoals) &&
+    message.openGoals >= 0 &&
+    message.openGoals <= 99
+      ? message.openGoals
+      : 0;
 
   const standaloneActivity = parseHeaderActivity(message.activity) ?? null;
   let work: HeaderWork | null = null;
@@ -1162,6 +1170,7 @@ export function parseHeaderSnapshot(raw: unknown): HeaderSnapshot | null {
   );
 
   return {
+    openGoals,
     activity: standaloneActivity,
     selection: hasExplicitSelection
       ? parseHeaderSelection(message.selection)

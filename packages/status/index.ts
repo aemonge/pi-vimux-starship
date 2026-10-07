@@ -38,7 +38,11 @@ import {
   restoreGoalHeaderState,
   sameGoalHeaderState,
 } from './src/goal.ts';
-import { installGoalBlockTakeover, readGoalHeadline } from './src/goal-block.ts';
+import {
+  countOpenGoals,
+  installGoalBlockTakeover,
+  readGoalHeadline,
+} from './src/goal-block.ts';
 import { collectOpenSpec, collectOpenSpecOverview } from './src/openspec.ts';
 import { collectOrchestration } from './src/orchestration.ts';
 import {
@@ -668,6 +672,7 @@ class GalacticaStatusRuntime {
         activity: this.liveActivity,
         taskflowPhase: this.liveTaskflowPhase,
         goal,
+        openGoals: goal ? 0 : countOpenGoals(this.ctx),
         goalAutomaticTurnLimit: this.goalAutomaticTurnLimit,
         activeRuns: (() => {
           const runs = this.runtimeSpans.snapshot();
