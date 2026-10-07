@@ -175,23 +175,23 @@ test('drops the footer count; diagnostics stay on the top rule', () => {
   assert.doesNotMatch(empty[1] ?? '', /·0/u);
 });
 
-test('renders extension status items beneath the top rule', () => {
+test('renders extension status items in a soft bottom row', () => {
   const state = fixture();
   state.piStatus = {
     errors: 0,
     warnings: 0,
-    nativeStatusCount: 1,
+    nativeStatusCount: 2,
     nativeStatuses: [
-      {
-        key: 'graphify',
-        text: 'graphify active · wiki + report available · update recommended',
-      },
+      { key: 'engram', text: 'ready' },
+      { key: 'graphify', text: 'active' },
     ],
   };
 
   const lines = renderHeaderDeck(state, 120, plainTheme as never).map(plain);
-  const row = lines[2] ?? '';
-  assert.match(row, /─ graphify · graphify active · wiki \+ report available/u);
+  const row = lines.find((line) => line.includes('graphify')) ?? '';
+  assert.match(row, /┈ engram · ready\s+graphify · active/u);
+  const dottedDivider = lines.findIndex((line) => /^┈┈┈┈┈/u.test(line));
+  assert.ok(lines.indexOf(row) > dottedDivider);
   assert.ok(lines.every((line) => visibleWidth(line) <= 120));
 });
 
@@ -208,8 +208,8 @@ test('degrades extension status items to the first item when narrow', () => {
   };
 
   const lines = renderHeaderDeck(state, 48, plainTheme as never).map(plain);
-  const row = lines[2] ?? '';
-  assert.match(row, /graphify/u);
+  const row = lines.find((line) => line.includes('graphify')) ?? '';
+  assert.match(row, /┈ graphify · graphify active/u);
   assert.equal(row.includes('3 servers healthy'), false);
   assert.ok(lines.every((line) => visibleWidth(line) <= 48));
 });
