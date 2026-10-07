@@ -189,7 +189,7 @@ test('renders extension status items in a soft bottom row', () => {
 
   const lines = renderHeaderDeck(state, 120, plainTheme as never).map(plain);
   const row = lines.at(-1) ?? '';
-  assert.match(row, /^┈+ engram · ready · graphify · active$/u);
+  assert.match(row, /^┈+ engram · graphify · active$/u);
   const dottedDivider = lines.findIndex((line) => /^┈┈┈┈┈/u.test(line));
   assert.ok(lines.length - 1 > dottedDivider);
   assert.ok(lines.every((line) => visibleWidth(line) <= 120));
@@ -223,7 +223,7 @@ test('strips the duplicated project segment from item text', () => {
     nativeStatuses: [{ key: 'engram', text: '\u{1F9E0} pi-vimux-starship · ready' }],
   };
   const lines = renderHeaderDeck(state, 120, plainTheme as never).map(plain);
-  assert.match(lines.at(-1) ?? '', /┈+ engram · ready$/u);
+  assert.match(lines.at(-1) ?? '', /┈+ engram$/u);
 });
 
 test('drops the goal status item from the footnote', () => {

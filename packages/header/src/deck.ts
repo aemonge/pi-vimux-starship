@@ -613,15 +613,21 @@ function extensionStatusLines(
   if (items.length === 0 || width < 48) return [];
 
   // The project segment duplicates the telemetry row's PWD — drop it.
-  const cleanText = (text: string): string =>
-    text.replace(/\u{1F9E0}[^·]*·\s*/u, '').trim();
+  // A bare trailing "ready" is noise: the item's presence already means
+  // healthy, so it renders as the key alone.
+  const cleanText = (text: string): string => {
+    const cleaned = text.replace(/\u{1F9E0}[^·]*·\s*/u, '').trim();
+    return /^ready$/iu.test(cleaned) ? '' : cleaned;
+  };
 
   const label = (parts: typeof items): string =>
     parts
-      .map(
-        (item) =>
-          `${color(theme, 'text', item.key)}${color(theme, 'dim', ` · ${cleanText(item.text)}`)}`,
-      )
+      .map((item) => {
+        const cleaned = cleanText(item.text);
+        return cleaned === ''
+          ? color(theme, 'text', item.key)
+          : `${color(theme, 'text', item.key)}${color(theme, 'dim', ` · ${cleaned}`)}`;
+      })
       .join(color(theme, 'dim', ' · '));
 
   const footnote = (text: string): string => {
