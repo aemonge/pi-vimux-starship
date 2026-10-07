@@ -36,7 +36,6 @@ The package composes four bounded modules in dependency-safe order:
   | `egm` | `engram` | persistent memory store |
   | `gpy` | `graphify` | knowledge graph |
   | `apa` | `appa` / `pi-openappa` | tool-call guard |
-  | `ukn` | any other | unknown companion |
 
   Cyan means healthy, orange means warn, error, or not reporting.
 

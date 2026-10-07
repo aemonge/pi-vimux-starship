@@ -520,9 +520,6 @@ function extensionStatusCodes(state: HeaderDeckState, theme: Theme): string {
       ),
     );
   }
-  for (const [key, text] of texts) {
-    parts.push(color(theme, companionIconColor(text, true), 'ukn'));
-  }
   return parts.join(' ');
 }
 
