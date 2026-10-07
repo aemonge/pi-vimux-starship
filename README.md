@@ -33,10 +33,10 @@ The package composes four bounded modules in dependency-safe order:
 
   | Icon | Extension | Meaning |
   | --- | --- | --- |
-  | 󰧠 brain | `engram` | persistent memory store |
-  | 󰢾 graph | `graphify` | knowledge graph |
-  | 󰖦 shield | `appa` / `pi-openappa` | tool-call guard |
-  | 󰆲 cube | any other | unknown companion |
+  | 󰧠󰜾 brain+cloud | `engram` | persistent memory store |
+  | ⌬⌘ | `graphify` | knowledge graph |
+  | 󰖦󰝰 shield+lock | `appa` / `pi-openappa` | tool-call guard |
+  | 󰜦 diamond | any other | unknown companion |
 
   Cyan means healthy, orange means warn, error, or not reporting.
 

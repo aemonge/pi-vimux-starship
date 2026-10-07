@@ -490,9 +490,10 @@ const KNOWN_COMPANION_KEYS: ReadonlyArray<{
   keys: readonly string[];
   glyph: string;
 }> = [
-  { keys: ['engram'], glyph: '\u{F09E0}' },
-  { keys: ['graphify'], glyph: '\u{F08BE}' },
-  { keys: ['appa', 'openappa'], glyph: '\u{F05A6}' },
+  // Human-picked compound glyphs: each companion is a tight pair.
+  { keys: ['engram'], glyph: '\u{F09E0}\u{E73E}' },
+  { keys: ['graphify'], glyph: '\u{232C}\u{2318}' },
+  { keys: ['appa', 'openappa'], glyph: '\u{F05A6}\u{F0770}' },
 ];
 
 const COMPANION_WARNING_PATTERN =
@@ -532,7 +533,7 @@ function extensionStatusIcons(state: HeaderDeckState, theme: Theme): string {
       color(
         theme,
         companionIconColor(text, true),
-        EXTENSION_STATUS_ICONS[key] ?? '\u{F01B2}',
+        EXTENSION_STATUS_ICONS[key] ?? '\u{F0726}',
       ),
     );
   }
