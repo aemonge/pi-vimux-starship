@@ -499,7 +499,9 @@ const COMPANION_WARNING_PATTERN =
   /(warn|error|stale|unreachable|down|fail|update recommended|needs attention|unhealthy)/iu;
 
 function companionIconColor(text: string | undefined, active: boolean): string {
-  if (!active) return 'dim';
+  // Disabled companions share the attention color: dim gray is barely
+  // visible on dark themes, and "not reporting" still deserves a glance.
+  if (!active) return 'warning';
   return text !== undefined && COMPANION_WARNING_PATTERN.test(text)
     ? 'warning'
     : 'accent';

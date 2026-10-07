@@ -28,8 +28,17 @@ The package composes four bounded modules in dependency-safe order:
 
 - **Fancy Footer** — responsive model, quota, context, cost, Git, and resource telemetry;
 - **Status provider** — lifecycle, OpenSpec, Session Work, and diagnostic state;
-- **Header Deck** — current activity, focus, project state, and compact telemetry;
-- **Pi Vim** — hidden-draft Normal/Visual/EX commands and external-editor handoff.
+- **Header Deck** — current activity, focus, project state, and compact telemetry.
+  Companion extensions surface as leading telemetry icons:
+
+  | Icon | Extension | Meaning |
+  | --- | --- | --- |
+  | 󰧠 brain | `engram` | persistent memory store |
+  | 󰢾 graph | `graphify` | knowledge graph |
+  | 󰖦 shield | `appa` / `pi-openappa` | tool-call guard |
+  | 󰆲 cube | any other | unknown companion |
+
+  Cyan means healthy, orange means warn, error, or not reporting.
 
 Optional Git, OpenSpec, Devbox, tmux, Neovim, provider-quota, and Nerd Font capabilities
 fail soft when absent. Pi core remains the API authority.

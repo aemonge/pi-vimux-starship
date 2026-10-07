@@ -266,7 +266,7 @@ test('companion icon colors encode health severity', () => {
   const shield = seen.find((entry) => entry.text === '\u{F05A6}');
   assert.equal(brain?.color, 'accent');
   assert.equal(graph?.color, 'warning');
-  assert.equal(shield?.color, 'dim');
+  assert.equal(shield?.color, 'warning');
 });
 
 test('known companion icons are always present', () => {
