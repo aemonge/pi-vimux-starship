@@ -410,9 +410,16 @@ function suggestionLine(
   return color(theme, semanticColor, `${SUGGESTION_LABELS[suggestion]}`);
 }
 
-function projectLeft(state: HeaderDeckState, theme: Theme): string {
+function projectLeft(state: HeaderDeckState, theme: Theme, statusIcons = ''): string {
   const devbox = state.devbox ? `${color(theme, 'success', '[󰆧]', true)} ` : '';
-  return `${devbox}${color(theme, 'success', ` ${safeText(state.cwd)}`)}`;
+  if (statusIcons === '') {
+    return `${devbox}${color(theme, 'success', ` ${safeText(state.cwd)}`)}`;
+  }
+  return `${devbox}${statusIcons} ${semanticSeparator(theme)} ${color(
+    theme,
+    'success',
+    ` ${safeText(state.cwd)}`,
+  )}`;
 }
 
 function gitRight(state: HeaderDeckState, theme: Theme): string {
@@ -484,12 +491,11 @@ function compactTelemetryLeft(
 ): string {
   // Relocation phase (Human-directed): repository identity joins the project
   // at the telemetry head; narrow frames drop the project before Git facts.
-  const projectSegment = width >= 100 ? projectLeft(state, theme) : '';
-  const statusIcons = extensionStatusIcons(state, theme);
-  const iconSegment = statusIcons !== '' && width >= 72 ? statusIcons : '';
+  const statusIcons = width >= 72 ? extensionStatusIcons(state, theme) : '';
+  const projectSegment = width >= 100 ? projectLeft(state, theme, statusIcons) : '';
   const gitSegment =
     width >= 79 ? truncateToWidth(gitRight(state, theme), 52, '…') : '';
-  return [projectSegment, iconSegment, gitSegment]
+  return [projectSegment, gitSegment]
     .filter((segment) => segment !== '')
     .join(` ${semanticSeparator(theme)} `);
 }
@@ -501,13 +507,31 @@ const EXTENSION_STATUS_ICONS: Record<string, string> = {
   appa: '\u{F05A6}',
 };
 
+const KNOWN_COMPANION_KEYS: ReadonlyArray<{
+  keys: readonly string[];
+  glyph: string;
+}> = [
+  { keys: ['engram'], glyph: '\u{F09E0}' },
+  { keys: ['graphify'], glyph: '\u{F08BE}' },
+  { keys: ['appa', 'openappa'], glyph: '\u{F05A6}' },
+];
+
 function extensionStatusIcons(state: HeaderDeckState, theme: Theme): string {
-  const items = (state.piStatus?.nativeStatuses ?? []).filter(
-    (item) => item.key !== 'goal',
+  const publishing = new Set(
+    (state.piStatus?.nativeStatuses ?? [])
+      .filter((item) => item.key !== 'goal')
+      .map((item) => item.key),
   );
-  if (items.length === 0) return '';
-  const glyphs = items.map((item) => EXTENSION_STATUS_ICONS[item.key] ?? '\u{F01B2}');
-  return color(theme, 'text', glyphs.join(' '));
+  const parts: string[] = [];
+  for (const companion of KNOWN_COMPANION_KEYS) {
+    const active = companion.keys.some((key) => publishing.has(key));
+    for (const key of companion.keys) publishing.delete(key);
+    parts.push(color(theme, active ? 'text' : 'dim', companion.glyph));
+  }
+  for (const key of publishing) {
+    parts.push(color(theme, 'text', EXTENSION_STATUS_ICONS[key] ?? '\u{F01B2}'));
+  }
+  return parts.join(' ');
 }
 
 function compactTelemetryRight(

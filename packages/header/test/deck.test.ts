@@ -106,7 +106,10 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.doesNotMatch(lines[4] ?? '', /requesting validation or redirection ⟩  task/u);
   assert.equal(plain(lines[3] ?? ''), '┈'.repeat(160));
   assert.match(lines[3] ?? '', /^\u001b\[2m/u);
-  assert.match(plain(lines[0] ?? ''), /^\[.\] . ~\/galactica ⟩/u);
+  assert.match(
+    plain(lines[0] ?? ''),
+    /^\[.\] [\u{F0000}-\u{FFFFF}] [\u{F0000}-\u{FFFFF}] [\u{F0000}-\u{FFFFF}] \u{27E9} [\u{E000}-\u{F8FF}] ~\/galactica ⟩/u,
+  );
   assert.match(plain(lines[0] ?? ''), /feature\/review-led/u);
   assert.ok(statusRow.includes('GPT-5.6 Sol'));
   assert.ok(statusRow.trimEnd().endsWith('63%'));
@@ -225,7 +228,11 @@ test('extension statuses ride the telemetry tail as icons', () => {
 
   const lines = renderHeaderDeck(state, 120, plainTheme as never).map(plain);
   const telemetry = lines[0] ?? '';
-  assert.match(telemetry, /^\[.\] .*\u{F09E0} \u{F08BE} .+\//u);
+  assert.match(
+    telemetry,
+    /^\[.\] [\u{F0000}-\u{FFFFF}] [\u{F0000}-\u{FFFFF}] [\u{F0000}-\u{FFFFF}] \u{27E9} [\u{E000}-\u{F8FF}] ~/u,
+  );
+  assert.ok(telemetry.indexOf('~/') > telemetry.indexOf('\u{F08BE}'));
   assert.equal(telemetry.includes('engram'), false);
   assert.equal(telemetry.includes('graphify'), false);
   assert.equal(
@@ -233,6 +240,11 @@ test('extension statuses ride the telemetry tail as icons', () => {
     false,
     'footnote row is gone',
   );
+});
+
+test('known companion icons are always present', () => {
+  const bare = renderHeaderDeck(fixture(), 120, plainTheme as never).map(plain);
+  assert.match(bare[0] ?? '', /\u{F09E0} \u{F08BE} \u{F05A6}/u);
 });
 
 test('extension status icons drop on narrow frames and filter the goal key', () => {
