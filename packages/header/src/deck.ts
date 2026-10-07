@@ -485,9 +485,11 @@ function compactTelemetryLeft(
   // Relocation phase (Human-directed): repository identity joins the project
   // at the telemetry head; narrow frames drop the project before Git facts.
   const projectSegment = width >= 100 ? projectLeft(state, theme) : '';
+  const statusIcons = extensionStatusIcons(state, theme);
+  const iconSegment = statusIcons !== '' && width >= 72 ? statusIcons : '';
   const gitSegment =
     width >= 79 ? truncateToWidth(gitRight(state, theme), 52, '…') : '';
-  return [projectSegment, gitSegment]
+  return [projectSegment, iconSegment, gitSegment]
     .filter((segment) => segment !== '')
     .join(` ${semanticSeparator(theme)} `);
 }
@@ -512,7 +514,6 @@ function compactTelemetryRight(
   state: HeaderDeckState,
   theme: Theme,
   nowMs = Date.now(),
-  width?: number,
 ): string {
   const resources = state.resources;
   // Relocation: resources left-to-right, cost anchors the far end.
@@ -535,12 +536,6 @@ function compactTelemetryRight(
   if (windows) resourceSegments.unshift(windows);
   const cost = costTile(state, theme);
   if (cost) resourceSegments.push(cost);
-  // Extension statuses ride the telemetry tail as icons; they yield first
-  // on narrow frames. The footnote row is gone.
-  if (width === undefined || width >= 72) {
-    const statusIcons = extensionStatusIcons(state, theme);
-    if (statusIcons) resourceSegments.push(statusIcons);
-  }
   return resourceSegments.join(` ${semanticSeparator(theme)} `);
 }
 
@@ -783,7 +778,7 @@ export function renderHeaderDeck(
   const rows = [
     ...alignedRows(
       compactTelemetryLeft(state, theme, boundedWidth),
-      compactTelemetryRight(state, theme, Date.now(), boundedWidth),
+      compactTelemetryRight(state, theme),
       boundedWidth,
     ),
     top,

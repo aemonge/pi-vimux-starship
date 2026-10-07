@@ -225,7 +225,7 @@ test('extension statuses ride the telemetry tail as icons', () => {
 
   const lines = renderHeaderDeck(state, 120, plainTheme as never).map(plain);
   const telemetry = lines[0] ?? '';
-  assert.match(telemetry, /\u{F09E0} \u{F08BE}$/u);
+  assert.match(telemetry, /^\[.\] .*\u{F09E0} \u{F08BE} .+\//u);
   assert.equal(telemetry.includes('engram'), false);
   assert.equal(telemetry.includes('graphify'), false);
   assert.equal(
