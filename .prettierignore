@@ -8,3 +8,4 @@ licenses/
 openspec/
 **/README.md
 **/LOCAL-CHANGES.md
+.tmp/
