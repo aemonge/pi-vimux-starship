@@ -19,11 +19,11 @@ const EXPECTED_COMMANDS = [
 const EXPECTED_TOOLS = ['openspec_focus', 'stage', 'subject', 'work_focus'];
 
 test('chrome-only deck composition activates header footer and status', () => {
-  assert.equal(COCKPIT_SURFACES.contextHeader, 'editor-deck');
+  assert.equal(COCKPIT_SURFACES.contextHeader, 'deck');
   assert.deepEqual(COCKPIT_COMPOSITION, [
     'fancy-footer:telemetry',
     'galactica-status:provider',
-    'galactica-context-header:editor-deck',
+    'galactica-context-header:deck',
     'cockpit-telemetry:sink',
   ]);
 });

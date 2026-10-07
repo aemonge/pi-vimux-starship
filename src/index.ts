@@ -4,13 +4,12 @@ import galacticaContextHeader from '../packages/header/index.js';
 import galacticaStatus from '../packages/status/index.js';
 import cockpitTelemetry from '../packages/cockpit-telemetry/index.js';
 import fancyFooter from '../packages/pi-fancy-footer-full-palette/src/index.js';
-import { createCockpitDeckSurface } from './deck-surface.js';
 import { registerVimuxHealth } from './health.js';
 import { registerPiStatus } from './pi-status.js';
 
 export const COCKPIT_SURFACES = {
   footer: 'telemetry',
-  contextHeader: 'editor-deck',
+  contextHeader: 'deck',
 } as const;
 
 export const COCKPIT_COMPOSITION = [
@@ -21,13 +20,11 @@ export const COCKPIT_COMPOSITION = [
 ] as const;
 
 export default function piVimuxStarship(pi: ExtensionAPI): void {
-  const deckSurface = createCockpitDeckSurface();
   registerPiStatus(pi);
   fancyFooter(pi, { surface: COCKPIT_SURFACES.footer });
   galacticaStatus(pi);
   galacticaContextHeader(pi, {
     surface: COCKPIT_SURFACES.contextHeader,
-    deckSurface,
   });
   cockpitTelemetry(pi);
   registerVimuxHealth(pi);
