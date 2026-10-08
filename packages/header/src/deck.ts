@@ -484,13 +484,13 @@ function compactTelemetryLeft(
     .join(` ${semanticSeparator(theme)} `);
 }
 
-const KNOWN_COMPANION_CODES: ReadonlyArray<{
+const KNOWN_COMPANION_ICONS: ReadonlyArray<{
   keys: readonly string[];
-  code: string;
+  icons: readonly string[];
 }> = [
-  { keys: ['engram'], code: 'egm' },
-  { keys: ['graphify'], code: 'gpy' },
-  { keys: ['appa', 'openappa'], code: 'apa' },
+  { keys: ['engram'], icons: ['\u{F09E0}', '\u{E73E}'] },
+  { keys: ['graphify'], icons: ['\u{232C}', '\u{2318}'] },
+  { keys: ['appa', 'openappa'], icons: ['\u{F05A6}', '\u{F0770}'] },
 ];
 
 const COMPANION_WARNING_PATTERN =
@@ -512,17 +512,14 @@ function extensionStatusCodes(state: HeaderDeckState, theme: Theme): string {
     texts.set(item.key, item.text);
   }
   const parts: string[] = [];
-  for (const companion of KNOWN_COMPANION_CODES) {
+  for (const companion of KNOWN_COMPANION_ICONS) {
     const published = companion.keys
       .map((key) => texts.get(key))
       .find((text) => text !== undefined);
     for (const key of companion.keys) texts.delete(key);
+    const chip = `[ ${companion.icons.join(' ')} ]`;
     parts.push(
-      color(
-        theme,
-        companionIconColor(published, published !== undefined),
-        companion.code,
-      ),
+      color(theme, companionIconColor(published, published !== undefined), chip),
     );
   }
   return parts.join(' ');

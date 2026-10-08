@@ -31,11 +31,11 @@ The package composes four bounded modules in dependency-safe order:
 - **Header Deck** — current activity, focus, project state, and compact telemetry.
   Companion extensions surface as leading telemetry icons:
 
-  | Code | Extension | Meaning |
+  | Chip | Extension | Meaning |
   | --- | --- | --- |
-  | `egm` | `engram` | persistent memory store |
-  | `gpy` | `graphify` | knowledge graph |
-  | `apa` | `appa` / `pi-openappa` | tool-call guard |
+  | `[ 󰧠 󰜾 ]` brain + cloud | `engram` | persistent memory store |
+  | `[ ⌬ ⌘ ]` | `graphify` | knowledge graph |
+  | `[ 󰖦 󰝰 ]` shield + lock | `appa` / `pi-openappa` | tool-call guard |
 
   Cyan means healthy, orange means warn, error, or not reporting.
 
