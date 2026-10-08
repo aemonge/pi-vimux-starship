@@ -473,13 +473,15 @@ function compactTelemetryLeft(
   theme: Theme,
   width: number,
 ): string {
-  // Relocation phase (Human-directed): repository identity joins the project
-  // at the telemetry head; narrow frames drop the project before Git facts.
-  const statusIcons = width >= 72 ? extensionStatusCodes(state, theme) : '';
+  // Human contract: companion symbols are always visible at any width —
+  // only their color changes (on / warn / off). They ride inside the project
+  // segment when it fits and lead standalone on narrow frames.
+  const statusIcons = extensionStatusCodes(state, theme);
   const projectSegment = width >= 100 ? projectLeft(state, theme, statusIcons) : '';
+  const leadSegment = projectSegment !== '' ? '' : statusIcons;
   const gitSegment =
     width >= 79 ? truncateToWidth(gitRight(state, theme), 52, '…') : '';
-  return [projectSegment, gitSegment]
+  return [projectSegment, leadSegment, gitSegment]
     .filter((segment) => segment !== '')
     .join(` ${semanticSeparator(theme)} `);
 }
@@ -497,9 +499,9 @@ const COMPANION_WARNING_PATTERN =
   /(warn|error|stale|unreachable|down|fail|update recommended|needs attention|unhealthy)/iu;
 
 function companionIconColor(text: string | undefined, active: boolean): string {
-  // Disabled companions share the attention color: dim gray is barely
-  // visible on dark themes, and "not reporting" still deserves a glance.
-  if (!active) return 'warning';
+  // Color is the only state signal: symbols never hide.
+  // On = accent, warn/error = warning, off = muted (visible gray).
+  if (!active) return 'muted';
   return text !== undefined && COMPANION_WARNING_PATTERN.test(text)
     ? 'warning'
     : 'accent';
