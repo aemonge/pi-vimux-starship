@@ -1,6 +1,0 @@
-schema: ramona-plan
-created: 2026-09-30
-idea: share-pi-vimux-starship
-skip_specs: true
-goal: The cockpit and the pi-agents CLI install from the public npm registry
-  with two commands and zero cloning, and the public recording proves it.
