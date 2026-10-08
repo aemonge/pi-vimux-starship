@@ -527,11 +527,11 @@ function extensionStatusCodes(state: HeaderDeckState, theme: Theme): string {
     });
   }
   let out = '';
+  let previousBare = false;
   for (const part of parts) {
     out +=
-      out === ''
-        ? part.text
-        : `${out.endsWith(' ') || part.bare ? '  ' : ' '}${part.text}`;
+      out === '' ? part.text : `${previousBare && part.bare ? '  ' : ' '}${part.text}`;
+    previousBare = part.bare;
   }
   return out;
 }
