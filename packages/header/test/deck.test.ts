@@ -289,7 +289,7 @@ test('known companion icons are always present', () => {
   const bare = renderHeaderDeck(fixture(), 120, plainTheme as never).map(plain);
   assert.match(
     bare[0] ?? '',
-    /\[ \u{F09E0} \u{E73E} \] \[ \u{232C} \u{2318} \] \[ \u{F05A6} \u{F0770} \]/u,
+    /\[ \u{2630} \u{2601} \] \[ \u{232C} \u{2318} \] \[ \u{26E8} \]/u,
   );
 });
 
