@@ -513,7 +513,7 @@ function extensionStatusCodes(state: HeaderDeckState, theme: Theme): string {
     if (item.key === 'goal' || texts.has(item.key)) continue;
     texts.set(item.key, item.text);
   }
-  const parts: string[] = [];
+  const parts: Array<{ bare: boolean; text: string }> = [];
   for (const companion of KNOWN_COMPANION_ICONS) {
     const published = companion.keys
       .map((key) => texts.get(key))
@@ -521,11 +521,19 @@ function extensionStatusCodes(state: HeaderDeckState, theme: Theme): string {
     for (const key of companion.keys) texts.delete(key);
     const joined = companion.icons.join(' ');
     const chip = companion.icons.length > 1 ? `[${joined}]` : joined;
-    parts.push(
-      color(theme, companionIconColor(published, published !== undefined), chip),
-    );
+    parts.push({
+      bare: companion.icons.length === 1,
+      text: color(theme, companionIconColor(published, published !== undefined), chip),
+    });
   }
-  return parts.join(' ');
+  let out = '';
+  for (const part of parts) {
+    out +=
+      out === ''
+        ? part.text
+        : `${out.endsWith(' ') || part.bare ? '  ' : ' '}${part.text}`;
+  }
+  return out;
 }
 
 function compactTelemetryRight(
