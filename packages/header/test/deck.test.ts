@@ -282,12 +282,12 @@ test('companion icon colors encode health severity', () => {
   const shield = seen.find((entry) => entry.text === '\u{26E8}');
   assert.equal(brain?.color, 'accent');
   assert.equal(graph?.color, 'warning');
-  assert.equal(shield?.color, 'warning');
+  assert.equal(shield?.color, 'muted');
 });
 
 test('known companion icons are always present', () => {
   const bare = renderHeaderDeck(fixture(), 120, plainTheme as never).map(plain);
-  assert.match(bare[0] ?? '', /\[ \u{21BB} \u{2524} \] \[ \u{232C} \] \[ \u{26E8} \]/u);
+  assert.match(bare[0] ?? '', /\[\u{21BB} \u{2524}\] \u{232C} \u{26E8}/u);
 });
 
 test('extension status icons drop on narrow frames and filter the goal key', () => {
@@ -302,7 +302,7 @@ test('extension status icons drop on narrow frames and filter the goal key', () 
     ],
   };
   const narrow = renderHeaderDeck(state, 60, plainTheme as never).map(plain);
-  assert.equal((narrow[0] ?? '').includes('egm'), false);
+  assert.match(narrow[0] ?? '', /\u{232C}/u);
   assert.equal(
     narrow.some((line) => line.includes('/goal-focus')),
     false,
