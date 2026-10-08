@@ -108,7 +108,7 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.match(lines[3] ?? '', /^\u001b\[2m/u);
   assert.match(
     plain(lines[0] ?? ''),
-    /^\[.\] \[\u{21BB} \u{2524}\] \u{232C} \u{26E8} \u{203A} [\u{E000}-\u{F8FF}] ~\/galactica ⟩/u,
+    /^\[.\] \[\u{21BB} \u{25A4}\] \u{232C} \u{26E8} \u{203A} [\u{E000}-\u{F8FF}] ~\/galactica ⟩/u,
   );
   assert.match(plain(lines[0] ?? ''), /feature\/review-led/u);
   assert.ok(statusRow.includes('GPT-5.6 Sol'));
