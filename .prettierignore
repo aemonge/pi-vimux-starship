@@ -9,3 +9,4 @@ openspec/
 **/README.md
 **/LOCAL-CHANGES.md
 .tmp/
+graphify-out/

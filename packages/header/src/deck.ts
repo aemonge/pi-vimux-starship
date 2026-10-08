@@ -523,7 +523,12 @@ function extensionStatusCodes(state: HeaderDeckState, theme: Theme): string {
     const chip = companion.icons.length > 1 ? `[${joined}]` : joined;
     parts.push({
       bare: companion.icons.length === 1,
-      text: color(theme, companionIconColor(published, published !== undefined), chip),
+      text: color(
+        theme,
+        companionIconColor(published, published !== undefined),
+        chip,
+        true,
+      ),
     });
   }
   let out = '';
