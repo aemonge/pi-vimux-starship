@@ -33,9 +33,9 @@ The package composes four bounded modules in dependency-safe order:
 
   | Chip | Extension | Meaning |
   | --- | --- | --- |
-  | `[ 󰧠 󰜾 ]` brain + cloud | `engram` | persistent memory store |
+  | `[ ☰ ☁ ]` memory + cloud | `engram` | persistent memory store |
   | `[ ⌬ ⌘ ]` | `graphify` | knowledge graph |
-  | `[ 󰖦 󰝰 ]` shield + lock | `appa` / `pi-openappa` | tool-call guard |
+  | `[ ⛨ ]` shield | `appa` / `pi-openappa` | tool-call guard |
 
   Cyan means healthy, orange means warn, error, or not reporting.
 

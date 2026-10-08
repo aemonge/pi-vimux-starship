@@ -488,9 +488,9 @@ const KNOWN_COMPANION_ICONS: ReadonlyArray<{
   keys: readonly string[];
   icons: readonly string[];
 }> = [
-  { keys: ['engram'], icons: ['\u{F09E0}', '\u{E73E}'] },
+  { keys: ['engram'], icons: ['\u{2630}', '\u{2601}'] },
   { keys: ['graphify'], icons: ['\u{232C}', '\u{2318}'] },
-  { keys: ['appa', 'openappa'], icons: ['\u{F05A6}', '\u{F0770}'] },
+  { keys: ['appa', 'openappa'], icons: ['\u{26E8}'] },
 ];
 
 const COMPANION_WARNING_PATTERN =
