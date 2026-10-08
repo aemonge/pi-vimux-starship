@@ -517,7 +517,8 @@ function extensionStatusCodes(state: HeaderDeckState, theme: Theme): string {
       .map((key) => texts.get(key))
       .find((text) => text !== undefined);
     for (const key of companion.keys) texts.delete(key);
-    const chip = `[ ${companion.icons.join(' ')} ]`;
+    const joined = companion.icons.join(' ');
+    const chip = companion.icons.length > 1 ? `[${joined}]` : joined;
     parts.push(
       color(theme, companionIconColor(published, published !== undefined), chip),
     );
