@@ -34,7 +34,7 @@ The package composes four bounded modules in dependency-safe order:
   | Chip | Extension | Meaning |
   | --- | --- | --- |
   | `[ ↺ ↻ ]` recall loops | `engram` | persistent memory store |
-  | `[ ⌬ ⌘ ]` | `graphify` | knowledge graph |
+  | `[ ⌬ ]` | `graphify` | knowledge graph |
   | `[ ⛨ ]` shield | `appa` / `pi-openappa` | tool-call guard |
 
   Cyan means healthy, orange means warn, error, or not reporting.

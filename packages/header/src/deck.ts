@@ -489,7 +489,7 @@ const KNOWN_COMPANION_ICONS: ReadonlyArray<{
   icons: readonly string[];
 }> = [
   { keys: ['engram'], icons: ['\u{21BA}', '\u{21BB}'] },
-  { keys: ['graphify'], icons: ['\u{232C}', '\u{2318}'] },
+  { keys: ['graphify'], icons: ['\u{232C}'] },
   { keys: ['appa', 'openappa'], icons: ['\u{26E8}'] },
 ];
 
