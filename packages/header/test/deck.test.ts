@@ -108,7 +108,7 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.match(lines[3] ?? '', /^\u001b\[2m/u);
   assert.match(
     plain(lines[0] ?? ''),
-    /^\[.\] \[\u{21BB} \u{25A4}\] \u{232C}  \u{26E8} \u{203A} [\u{E000}-\u{F8FF}] ~\/galactica ⟩/u,
+    /^\[.\] \[\u{21BB} \u{25A4}\] \u{232C}  \u{26E8}  \u{203A} [\u{E000}-\u{F8FF}] ~\/galactica ⟩/u,
   );
   assert.match(plain(lines[0] ?? ''), /feature\/review-led/u);
   assert.ok(statusRow.includes('GPT-5.6 Sol'));
@@ -244,7 +244,7 @@ test('extension statuses ride the telemetry tail as icons', () => {
   const telemetry = lines[0] ?? '';
   assert.match(
     telemetry,
-    /^\[.\] \[\u{21BB} \u{25A4}\] \u{232C}  \u{26E8} \u{203A} [\u{E000}-\u{F8FF}] ~/u,
+    /^\[.\] \[\u{21BB} \u{25A4}\] \u{232C}  \u{26E8}  \u{203A} [\u{E000}-\u{F8FF}] ~/u,
   );
   assert.ok(telemetry.indexOf('~/') > telemetry.indexOf('\u{F08BE}'));
   assert.equal(telemetry.includes('engram'), false);
