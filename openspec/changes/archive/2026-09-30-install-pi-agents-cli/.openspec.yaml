@@ -1,6 +1,0 @@
-schema: ramona-plan
-created: 2026-09-29
-idea: share-pi-vimux-starship
-skip_specs: true
-goal: The command center is one word away — pi-agents on the PATH from any
-  shell, packed with the package and integrity-checked.
