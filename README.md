@@ -33,7 +33,7 @@ The package composes four bounded modules in dependency-safe order:
 
   | Chip | Extension | Meaning |
   | --- | --- | --- |
-  | `[ ↺ ↻ ]` recall loops | `engram` | persistent memory store |
+  | `[ ↻ ▤ ]` recall + records | `engram` | persistent memory store |
   | `[ ⌬ ]` | `graphify` | knowledge graph |
   | `[ ⛨ ]` shield | `appa` / `pi-openappa` | tool-call guard |
 

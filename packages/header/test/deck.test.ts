@@ -108,7 +108,7 @@ test('renders the approved rich wide header without side borders or spacer rows'
   assert.match(lines[3] ?? '', /^\u001b\[2m/u);
   assert.match(
     plain(lines[0] ?? ''),
-    /^\[.\] \[ \u{21BA} \u{21BB} \] \[ \u{232C} \] \[ \u{26E8} \] \u{203A} [\u{E000}-\u{F8FF}] ~\/galactica ⟩/u,
+    /^\[.\] \[ \u{21BB} \u{2524} \] \[ \u{232C} \] \[ \u{26E8} \] \u{203A} [\u{E000}-\u{F8FF}] ~\/galactica ⟩/u,
   );
   assert.match(plain(lines[0] ?? ''), /feature\/review-led/u);
   assert.ok(statusRow.includes('GPT-5.6 Sol'));
@@ -244,7 +244,7 @@ test('extension statuses ride the telemetry tail as icons', () => {
   const telemetry = lines[0] ?? '';
   assert.match(
     telemetry,
-    /^\[.\] \[ \u{21BA} \u{21BB} \] \[ \u{232C} \] \[ \u{26E8} \] \u{203A} [\u{E000}-\u{F8FF}] ~/u,
+    /^\[.\] \[ \u{21BB} \u{2524} \] \[ \u{232C} \] \[ \u{26E8} \] \u{203A} [\u{E000}-\u{F8FF}] ~/u,
   );
   assert.ok(telemetry.indexOf('~/') > telemetry.indexOf('\u{F08BE}'));
   assert.equal(telemetry.includes('engram'), false);
@@ -277,7 +277,7 @@ test('companion icon colors encode health severity', () => {
   };
 
   renderHeaderDeck(state, 120, spyTheme);
-  const brain = seen.find((entry) => entry.text === '[ \u{21BA} \u{21BB} ]');
+  const brain = seen.find((entry) => entry.text === '[ \u{21BB} \u{2524} ]');
   const graph = seen.find((entry) => entry.text === '[ \u{232C} ]');
   const shield = seen.find((entry) => entry.text === '[ \u{26E8} ]');
   assert.equal(brain?.color, 'accent');
@@ -287,7 +287,7 @@ test('companion icon colors encode health severity', () => {
 
 test('known companion icons are always present', () => {
   const bare = renderHeaderDeck(fixture(), 120, plainTheme as never).map(plain);
-  assert.match(bare[0] ?? '', /\[ \u{21BA} \u{21BB} \] \[ \u{232C} \] \[ \u{26E8} \]/u);
+  assert.match(bare[0] ?? '', /\[ \u{21BB} \u{2524} \] \[ \u{232C} \] \[ \u{26E8} \]/u);
 });
 
 test('extension status icons drop on narrow frames and filter the goal key', () => {
