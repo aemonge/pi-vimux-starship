@@ -1,0 +1,6 @@
+schema: ramona-plan
+created: 2026-09-18
+idea: share-pi-vimux-starship
+skip_specs: true
+goal: The cockpit renders one frozen-contract snapshot (selection, runs, progress)
+  through an event ledger and reducer, and all five drift exhibits are dead.

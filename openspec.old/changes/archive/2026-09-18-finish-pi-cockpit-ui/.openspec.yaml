@@ -1,0 +1,6 @@
+schema: ramona-plan
+created: 2026-09-07
+idea: share-pi-vimux-starship
+skip_specs: true
+goal: Human sees stable title colors, semantic progress, and only the rich
+  header frame around a borderless prompt.
